@@ -39,6 +39,17 @@
 | 记忆 | `paknow/memory/{trace,sop}.py` |
 | 服务 | `apps/api/main.py`（FastAPI）+ `apps/viewer/index.html` |
 
+## 技术文档站
+
+仓库内含一套按 RAG 设计流程组织的技术文档（`doc/`，MkDocs Material），
+讲清楚每个环节的技术选型、为什么选/不选、已完成与待补充、运行示例与 AI 评价：
+
+```bash
+.venv/Scripts/python.exe -m mkdocs serve      # 本地预览 http://127.0.0.1:8000
+.venv/Scripts/python.exe -m mkdocs build      # 构建到 site/
+.venv/Scripts/python.exe -m mkdocs gh-deploy  # 发布到 GitHub Pages
+```
+
 ## 快速开始
 
 ```bash

@@ -1,0 +1,56 @@
+site_name: PAknow 技术文档
+site_description: 多模态检索、证据图谱与可验证 SOP 记忆系统——按设计流程讲技术选型
+docs_dir: doc
+theme:
+  name: material
+  language: zh
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.indexes
+    - content.code.copy
+    - search.highlight
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+nav:
+  - 首页: index.md
+  - 设计流程:
+      - 0. 系统架构与设计原则: chapter0-architecture.md
+      - 1. 资料审计与证据单元: chapter1-corpus.md
+      - 2. 多模态证据构建: chapter2-multimodal.md
+      - 3. 索引构建: chapter3-index.md
+      - 4. 检索优化: chapter4-retrieval.md
+      - 5. 查询构建与改写: chapter5-query.md
+      - 6. 证据核验与生成: chapter6-generation.md
+      - 7. SOP 记忆与自动优化: chapter7-memory.md
+      - 8. 服务与工程化: chapter8-service.md
+  - 状态与验证:
+      - 已完成与待补充: chapter9-status.md
+      - 运行示例: chapter10-examples.md
+      - AI 评价: chapter11-ai-review.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - toc:
+      permalink: true
+  - attr_list
+  - md_in_html
+
+extra:
+  generator: false
