@@ -1,0 +1,352 @@
+/* ==========================================================================
+   PAknow docs — custom theme
+   Palette: indigo (#4f46e5) + teal (#0d9488), light/dark aware.
+   ========================================================================== */
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap");
+
+/* ---------- palette ---------- */
+[data-md-color-scheme="default"] {
+  --md-primary-fg-color: #4f46e5;
+  --md-primary-fg-color--light: #6366f1;
+  --md-primary-fg-color--dark: #4338ca;
+  --md-accent-fg-color: #0d9488;
+  --md-typeset-a-color: #4f46e5;
+  --md-default-bg-color: #ffffff;
+  --md-code-bg-color: #f4f5fb;
+  --md-code-fg-color: #1f2937;
+  --pak-hero-from: #0f172a;
+  --pak-hero-to: #1e1b4b;
+  --pak-card-shadow: 0 10px 30px rgba(79, 70, 229, 0.14);
+}
+
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: #6366f1;
+  --md-primary-fg-color--light: #818cf8;
+  --md-primary-fg-color--dark: #4f46e5;
+  --md-accent-fg-color: #2dd4bf;
+  --md-typeset-a-color: #a5b4fc;
+  --md-default-bg-color: #0b1120;
+  --md-code-bg-color: #111827;
+  --pak-hero-from: #0b1120;
+  --pak-hero-to: #1e1b4b;
+  --pak-card-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+
+/* ---------- typography ---------- */
+body,
+.md-typeset,
+.md-nav,
+.md-header {
+  font-family: "Inter", "Noto Sans SC", "PingFang SC", "Microsoft YaHei",
+    system-ui, -apple-system, sans-serif;
+}
+
+.md-typeset {
+  font-size: 0.78rem;
+  line-height: 1.78;
+}
+
+.md-typeset h1 {
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--md-default-fg-color);
+}
+
+.md-typeset h2 {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin-top: 2.2em;
+  padding-bottom: 0.35em;
+  border-bottom: 1px solid var(--md-default-fg-color--lightest);
+}
+
+.md-typeset h3 {
+  font-weight: 600;
+  margin-top: 1.6em;
+}
+
+.md-typeset code {
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.82em;
+  border-radius: 5px;
+}
+
+.md-typeset pre > code {
+  border-radius: 12px;
+}
+
+.md-typeset pre {
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+/* ---------- header / footer ---------- */
+.md-header {
+  box-shadow: 0 2px 14px rgba(15, 23, 42, 0.08);
+}
+
+.md-tabs {
+  border-bottom: 1px solid var(--md-default-fg-color--lightest);
+}
+
+.md-footer {
+  margin-top: 2rem;
+}
+
+.md-footer-meta {
+  background-color: #0b1120;
+}
+
+/* ---------- sidebar ---------- */
+.md-nav__link--active,
+.md-nav__item--active > .md-nav__link {
+  font-weight: 600;
+}
+
+.md-nav__item--section > .md-nav__link {
+  color: var(--md-primary-fg-color);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+/* ---------- tables ---------- */
+.md-typeset table:not([class]) {
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.md-typeset table:not([class]) th {
+  background: rgba(79, 70, 229, 0.06);
+  font-weight: 600;
+  border-bottom: 1px solid var(--md-default-fg-color--lightest);
+}
+
+.md-typeset table:not([class]) tr:hover {
+  background: rgba(79, 70, 229, 0.03);
+}
+
+/* ---------- blockquote / admonition ---------- */
+.md-typeset blockquote {
+  border-left: 3px solid var(--md-primary-fg-color);
+  background: rgba(79, 70, 229, 0.05);
+  border-radius: 0 10px 10px 0;
+  padding: 0.6rem 1rem;
+  color: var(--md-default-fg-color--light);
+}
+
+.md-typeset .admonition,
+.md-typeset details {
+  border-radius: 12px;
+  border-width: 1px;
+}
+
+/* ---------- mermaid ---------- */
+.mermaid {
+  text-align: center;
+  margin: 1.4rem 0;
+}
+
+.mermaid svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ==========================================================================
+   Landing page hero
+   ========================================================================== */
+.paknow-hero {
+  position: relative;
+  margin: 0.2rem -0.8rem 1.6rem;
+  padding: 3.4rem 1.4rem 2.8rem;
+  border-radius: 20px;
+  color: #f8fafc;
+  text-align: center;
+  overflow: hidden;
+  background:
+    radial-gradient(900px 380px at 15% -10%, rgba(99, 102, 241, 0.45), transparent 60%),
+    radial-gradient(700px 320px at 92% 8%, rgba(13, 148, 136, 0.38), transparent 55%),
+    linear-gradient(135deg, var(--pak-hero-from), var(--pak-hero-to));
+}
+
+.paknow-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 30px 30px;
+  -webkit-mask-image: radial-gradient(ellipse at 50% 0%, #000 0%, transparent 72%);
+  mask-image: radial-gradient(ellipse at 50% 0%, #000 0%, transparent 72%);
+}
+
+.paknow-hero h1 {
+  position: relative;
+  z-index: 1;
+  margin: 0 0 0.5rem;
+  font-size: 2.35rem;
+  line-height: 1.15;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  background: linear-gradient(92deg, #ffffff 10%, #c7d2fe 55%, #99f6e4 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.paknow-hero .paknow-sub {
+  position: relative;
+  z-index: 1;
+  max-width: 720px;
+  margin: 0 auto;
+  color: #cbd5e1;
+  font-size: 0.95rem;
+  line-height: 1.7;
+}
+
+.paknow-badges {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.45rem;
+  margin-top: 1.2rem;
+}
+
+.paknow-badge {
+  display: inline-block;
+  padding: 0.22rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: #e0e7ff;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(6px);
+}
+
+.paknow-cta {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.7rem;
+  margin-top: 1.5rem;
+}
+
+.paknow-cta a {
+  display: inline-block;
+  padding: 0.62rem 1.25rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+}
+
+.paknow-cta a:hover {
+  transform: translateY(-2px);
+}
+
+.paknow-cta a.paknow-btn {
+  color: #ffffff;
+  background: linear-gradient(120deg, #6366f1, #0d9488);
+  box-shadow: 0 8px 22px rgba(79, 70, 229, 0.35);
+}
+
+.paknow-cta a.paknow-btn-ghost {
+  color: #e2e8f0;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.paknow-cta a.paknow-btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+/* ---------- landing feature strip ---------- */
+.paknow-features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 0.9rem;
+  margin: 1.2rem 0 1.8rem;
+}
+
+.paknow-feature {
+  padding: 1.1rem 1.2rem;
+  border-radius: 16px;
+  border: 1px solid var(--md-default-fg-color--lightest);
+  background: var(--md-default-bg-color);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.paknow-feature:hover {
+  transform: translateY(-3px);
+  border-color: var(--md-primary-fg-color);
+  box-shadow: var(--pak-card-shadow);
+}
+
+.paknow-feature .paknow-feature-icon {
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.paknow-feature h3 {
+  margin: 0.5rem 0 0.35rem;
+  font-size: 0.86rem;
+  font-weight: 700;
+  border: none;
+}
+
+.paknow-feature p {
+  margin: 0;
+  font-size: 0.74rem;
+  color: var(--md-default-fg-color--light);
+}
+
+/* ---------- Material grid cards, restyled ---------- */
+.md-typeset .grid.cards > ul > li {
+  border-radius: 16px;
+  border: 1px solid var(--md-default-fg-color--lightest);
+  padding: 1.05rem 1.15rem;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.md-typeset .grid.cards > ul > li:hover {
+  transform: translateY(-3px);
+  border-color: var(--md-primary-fg-color);
+  box-shadow: var(--pak-card-shadow);
+}
+
+.md-typeset .grid.cards > ul > li > hr {
+  margin: 0.55rem 0;
+  border-color: var(--md-default-fg-color--lightest);
+}
+
+.md-typeset .grid.cards > ul > li a {
+  font-weight: 600;
+}
+
+/* ---------- misc ---------- */
+.md-typeset .headerlink {
+  color: var(--md-default-fg-color--lighter);
+}
+
+.md-typeset img {
+  border-radius: 10px;
+}
+
+::selection {
+  background: rgba(79, 70, 229, 0.22);
+}
+
+/* smooth in-page anchors */
+html {
+  scroll-behavior: smooth;
+}

@@ -1,57 +1,170 @@
-# PAknow 技术文档
+<div class="paknow-hero">
+  <h1>PAknow</h1>
+  <p class="paknow-sub">
+    面向本地价格行为资料的多模态 RAG：<strong>可追溯出处</strong>的知识问答、
+    带条件的主张图谱、派生视觉索引，以及<strong>可验证、可版本化、可回滚</strong>的程序性记忆（SOP）。
+  </p>
+  <div class="paknow-badges">
+    <span class="paknow-badge">91,235 证据单元</span>
+    <span class="paknow-badge">927 图资产</span>
+    <span class="paknow-badge">2,694 概念 · 1,888 主张</span>
+    <span class="paknow-badge">674 K 线指代</span>
+    <span class="paknow-badge">SOP 生命周期 + git</span>
+  </div>
+  <div class="paknow-cta">
+    <a class="paknow-btn" href="chapter0-architecture/">开始阅读</a>
+    <a class="paknow-btn-ghost" href="chapter10-examples/">运行示例</a>
+    <a class="paknow-btn-ghost" href="https://github.com/TbK0ng/paknow">GitHub 仓库</a>
+  </div>
+</div>
 
-> 一个面向**本地价格行为资料**（Al Brooks 系列 + 中文精翻 + 笔记）的多模态 RAG 系统：
-> 可追溯出处的知识问答、上传图表分析、带条件的主张图谱，以及**可验证、可版本化、可回滚的程序性记忆（SOP）**。
+<div class="paknow-features">
+  <div class="paknow-feature">
+    <div class="paknow-feature-icon">🔗</div>
+    <h3>可追溯</h3>
+    <p>每个 <code>[n]</code> 绑定证据编号，最终落到「书 → 章 → 图 → 页」。</p>
+  </div>
+  <div class="paknow-feature">
+    <div class="paknow-feature-icon">🧪</div>
+    <h3>可验证</h3>
+    <p>图谱主张带条件，视觉观察标记为派生材料，SOP 需要回放证据才能晋升。</p>
+  </div>
+  <div class="paknow-feature">
+    <div class="paknow-feature-icon">🕘</div>
+    <h3>可回滚</h3>
+    <p>记忆以 YAML + git 管理，每次变更可 diff、可 blame、可回退。</p>
+  </div>
+</div>
 
-本文档借鉴 [All-in-RAG](https://datawhalechina.github.io/all-in-rag/) 第 8/9 章的写法：**按 RAG 系统的设计流程逐步展开**，每一节都回答三个问题——这个环节要解决什么、为什么选这个方案、为什么不选另一个。这里不贴大段实现代码（代码在仓库里），重点讲**设计决策的来由和实测依据**。
+## 设计流程
 
-## 这个系统解决什么问题
+按 RAG 系统的构建顺序展开。每一章回答：这个环节要解决什么、为什么选这个方案、为什么不选另一个。
 
-普通 RAG 在这批资料上会失效，原因不是"模型不够强"，而是资料本身的性质：
+<div class="grid cards" markdown>
 
-| 资料性质 | 对系统的要求 |
-|---|---|
-| 图表密集（927 张图，图注/K线编号/箭头） | 图文必须建立可检索的链接，而不是只索引文字 |
-| 中英双语且**不是逐段对应**（中文精翻 vs 三卷英文） | 跨语言检索 + 术语对齐，不能假设翻译一一映射 |
-| 条件化知识（"强趋势中 X，区间中 Y"） | 主张要保留条件（context/modality），检索要能按语境区分 |
-| 大量缩写与专名（H2/L2/BTC/MTR/DBBF…） | 词法层必须保护领域词，否则稀疏检索被切碎 |
-| 教学习题/案例、地图式叙述 | 问题往往需要**归纳机制**而非复述某一段 → 需要 synthesis 模式 |
+-   :material-sitemap-outline:{ .lg .middle } **0. 系统架构与设计原则**
 
-## 三条设计主线
+    ---
 
-1. **可追溯**：任何结论都要能回到"哪本书、哪一章、哪个图、哪一页、哪段原文"。
-2. **可验证**：图谱主张、视觉观察、SOP 都是"带状态"的产物；派生材料不能冒充权威原文。
-3. **可回滚**：记忆（SOP）用 git 管理，每次变更都有版本与提交记录。
+    目标边界、四条原则、技术栈总览与"明确不做"的设计。
 
-## 系统总览
+    [:octicons-arrow-right-24: 阅读](chapter0-architecture.md)
 
-```mermaid
-flowchart LR
-    A[本地 PDF/EPUB<br/>7 份资料] --> B[解析<br/>EPUB 原生 / PyMuPDF]
-    B --> C[证据单元 91,235<br/>+ 图资产 927]
-    C --> D[索引<br/>BGE-M3 dense+sparse<br/>Qdrant 嵌入式]
-    C --> E[证据图谱<br/>2,694 概念 / 1,888 主张]
-    C --> F[视觉观察<br/>Qwen2.5-VL 派生索引]
-    D --> G[多路召回<br/>混合 + 重排 + 邻接 + toc + 图谱 + BarRef]
-    E --> G
-    F --> G
-    G --> H[查询构建与改写<br/>路由/Step-Back/Multi-query/HyDE]
-    H --> G
-    G --> I[证据核验<br/>有界补检索]
-    I --> J[生成与引用<br/>extractive / synthesis]
-    J --> K[RunTrace 情节记忆]
-    K --> L[SOP 记忆<br/>评价→蒸馏→发布]
-    L --> G
-    J --> M[API + 查看器]
+-   :material-file-document-multiple-outline:{ .lg .middle } **1. 资料审计与证据单元**
+
+    ---
+
+    7 份资料的性质、定位字段设计、解析选型、父块悬空事故与邻接回填。
+
+    [:octicons-arrow-right-24: 阅读](chapter1-corpus.md)
+
+-   :material-image-multiple-outline:{ .lg .middle } **2. 多模态证据构建**
+
+    ---
+
+    图资产、视觉路线被迫替换、观察污染事故、图谱条件、BarRef、图文链接。
+
+    [:octicons-arrow-right-24: 阅读](chapter2-multimodal.md)
+
+-   :material-database-outline:{ .lg .middle } **3. 索引构建**
+
+    ---
+
+    BGE-M3 单模型理由、领域分词与词边界事故、嵌入式 Qdrant、重索引策略。
+
+    [:octicons-arrow-right-24: 阅读](chapter3-index.md)
+
+-   :material-magnify:{ .lg .middle } **4. 检索优化**
+
+    ---
+
+    混合召回、RRF、重排、多样性、邻接、toc、图谱、BarRef、失败降级。
+
+    [:octicons-arrow-right-24: 阅读](chapter4-retrieval.md)
+
+-   :material-compass-outline:{ .lg .middle } **5. 查询构建与改写**
+
+    ---
+
+    单次结构化计划、Step-Back / Multi-query / HyDE、双语对齐、分析 vs 举例分流。
+
+    [:octicons-arrow-right-24: 阅读](chapter5-query.md)
+
+-   :material-text-box-check-outline:{ .lg .middle } **6. 证据核验与生成**
+
+    ---
+
+    两种生成模式、有界补检索、引用绑定、上下文分层、分析优先与图例策略。
+
+    [:octicons-arrow-right-24: 阅读](chapter6-generation.md)
+
+-   :material-brain:{ .lg .middle } **7. SOP 记忆与自动优化**
+
+    ---
+
+    运行轨迹、生命周期、git 版本管理、评价→蒸馏→发布闭环、生效方式与局限。
+
+    [:octicons-arrow-right-24: 阅读](chapter7-memory.md)
+
+-   :material-server-outline:{ .lg .middle } **8. 服务与工程化**
+
+    ---
+
+    API、存储、截点遮罩、git 实践、性能实测、部署与文档站。
+
+    [:octicons-arrow-right-24: 阅读](chapter8-service.md)
+
+</div>
+
+## 状态与验证
+
+<div class="grid cards" markdown>
+
+-   :material-check-decagram-outline:{ .lg .middle } **已完成与待补充**
+
+    ---
+
+    逐项列出已验证的实现与按优先级排列的待补事项。
+
+    [:octicons-arrow-right-24: 查看](chapter9-status.md)
+
+-   :material-play-circle-outline:{ .lg .middle } **运行示例**
+
+    ---
+
+    从环境到全量构建，再到问答、图例、K 线指代与截点上传的真实命令与输出。
+
+    [:octicons-arrow-right-24: 查看](chapter10-examples.md)
+
+-   :material-robot-happy-outline:{ .lg .middle } **AI 评价**
+
+    ---
+
+    一份诚实的自评：优点、短板、10 维度评分与最值得做的三件事。
+
+    [:octicons-arrow-right-24: 查看](chapter11-ai-review.md)
+
+</div>
+
+## 快速开始
+
+```bash
+# 1) 依赖（Windows 上 torch/torchvision 必须走 CUDA 索引）
+uv venv .venv
+uv pip install --python .venv --index-url https://download.pytorch.org/whl/cu128 "torch==2.9.1" "torchvision==0.24.1"
+uv pip install --python .venv -e ".[dev]"
+
+# 2) 配置（复制 .env.example 并填入 DEEPSEEK_API_KEY）
+cp .env.example .env
+
+# 3) 摄入 + 索引
+.venv/Scripts/python.exe scripts/ingest_all.py
+.venv/Scripts/python.exe scripts/index_visual.py
+
+# 4) 启动服务
+.venv/Scripts/python.exe -m uvicorn apps.api.main:app --port 8000
 ```
 
-## 阅读路径
-
-- **想快速判断这个项目值不值得看**：直接读 [AI 评价](chapter11-ai-review.md)。
-- **想理解每个技术选择**：从 [0. 系统架构与设计原则](chapter0-architecture.md) 顺序读到第 8 章。
-- **想跑起来**：看 [运行示例](chapter10-examples.md)。
-- **想知道还差什么**：看 [已完成与待补充](chapter9-status.md)。
-
-## 与 plan.md 的关系
-
-`plan.md` 是实施前的设计文档（含市场调研与验收细节）；本文档是**实施后的技术说明**，记录实际发生了什么、为什么这么做、哪些坑踩过并修好了。两者冲突时以本文档与代码为准。
+!!! note "文档与代码的关系"
+    本文档是**实施后的技术说明**，以实际代码、数据库计数与运行结果为准：
+    记录实际发生了什么、为什么这么做、哪些坑踩过并修好了。设计过程中的讨论稿不随仓库发布。
