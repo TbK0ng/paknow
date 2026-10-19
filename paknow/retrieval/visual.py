@@ -77,6 +77,26 @@ def _no_grad():
     return torch.no_grad()
 
 
+def mask_right_bytes(data: bytes, frac: float) -> bytes:
+    """Mask the rightmost ``frac`` fraction of a chart image (bar cutoff).
+
+    plan §8.4: when analyzing a historical chart at a simulated point in time,
+    bars after the cutoff must not be visible, so lookahead is impossible.
+    """
+    import io
+
+    from PIL import Image, ImageDraw
+
+    img = Image.open(io.BytesIO(data)).convert("RGB")
+    w, h = img.size
+    x0 = int(w * (1.0 - max(0.0, min(frac, 1.0))))
+    if x0 < w - 1:
+        ImageDraw.Draw(img).rectangle([x0, 0, w - 1, h - 1], fill=(246, 246, 246))
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    return buf.getvalue()
+
+
 def search_pages(text: str, top_k: int = 5) -> list[dict[str, Any]]:
     """Visual-route retrieval: reuse hybrid text search over observation units.
 

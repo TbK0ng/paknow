@@ -12,11 +12,20 @@ from typing import Any, TypedDict
 
 from langgraph.graph import END, START, StateGraph
 
+from paknow.db import SessionLocal
+from paknow.db.models import FigureAssetRow
 from paknow.graph.retrieve import concept_lookup, expand_evidence_ids, transition_chains
 from paknow.memory.sop import select_sop
 from paknow.memory.trace import save_trace
+from paknow.retrieval.barref import barref_lookup
 from paknow.retrieval.dictionary import expand_query
-from paknow.retrieval.search import expand_evidence, hybrid_search, point_to_doc, rerank
+from paknow.retrieval.search import (
+    diversify,
+    expand_evidence,
+    hybrid_search,
+    point_to_doc,
+    rerank,
+)
 from paknow.retrieval.toc import toc_recall
 from paknow.workflows.evidence import check_sufficiency
 from paknow.workflows.generate import generate
@@ -58,6 +67,7 @@ class QState(TypedDict, total=False):
     graph_evidence: list[dict[str, Any]]
     toc_context: list[dict[str, Any]]
     context_units: list[dict[str, Any]]
+    barrefs: list[dict[str, Any]]
 
 
 def _route_node(state: QState) -> QState:
@@ -100,14 +110,12 @@ def _retrieve_node(state: QState) -> QState:
     # cross-encoder rerank over the top candidates (falls back to RRF order)
     if len(hits) >= 2:
         try:
-            hits = rerank(state["query"], hits[:20], top_k=14)
+            hits = rerank(state["query"], hits[:20], top_k=20)
             for h in hits:
                 h["reranked"] = True
         except Exception as e:  # noqa: BLE001
             state.setdefault("failures", []).append(f"rerank: {e}")
-            hits = hits[:14]
-    else:
-        hits = hits[:14]
+    hits = diversify(hits, top_k=14, max_per_doc=5)
 
     state["hits"] = hits
     state["round"] = state.get("round", 0) + 1
@@ -146,7 +154,39 @@ def _retrieve_node(state: QState) -> QState:
     # toc recall: chapter framework for structural questions
     if "toc" in routes or "toc" in needs:
         state["toc_context"] = toc_recall(state["query"])
+
+    # bar-number references inside figures ("K线2/3构成双底")
+    state["barrefs"] = barref_lookup(state["query"])
+    if state["barrefs"]:
+        _merge_barref_figures(state)
     return state
+
+
+def _merge_barref_figures(state: QState) -> None:
+    """Attach figures referenced by bar-refs to the figure list (viewer)."""
+    fig_ids = {b["figure_id"] for b in state.get("barrefs", []) if b.get("figure_id")}
+    if not fig_ids:
+        return
+    have = {f.get("figure_id") for f in state.get("figures", [])}
+    missing = fig_ids - have
+    if not missing:
+        return
+    with SessionLocal() as s:
+        figs = (
+            s.query(FigureAssetRow)
+            .filter(FigureAssetRow.figure_id.in_(missing))
+            .all()
+        )
+    for f in figs:
+        state.setdefault("figures", []).append(
+            {
+                "figure_id": f.figure_id,
+                "rel_path": f.rel_path,
+                "width_px": f.width_px,
+                "height_px": f.height_px,
+                "figure_label": f.figure_label,
+            }
+        )
 
 
 def _check_node(state: QState) -> QState:
@@ -190,6 +230,7 @@ def _generate_node(state: QState) -> QState:
         graph_context=state.get("graph_context"),
         toc_context=state.get("toc_context"),
         fallback=state.get("sop_fallback"),
+        barrefs=state.get("barrefs"),
     )
     return state
 
@@ -260,5 +301,6 @@ def run_query(query: str, images: list[bytes] | None = None) -> dict[str, Any]:
         "routes": final.get("routes", []),
         "hits": final.get("hits", []),
         "figures": final.get("figures", []),
+        "barrefs": final.get("barrefs", []),
         "answer": final.get("answer"),
     }

@@ -76,6 +76,38 @@ def rerank(query_text: str, docs: list[dict[str, Any]], top_k: int | None = None
     return [docs[i] for i in order]
 
 
+def diversify(
+    hits: list[dict[str, Any]], *, top_k: int = 14, max_per_doc: int = 5
+) -> list[dict[str, Any]]:
+    """Near-duplicate suppression + per-document cap so one book/edition
+    cannot flood the evidence window (plan §5.4 去重分组)."""
+    import re
+
+    def norm(text: str) -> str:
+        return re.sub(r"\s+", "", text)[:80].lower()
+
+    seen_dup: set[str] = set()
+    doc_counts: dict[str, int] = {}
+    out: list[dict[str, Any]] = []
+    for h in hits:
+        eid = h.get("evidence_id")
+        if not eid:
+            out.append(h)
+            continue
+        key = norm(h.get("text") or "")
+        if key in seen_dup:
+            continue
+        doc = h.get("doc_id") or eid
+        if doc_counts.get(doc, 0) >= max_per_doc:
+            continue
+        seen_dup.add(key)
+        doc_counts[doc] = doc_counts.get(doc, 0) + 1
+        out.append(h)
+        if len(out) >= top_k:
+            break
+    return out
+
+
 def point_to_doc(p: ScoredPoint) -> dict[str, Any]:
     pl = p.payload or {}
     return {

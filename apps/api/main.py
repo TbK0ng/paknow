@@ -12,6 +12,7 @@ from paknow.db import SessionLocal
 from paknow.db.models import DocumentRow, EvidenceUnitRow, FigureAssetRow, RunTraceRow
 from paknow.evidence.citations import resolve_citations
 from paknow.memory.sop import list_sops
+from paknow.retrieval.visual import mask_right_bytes
 from paknow.workflows.graph import run_query
 
 app = FastAPI(title="PAknow", version="0.1.0")
@@ -49,8 +50,12 @@ def query(req: QueryRequest) -> dict[str, Any]:
 
 
 @app.post("/charts")
-async def charts(query: str, file: UploadFile) -> dict[str, Any]:
+async def charts(query: str, file: UploadFile, cutoff: float = 0.0) -> dict[str, Any]:
+    """Chart upload analysis. ``cutoff`` (0..1) masks the rightmost fraction
+    of the image so bars after the analysis point are invisible (plan §8.4)."""
     data = await file.read()
+    if cutoff > 0:
+        data = mask_right_bytes(data, cutoff)
     return _resolve_answer(run_query(query, images=[data]))
 
 

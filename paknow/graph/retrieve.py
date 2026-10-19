@@ -74,18 +74,29 @@ def concept_lookup(terms: list[str], limit: int = 12) -> list[dict[str, Any]]:
             if any(_term_alias_match(f, target) for f in forms):
                 matched_nodes.append(n)
         labels = {n.label for n in matched_nodes} | {n.concept_id for n in matched_nodes}
-        claims: list[ClaimRow] = []
+        # claims ranked by: subject match > predicate match > condition-only match
+        scored_claims: list[tuple[int, ClaimRow]] = []
         for c in s.query(ClaimRow).all():
             if c.subject in labels:
-                claims.append(c)
+                scored_claims.append((3, c))
                 continue
-            subj = c.subject or ""
-            if any(_term_alias_match(f, subj) for f in forms) or any(
-                _term_alias_match(f, c.predicate or "") for f in forms
-            ):
-                claims.append(c)
-            if len(claims) >= limit:
-                break
+            subj, pred = c.subject or "", c.predicate or ""
+            subj_hit = any(_term_alias_match(f, subj) for f in forms)
+            pred_hit = any(_term_alias_match(f, pred) for f in forms)
+            ctx_vals = (c.qualifiers or {}).get("context") or []
+            if isinstance(ctx_vals, str):
+                ctx_vals = [ctx_vals]
+            ctx_hit = any(
+                _term_alias_match(f, str(v)) for v in ctx_vals for f in forms
+            )
+            if subj_hit:
+                scored_claims.append((2, c))
+            elif pred_hit:
+                scored_claims.append((1, c))
+            elif ctx_hit:
+                scored_claims.append((0, c))
+        scored_claims.sort(key=lambda x: -x[0])
+        claims = [c for _score, c in scored_claims[:limit]]
     out: list[dict[str, Any]] = []
     for n in matched_nodes[:limit]:
         out.append(

@@ -67,6 +67,7 @@ def generate(
     graph_context: dict[str, Any] | None = None,
     toc_context: list[dict[str, Any]] | None = None,
     fallback: str | None = None,
+    barrefs: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     context = build_context(units)
     parts = [f"问题：{query}"]
@@ -82,6 +83,15 @@ def generate(
         parts.append(
             "知识图谱上下文（概念/主张/周期链，用于校验与归纳，不直接引用编号）：\n"
             + json.dumps(graph_context, ensure_ascii=False, indent=1)
+        )
+    if barrefs:
+        parts.append(
+            "图内K线指代解析（结构化标注，用于定位图中具体K线）：\n"
+            + "\n".join(
+                f"- {' '.join(b['bars'])} {b['relation']} {b['pattern']}（{b['snippet']}）"
+                for b in barrefs
+                if b.get("bars")
+            )
         )
     if fallback:
         parts.append(f"证据不足时的处理要求：{fallback}")

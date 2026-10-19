@@ -137,13 +137,28 @@ class ClaimRow(Base):
 
 class GraphEdgeRow(Base):
     __tablename__ = "graph_edges"
-
     edge_id: Mapped[str] = mapped_column(String(64), primary_key=True)
     from_node: Mapped[str] = mapped_column(String(64), index=True)
     to_node: Mapped[str] = mapped_column(String(64), index=True)
     relation: Mapped[str] = mapped_column(String(32), index=True)
     source: Mapped[str] = mapped_column(Text)
     extraction_status: Mapped[str] = mapped_column(String(16), default="pending")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class BarRefRow(Base):
+    """Structured bar-number references inside figures (plan §6.1 BarRef)."""
+
+    __tablename__ = "bar_refs"
+
+    ref_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    doc_id: Mapped[str] = mapped_column(ForeignKey("documents.doc_id"), index=True)
+    figure_id: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    evidence_id: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    pattern: Mapped[str] = mapped_column(Text, default="")
+    bars: Mapped[list[str]] = mapped_column(JSON, default=list)
+    relation: Mapped[str] = mapped_column(Text, default="")
+    snippet: Mapped[str] = mapped_column(Text, default="")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 

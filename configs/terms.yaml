@@ -122,3 +122,546 @@
   aliases: ["更低高点", "lower high", "LH", "次低高点"]
 - canonical: higher_low
   aliases: ["更高低点", "higher low", "HL", "更高低"]
+
+
+# ---- auto: 双语标题提取 (scripts/extract_bilingual_terms.py) ----
+- canonical: auto_putting_it_all_together
+  aliases: ["时间、周期、心理与每日流程", "Putting It All Together"]
+  context: "出自章节: 卷六：实战落地——时间、周期、心理与每日流程（Putting It All Together）"
+- canonical: auto_small_pullback_trend_spt
+  aliases: ["小型回调趋势", "Small Pullback Trend, SPT"]
+  context: "出自章节: 5.4 小型回调趋势（Small Pullback Trend, SPT）"
+- canonical: auto_entry_methods
+  aliases: ["入场方式", "Entry Methods"]
+  context: "出自章节: 第19章：入场方式（Entry Methods）"
+- canonical: auto_choosing_your_timeframe
+  aliases: ["时间周期的选择", "Choosing Your Timeframe"]
+  context: "出自章节: 3.5 时间周期的选择（Choosing Your Timeframe）"
+- canonical: auto_three_market_states
+  aliases: ["三种市场状态", "Three Market States"]
+  context: "出自章节: 第4章：三种市场状态（Three Market States）"
+- canonical: auto_post_session_checklist
+  aliases: ["收盘后", "Post-Session Checklist"]
+  context: "出自章节: 清单3：收盘后（Post-Session Checklist）"
+- canonical: auto_trading_journal
+  aliases: ["交易日志", "Trading Journal"]
+  context: "出自章节: 31.5 交易日志（Trading Journal）"
+- canonical: auto_no_shortcuts
+  aliases: ["没有捷径", "No Shortcuts"]
+  context: "出自章节: 1.18 没有捷径（No Shortcuts）"
+- canonical: auto_two_leg_principle_2l
+  aliases: ["两条腿原则", "Two-Leg Principle, 2L"]
+  context: "出自章节: 14.7 两条腿原则（Two-Leg Principle, 2L）"
+- canonical: auto_failed_breakout_fbo
+  aliases: ["失败突破", "Failed Breakout, FBO"]
+  context: "出自章节: 18.1 失败突破（Failed Breakout, FBO）"
+- canonical: auto_the_language_of_price
+  aliases: ["从单根K线到结构工具", "The Language of Price"]
+  context: "出自章节: 卷三：价格的语言——从单根K线到结构工具（The Language of Price）"
+- canonical: auto_second_entry_trap
+  aliases: ["二次入场陷阱", "Second Entry Trap"]
+  context: "出自章节: 14.3 二次入场陷阱（Second Entry Trap）"
+- canonical: auto_consistency_and_deliberate_practice
+  aliases: ["执行一致性与训练路径", "Consistency and Deliberate Practice"]
+  context: "出自章节: 第3章：执行一致性与训练路径（Consistency and Deliberate Practice）"
+- canonical: auto_per_bar_checklist
+  aliases: ["每根K线", "Per-Bar Checklist"]
+  context: "出自章节: 清单2：每根K线（Per-Bar Checklist）"
+- canonical: auto_channel_within_channel
+  aliases: ["通道中的通道", "Channel Within Channel"]
+  context: "出自章节: 11.8 通道中的通道（Channel Within Channel）"
+- canonical: auto_what_makes_a_good_trade
+  aliases: ["的显式定义", "What Makes a Good Trade"]
+  context: "出自章节: 1.11 「好交易「的显式定义（What Makes a Good Trade）"
+- canonical: auto_buying_pressure
+  aliases: ["买压", "Buying Pressure"]
+  context: "出自章节: 9.3 买压（Buying Pressure）与卖压（Selling Pressure）的隐性累积"
+- canonical: auto_selling_pressure
+  aliases: ["卖压", "Selling Pressure"]
+  context: "出自章节: 9.3 买压（Buying Pressure）与卖压（Selling Pressure）的隐性累积"
+- canonical: auto_trend_feel_range_feel_reversal_feel
+  aliases: ["趋势感/区间感/反转感", "Trend Feel / Range Feel / Reversal Feel"]
+  context: "出自章节: 31.3 趋势感/区间感/反转感（Trend Feel / Range Feel / Reversal Feel）"
+- canonical: auto_trader_s_equation
+  aliases: ["交易者方程", "Trader's Equation"]
+  context: "出自章节: 1.3 交易者方程（Trader's Equation）"
+- canonical: auto_universality_of_price_action
+  aliases: ["价格行为的普适性", "Universality of Price Action"]
+  context: "出自章节: 1.16 价格行为的普适性（Universality of Price Action）"
+- canonical: auto_scaling_in
+  aliases: ["加仓策略", "Scaling In"]
+  context: "出自章节: 25.3 加仓策略（Scaling In）与条件"
+- canonical: auto_overnight_price_action
+  aliases: ["隔夜走势的处理", "Overnight Price Action"]
+  context: "出自章节: 28.1 隔夜走势的处理（Overnight Price Action）"
+- canonical: auto_reversal_theory
+  aliases: ["反转尝试与反转成立", "Reversal Theory"]
+  context: "出自章节: 第15章：反转总论——反转尝试与反转成立（Reversal Theory）"
+- canonical: auto_tr_maturity
+  aliases: ["区间成熟度", "TR Maturity"]
+  context: "出自章节: 6.4 区间成熟度（TR Maturity）"
+- canonical: auto_wedge_reversal
+  aliases: ["楔形反转", "Wedge Reversal"]
+  context: "出自章节: 14.4 楔形旗形（Wedge Flag）vs 楔形反转（Wedge Reversal）的实时区分"
+- canonical: auto_trend_line_break_tl_break
+  aliases: ["趋势线突破", "Trend Line Break, TL Break"]
+  context: "出自章节: 11.3 趋势线突破（Trend Line Break, TL Break）与MTR关键序列"
+- canonical: auto_overshoot_reversal
+  aliases: ["过度穿越与通道线反转", "Overshoot Reversal"]
+  context: "出自章节: 16.9 过度穿越与通道线反转（Overshoot Reversal）"
+- canonical: auto_reversal_trade_stop_logic
+  aliases: ["反手交易止损逻辑", "Reversal Trade Stop Logic"]
+  context: "出自章节: 23.7 反手交易止损逻辑（Reversal Trade Stop Logic）"
+- canonical: auto_how_a_trading_range_works
+  aliases: ["交易区间的内部运作", "How a Trading Range Works"]
+  context: "出自章节: 第6章：交易区间的内部运作（How a Trading Range Works）"
+- canonical: auto_trap_bar_entry
+  aliases: ["陷阱棒入场", "Trap Bar Entry"]
+  context: "出自章节: 21.4 陷阱棒入场（Trap Bar Entry）"
+- canonical: auto_mathematically_symmetric_trade
+  aliases: ["数学上对称的交易", "Mathematically Symmetric Trade"]
+  context: "出自章节: 10.5 数学上对称的交易（Mathematically Symmetric Trade）"
+- canonical: auto_execution_consistency
+  aliases: ["执行一致性", "Execution Consistency"]
+  context: "出自章节: 2.5 执行一致性（Execution Consistency）"
+- canonical: auto_multiple_reasonable_paths_for_the_same_setup
+  aliases: ["同一场景下的多条合理路径", "Multiple Reasonable Paths for the Same Setup"]
+  context: "出自章节: 1.15 同一场景下的多条合理路径（Multiple Reasonable Paths for the Same Setup）"
+- canonical: auto_polarity_reversal
+  aliases: ["极性转换", "Polarity Reversal"]
+  context: "出自章节: 13.19 极性转换（Polarity Reversal）"
+- canonical: auto_you_only_need_one_good_trade_per_day
+  aliases: ["每天只需要一笔好交易", "You Only Need One Good Trade Per Day"]
+  context: "出自章节: 3.8 每天只需要一笔好交易（You Only Need One Good Trade Per Day）"
+- canonical: auto_truncation
+  aliases: ["截断", "Truncation"]
+  context: "出自章节: 8.6 截断（Truncation）"
+- canonical: auto_double_bottom_bull_flag_dbbf
+  aliases: ["双底牛旗", "Double Bottom Bull Flag, DBBF"]
+  context: "出自章节: 17.2 双底牛旗（Double Bottom Bull Flag, DBBF）/ 双顶熊旗（Double Top Bear Flag, DTBF）"
+- canonical: auto_double_top_bear_flag_dtbf
+  aliases: ["双顶熊旗", "Double Top Bear Flag, DTBF"]
+  context: "出自章节: 17.2 双底牛旗（Double Bottom Bull Flag, DBBF）/ 双顶熊旗（Double Top Bear Flag, DTBF）"
+- canonical: auto_reading_navigation_guide
+  aliases: ["阅读导航指南", "Reading Navigation Guide"]
+  context: "出自章节: 阅读导航指南（Reading Navigation Guide）"
+- canonical: auto_channel_line_cl
+  aliases: ["通道线", "Channel Line, CL"]
+  context: "出自章节: 11.5 通道线（Channel Line, CL）与获利了结位置"
+- canonical: auto_gray_areas_and_uncertainty
+  aliases: ["灰色地带与不确定性", "Gray Areas and Uncertainty"]
+  context: "出自章节: 1.10 灰色地带与不确定性（Gray Areas and Uncertainty）"
+- canonical: auto_high_low_counting_system
+  aliases: ["计数", "High/Low Counting System"]
+  context: "出自章节: 10.4 H1-H4 / L1-L4 计数（High/Low Counting System）"
+- canonical: auto_head_and_shoulders_h_s
+  aliases: ["头肩形态", "Head and Shoulders, H&S"]
+  context: "出自章节: 16.5 头肩形态（Head and Shoulders, H&S）——Brooks 的降级处理"
+- canonical: auto_initial_risk_ir
+  aliases: ["初始风险", "Initial Risk, IR"]
+  context: "出自章节: 23.4 初始风险（Initial Risk, IR）与实际风险（Actual Risk, AR）"
+- canonical: auto_actual_risk_ar
+  aliases: ["实际风险", "Actual Risk, AR"]
+  context: "出自章节: 23.4 初始风险（Initial Risk, IR）与实际风险（Actual Risk, AR）"
+- canonical: auto_fear_of_pulling_the_trigger
+  aliases: ["害怕入场", "Fear of Pulling the Trigger"]
+  context: "出自章节: 30.3 害怕入场（Fear of Pulling the Trigger）"
+- canonical: auto_mm_is_a_magnet_not_a_ceiling
+  aliases: ["只是磁铁不是天花板", "MM Is a Magnet, Not a Ceiling"]
+  context: "出自章节: 13.22 MM只是磁铁不是天花板（MM Is a Magnet, Not a Ceiling）"
+- canonical: auto_magnet_effect
+  aliases: ["磁铁效应", "Magnet Effect"]
+  context: "出自章节: 13.17 磁铁效应（Magnet Effect）"
+- canonical: auto_shaved_bar
+  aliases: ["剃头棒", "Shaved Bar"]
+  context: "出自章节: 8.5 剃头棒（Shaved Bar）"
+- canonical: auto_ema_gap_trap_entry
+  aliases: ["缺口陷阱入场", "EMA Gap Trap Entry"]
+  context: "出自章节: 21.3 EMA缺口陷阱入场（EMA Gap Trap Entry）"
+- canonical: auto_trend_lines_and_channels
+  aliases: ["趋势线与通道", "Trend Lines and Channels"]
+  context: "出自章节: 第11章：趋势线与通道（Trend Lines and Channels）"
+- canonical: auto_wide_stop
+  aliases: ["宽止损", "Wide Stop"]
+  context: "出自章节: 23.2 宽止损（Wide Stop）vs 窄止损（Tight Stop）"
+- canonical: auto_tight_stop
+  aliases: ["窄止损", "Tight Stop"]
+  context: "出自章节: 23.2 宽止损（Wide Stop）vs 窄止损（Tight Stop）"
+- canonical: auto_double_signal_bar
+  aliases: ["双重信号棒", "Double Signal Bar"]
+  context: "出自章节: 8.13 双重信号棒（Double Signal Bar）"
+- canonical: auto_final_flag
+  aliases: ["终结旗形", "Final Flag"]
+  context: "出自章节: 16.6 终结旗形（Final Flag）"
+- canonical: auto_overshoot
+  aliases: ["过度穿越", "Overshoot"]
+  context: "出自章节: 11.6 过度穿越（Overshoot）与未达（Undershoot）"
+- canonical: auto_undershoot
+  aliases: ["未达", "Undershoot"]
+  context: "出自章节: 11.6 过度穿越（Overshoot）与未达（Undershoot）"
+- canonical: auto_counter_trend_and_special_entries
+  aliases: ["逆势交易与特殊入场", "Counter-Trend and Special Entries"]
+  context: "出自章节: 第21章：逆势交易与特殊入场（Counter-Trend and Special Entries）"
+- canonical: auto_flag_types
+  aliases: ["旗形种类细分", "Flag Types"]
+  context: "出自章节: 14.5 旗形种类细分（Flag Types）"
+- canonical: auto_spike_and_ledge_s_l
+  aliases: ["突破与平台", "Spike and Ledge, S&L"]
+  context: "出自章节: 17.1 突破与平台（Spike and Ledge, S&L）"
+- canonical: auto_portfolio_risk
+  aliases: ["组合风险", "Portfolio Risk"]
+  context: "出自章节: 25.5 组合风险（Portfolio Risk）"
+- canonical: auto_first_breakout_often_fails
+  aliases: ["初始突破通常不是最终方向", "First Breakout Often Fails"]
+  context: "出自章节: 6.8 初始突破通常不是最终方向（First Breakout Often Fails）"
+- canonical: auto_exhaustion_gap_eg
+  aliases: ["衰竭缺口", "Exhaustion Gap, EG"]
+  context: "出自章节: 13.3 衰竭缺口（Exhaustion Gap, EG）"
+- canonical: auto_breakeven_stop_trap
+  aliases: ["保本止损的陷阱", "Breakeven Stop Trap"]
+  context: "出自章节: 23.6 保本止损的陷阱（Breakeven Stop Trap）"
+- canonical: auto_context
+  aliases: ["背景", "Context"]
+  context: "出自章节: 15.2 反转判定四维框架：背景（Context）+ 动能（Momentum）+ 位置（Location）+ 空间（Room）"
+- canonical: auto_momentum
+  aliases: ["动能", "Momentum"]
+  context: "出自章节: 15.2 反转判定四维框架：背景（Context）+ 动能（Momentum）+ 位置（Location）+ 空间（Room）"
+- canonical: auto_location
+  aliases: ["位置", "Location"]
+  context: "出自章节: 15.2 反转判定四维框架：背景（Context）+ 动能（Momentum）+ 位置（Location）+ 空间（Room）"
+- canonical: auto_room
+  aliases: ["空间", "Room"]
+  context: "出自章节: 15.2 反转判定四维框架：背景（Context）+ 动能（Momentum）+ 位置（Location）+ 空间（Room）"
+- canonical: auto_continuation_patterns
+  aliases: ["延续形态", "Continuation Patterns"]
+  context: "出自章节: 第17章：延续形态（Continuation Patterns）"
+- canonical: auto_disappointment_exit
+  aliases: ["失望离场", "Disappointment Exit"]
+  context: "出自章节: 24.3 失望离场（Disappointment Exit）"
+- canonical: auto_pre_session_trading_plan
+  aliases: ["盘前交易计划", "Pre-Session Trading Plan"]
+  context: "出自章节: 第28章：盘前交易计划（Pre-Session Trading Plan）"
+- canonical: auto_the_language_of_a_single_bar
+  aliases: ["单根K线的语言", "The Language of a Single Bar"]
+  context: "出自章节: 第8章：单根K线的语言（The Language of a Single Bar）"
+- canonical: auto_breakout_test_bt
+  aliases: ["突破测试", "Breakout Test, BT"]
+  context: "出自章节: 20.3 突破测试（Breakout Test, BT）"
+- canonical: auto_probability_win_rate_risk_reward_and_execution
+  aliases: ["概率、胜率、盈亏比与执行", "Probability, Win Rate, Risk-Reward, and Execution"]
+  context: "出自章节: 第2章：概率、胜率、盈亏比与执行（Probability, Win Rate, Risk-Reward, and Execution）"
+- canonical: auto_breakout_mode_tr
+  aliases: ["处于突破模式的TR", "Breakout Mode TR"]
+  context: "出自章节: 17.3 处于突破模式的TR（Breakout Mode TR）与扩大三角形（Expanding Triangle）"
+- canonical: auto_expanding_triangle
+  aliases: ["扩大三角形", "Expanding Triangle"]
+  context: "出自章节: 17.3 处于突破模式的TR（Breakout Mode TR）与扩大三角形（Expanding Triangle）"
+- canonical: auto_market_entry
+  aliases: ["市价入场", "Market Entry"]
+  context: "出自章节: 19.3 市价入场（Market Entry）"
+- canonical: auto_intraday_sessions
+  aliases: ["日内时段", "Intraday Sessions"]
+  context: "出自章节: 第26章：日内时段（Intraday Sessions）"
+- canonical: auto_wide_tr
+  aliases: ["宽幅TR", "Wide TR"]
+  context: "出自章节: 6.1 宽幅TR（Wide TR）vs 窄幅TR（Tight Trading Range, TTR）"
+- canonical: auto_tight_trading_range_ttr
+  aliases: ["窄幅TR", "Tight Trading Range, TTR"]
+  context: "出自章节: 6.1 宽幅TR（Wide TR）vs 窄幅TR（Tight Trading Range, TTR）"
+- canonical: auto_micro_channel
+  aliases: ["微观通道", "Micro Channel"]
+  context: "出自章节: 11.7 微观通道（Micro Channel）"
+- canonical: auto_execution_tf_for_signal
+  aliases: ["执行周期找信号", "Execution TF for Signal"]
+  context: "出自章节: 27.2 执行周期找信号（Execution TF for Signal）"
+- canonical: auto_most_reversals_in_trends_fail
+  aliases: ["法则", "Most Reversals in Trends Fail"]
+  context: "出自章节: 1.6 趋势中大多数反转失败——80%法则（Most Reversals in Trends Fail）"
+- canonical: auto_position_sizing_scaling_in_and_risk_control
+  aliases: ["仓位、加仓与风控", "Position Sizing, Scaling In, and Risk Control"]
+  context: "出自章节: 第25章：仓位、加仓与风控（Position Sizing, Scaling In, and Risk Control）"
+- canonical: auto_gaps_measured_moves_and_magnets
+  aliases: ["缺口、测量目标与磁铁", "Gaps, Measured Moves, and Magnets"]
+  context: "出自章节: 第13章：缺口、测量目标与磁铁（Gaps, Measured Moves, and Magnets）"
+- canonical: auto_most_breakouts_in_trading_ranges_fail
+  aliases: ["法则", "Most Breakouts in Trading Ranges Fail"]
+  context: "出自章节: 1.7 区间中大多数突破失败——80%法则（Most Breakouts in Trading Ranges Fail）"
+- canonical: auto_trend_line_tl
+  aliases: ["趋势线", "Trend Line, TL"]
+  context: "出自章节: 11.1 趋势线（Trend Line, TL）画法与级别"
+- canonical: auto_limitations_of_sim_trading
+  aliases: ["模拟盘的局限性与极小仓位实盘", "Limitations of Sim Trading"]
+  context: "出自章节: 3.3 模拟盘的局限性与极小仓位实盘（Limitations of Sim Trading）"
+- canonical: auto_multiple_failures_and_cumulative_energy
+  aliases: ["多阶失败的递归爆发", "Multiple Failures and Cumulative Energy"]
+  context: "出自章节: 18.4 多阶失败的递归爆发（Multiple Failures and Cumulative Energy）"
+- canonical: auto_capitulation
+  aliases: ["投降", "Capitulation"]
+  context: "出自章节: 16.7 投降（Capitulation）"
+- canonical: auto_trend_bar_fraction
+  aliases: ["趋势棒占比", "Trend Bar Fraction"]
+  context: "出自章节: 4.2 趋势棒占比（Trend Bar Fraction）"
+- canonical: auto_the_3_5_year_timeline
+  aliases: ["年时间框架与阶段性瓶颈", "The 3-5 Year Timeline"]
+  context: "出自章节: 3.2 3-5年时间框架与阶段性瓶颈（The 3-5 Year Timeline）"
+- canonical: auto_undershoot
+  aliases: ["测试未达", "Undershoot"]
+  context: "出自章节: 8.17 测试未达（Undershoot）与紧迫性（Urgency）"
+- canonical: auto_urgency
+  aliases: ["紧迫性", "Urgency"]
+  context: "出自章节: 8.17 测试未达（Undershoot）与紧迫性（Urgency）"
+- canonical: auto_high_value_mistakes
+  aliases: ["高价值错误", "High-Value Mistakes"]
+  context: "出自章节: 31.2 高价值错误（High-Value Mistakes）"
+- canonical: auto_pre_entry_filters_and_vetoes
+  aliases: ["入场前的过滤与否决", "Pre-Entry Filters and Vetoes"]
+  context: "出自章节: 第22章：入场前的过滤与否决（Pre-Entry Filters and Vetoes）"
+- canonical: auto_quick_reference_checklist
+  aliases: ["盘中快速检查清单", "Quick Reference Checklist"]
+  context: "出自章节: 附录C：盘中快速检查清单（Quick Reference Checklist）"
+- canonical: auto_over_optimization_trap
+  aliases: ["陷阱", "Over-Optimization Trap"]
+  context: "出自章节: 2.9 过度拟合与”过滤”陷阱（Over-Optimization Trap）"
+- canonical: auto_review_and_deliberate_practice
+  aliases: ["复盘与盘感训练", "Review and Deliberate Practice"]
+  context: "出自章节: 第31章：复盘与盘感训练（Review and Deliberate Practice）"
+- canonical: auto_room_veto
+  aliases: ["空间不足一票否决", "Room Veto"]
+  context: "出自章节: 22.2 空间不足一票否决（Room Veto）"
+- canonical: auto_room_veto
+  aliases: ["空间不足的一票否决权", "Room Veto"]
+  context: "出自章节: 13.21 空间不足的一票否决权（Room Veto）"
+- canonical: auto_win_rate
+  aliases: ["胜率", "Win Rate"]
+  context: "出自章节: 2.1 胜率（Win Rate）与盈亏比（Risk-Reward Ratio）的关系"
+- canonical: auto_risk_reward_ratio
+  aliases: ["盈亏比", "Risk-Reward Ratio"]
+  context: "出自章节: 2.1 胜率（Win Rate）与盈亏比（Risk-Reward Ratio）的关系"
+- canonical: auto_common_mistakes_and_corrections
+  aliases: ["常见错误与纠偏", "Common Mistakes and Corrections"]
+  context: "出自章节: 第32章：常见错误与纠偏（Common Mistakes and Corrections）"
+- canonical: auto_measuring_gap_mg
+  aliases: ["测量缺口", "Measuring Gap, MG"]
+  context: "出自章节: 13.2 测量缺口（Measuring Gap, MG）"
+- canonical: auto_ema_gap_trap_ema_gt
+  aliases: ["缺口陷阱", "EMA Gap Trap, EMA GT"]
+  context: "出自章节: 12.4 EMA缺口陷阱（EMA Gap Trap, EMA GT）"
+- canonical: auto_parabolic_wedge_climax
+  aliases: ["抛物线楔形高潮", "Parabolic Wedge Climax"]
+  context: "出自章节: 16.2 抛物线楔形高潮（Parabolic Wedge Climax）"
+- canonical: auto_with_trend_entry_setups
+  aliases: ["顺势入场场景", "With-Trend Entry Setups"]
+  context: "出自章节: 第20章：顺势入场场景（With-Trend Entry Setups）"
+- canonical: auto_commonly_confused_concepts
+  aliases: ["高频易混概念对照表", "Commonly Confused Concepts"]
+  context: "出自章节: 附录B：高频易混概念对照表（Commonly Confused Concepts）"
+- canonical: auto_reversal_patterns_in_detail
+  aliases: ["反转形态详解", "Reversal Patterns in Detail"]
+  context: "出自章节: 第16章：反转形态详解（Reversal Patterns in Detail）"
+- canonical: auto_probability_language_guide
+  aliases: ["概率措辞的含义参考", "Probability Language Guide"]
+  context: "出自章节: 2.11 概率措辞的含义参考（Probability Language Guide）"
+- canonical: auto_reversal_bar_count
+  aliases: ["反转棒计数", "Reversal Bar Count"]
+  context: "出自章节: 9.5 反转棒计数（Reversal Bar Count）"
+- canonical: auto_reading_the_market_state
+  aliases: ["市场状态", "Reading the Market State"]
+  context: "出自章节: 卷二：你打开图表后第一眼看什么——市场状态（Reading the Market State）"
+- canonical: auto_transition
+  aliases: ["过渡环境", "Transition"]
+  context: "出自章节: 4.5 过渡环境（Transition）——作为独立的市场状态"
+- canonical: auto_signs_of_trend_exhaustion
+  aliases: ["趋势衰竭迹象", "Signs of Trend Exhaustion"]
+  context: "出自章节: 5.6 趋势衰竭迹象（Signs of Trend Exhaustion）"
+- canonical: auto_intraday_execution_sop
+  aliases: ["盘中执行流程", "Intraday Execution SOP"]
+  context: "出自章节: 第29章：盘中执行流程（Intraday Execution SOP）"
+- canonical: auto_keep_it_simple
+  aliases: ["简化原则", "Keep It Simple"]
+  context: "出自章节: 1.17 简化原则（Keep It Simple）"
+- canonical: auto_three_push_wedge
+  aliases: ["楔形三推", "Three-Push Wedge"]
+  context: "出自章节: 16.1 楔形三推（Three-Push Wedge）与嵌套楔形（Nested Wedge）"
+- canonical: auto_nested_wedge
+  aliases: ["嵌套楔形", "Nested Wedge"]
+  context: "出自章节: 16.1 楔形三推（Three-Push Wedge）与嵌套楔形（Nested Wedge）"
+- canonical: auto_first_bar_trade
+  aliases: ["第一根K线交易", "First Bar Trade"]
+  context: "出自章节: 20.5 第一根K线交易（First Bar Trade）"
+- canonical: auto_diminishing_returns_on_ema_tests
+  aliases: ["回测递减规则", "Diminishing Returns on EMA Tests"]
+  context: "出自章节: 12.3 EMA回测递减规则（Diminishing Returns on EMA Tests）"
+- canonical: auto_staircase_trend
+  aliases: ["阶梯形趋势", "Staircase Trend"]
+  context: "出自章节: 5.3 阶梯形趋势（Staircase Trend）与台阶突破失败"
+- canonical: auto_reversal_attempt
+  aliases: ["反转尝试", "Reversal Attempt"]
+  context: "出自章节: 15.1 反转尝试（Reversal Attempt）vs 反转成立（Confirmed Reversal）"
+- canonical: auto_confirmed_reversal
+  aliases: ["反转成立", "Confirmed Reversal"]
+  context: "出自章节: 15.1 反转尝试（Reversal Attempt）vs 反转成立（Confirmed Reversal）"
+- canonical: auto_pullbacks_and_counting
+  aliases: ["回调形态与计数", "Pullbacks and Counting"]
+  context: "出自章节: 第14章：回调形态与计数（Pullbacks and Counting）"
+- canonical: auto_core_philosophy
+  aliases: ["核心哲学", "Core Philosophy"]
+  context: "出自章节: 第1章：核心哲学（Core Philosophy）"
+- canonical: auto_micro_double_top_mdt
+  aliases: ["微型双顶", "Micro Double Top, mDT"]
+  context: "出自章节: 10.3 微型双顶（Micro Double Top, mDT）/ 微型双底（Micro Double Bottom, mDB）"
+- canonical: auto_micro_double_bottom_mdb
+  aliases: ["微型双底", "Micro Double Bottom, mDB"]
+  context: "出自章节: 10.3 微型双顶（Micro Double Top, mDT）/ 微型双底（Micro Double Bottom, mDB）"
+- canonical: auto_seven_transition_signals
+  aliases: ["从趋势到区间的七大过渡信号", "Seven Transition Signals"]
+  context: "出自章节: 5.5 从趋势到区间的七大过渡信号（Seven Transition Signals）"
+- canonical: auto_multiple_time_frame_analysis
+  aliases: ["多周期分析", "Multiple Time Frame Analysis"]
+  context: "出自章节: 第27章：多周期分析（Multiple Time Frame Analysis）"
+- canonical: auto_overtrading
+  aliases: ["过度交易", "Overtrading"]
+  context: "出自章节: 30.1 过度交易（Overtrading）"
+- canonical: auto_glossary
+  aliases: ["核心术语速查表", "Glossary"]
+  context: "出自章节: 附录A：核心术语速查表（Glossary）"
+- canonical: auto_failure_of_a_failure_ff
+  aliases: ["失败的失败", "Failure of a Failure, FF"]
+  context: "出自章节: 18.3 失败的失败（Failure of a Failure, FF）"
+- canonical: auto_always_assume_the_other_side_has_a_reason
+  aliases: ["永远假设对手方也有合理的理由", "Always Assume the Other Side Has a Reason"]
+  context: "出自章节: 1.13 永远假设对手方也有合理的理由（Always Assume the Other Side Has a Reason）"
+- canonical: auto_bar_groups_and_momentum_buildup
+  aliases: ["线群组与动能累积", "Bar Groups and Momentum Buildup"]
+  context: "出自章节: 第9章：K线群组与动能累积（Bar Groups and Momentum Buildup）"
+- canonical: auto_climax_bar
+  aliases: ["高潮棒", "Climax Bar"]
+  context: "出自章节: 8.18 高潮棒（Climax Bar）vs 衰竭棒（Exhaustion Bar）"
+- canonical: auto_exhaustion_bar
+  aliases: ["衰竭棒", "Exhaustion Bar"]
+  context: "出自章节: 8.18 高潮棒（Climax Bar）vs 衰竭棒（Exhaustion Bar）"
+- canonical: auto_time_symmetry
+  aliases: ["时间对称", "Time Symmetry"]
+  context: "出自章节: 27.9 时间对称（Time Symmetry）"
+- canonical: auto_micro_patterns_and_rhythm
+  aliases: ["微观形态与节奏", "Micro Patterns and Rhythm"]
+  context: "出自章节: 第10章：微观形态与节奏（Micro Patterns and Rhythm）"
+- canonical: auto_context_is_king
+  aliases: ["背景至上", "Context Is King"]
+  context: "出自章节: 1.8 背景至上（Context Is King）"
+- canonical: auto_psychological_discipline
+  aliases: ["心理纪律", "Psychological Discipline"]
+  context: "出自章节: 第30章：心理纪律（Psychological Discipline）"
+- canonical: auto_exit_and_position_management
+  aliases: ["出场与持仓管理", "Exit and Position Management"]
+  context: "出自章节: 第24章：出场与持仓管理（Exit and Position Management）"
+- canonical: auto_spike_and_channel_s_c
+  aliases: ["突破与通道", "Spike and Channel, S&C"]
+  context: "出自章节: 11.9 突破与通道（Spike and Channel, S&C）"
+- canonical: auto_trading_range_bar
+  aliases: ["区间棒", "Trading Range Bar"]
+  context: "出自章节: 8.2 区间棒（Trading Range Bar）/ 十字星（Doji）"
+- canonical: auto_doji
+  aliases: ["十字星", "Doji"]
+  context: "出自章节: 8.2 区间棒（Trading Range Bar）/ 十字星（Doji）"
+- canonical: auto_trap_bar
+  aliases: ["陷阱棒", "Trap Bar"]
+  context: "出自章节: 8.14 陷阱棒（Trap Bar）"
+- canonical: auto_the_life_cycle_of_a_trend
+  aliases: ["趋势如何诞生、运行与衰亡", "The Life Cycle of a Trend"]
+  context: "出自章节: 第5章：趋势如何诞生、运行与衰亡（The Life Cycle of a Trend）"
+- canonical: auto_always_in_ai
+  aliases: ["始终在市", "Always In, AI"]
+  context: "出自章节: 4.1 始终在市（Always In, AI）与 AI 翻转信号（AI Flip）"
+- canonical: auto_ai_flip
+  aliases: [" AI 翻转信号", "AI Flip"]
+  context: "出自章节: 4.1 始终在市（Always In, AI）与 AI 翻转信号（AI Flip）"
+- canonical: auto_trading_range_tr
+  aliases: ["交易区间", "Trading Range, TR"]
+  context: "出自章节: 4.4 交易区间（Trading Range, TR）的类型"
+- canonical: auto_not_trading_is_also_a_decision
+  aliases: ["不交易也是决策", "Not Trading Is Also a Decision"]
+  context: "出自章节: 2.4 不交易也是决策（Not Trading Is Also a Decision）"
+- canonical: auto_ten_bars_two_legs
+  aliases: ["两种场景的区分", "Ten Bars Two Legs"]
+  context: "出自章节: 26.7 TBTL两种场景的区分（Ten Bars Two Legs）"
+- canonical: auto_midpoint_magnet
+  aliases: ["中点磁铁", "Midpoint Magnet"]
+  context: "出自章节: 6.3 中点磁铁（Midpoint Magnet）与上下沿吸引力（Pull of Range Extremes）"
+- canonical: auto_pull_of_range_extremes
+  aliases: ["上下沿吸引力", "Pull of Range Extremes"]
+  context: "出自章节: 6.3 中点磁铁（Midpoint Magnet）与上下沿吸引力（Pull of Range Extremes）"
+- canonical: auto_scaling_out
+  aliases: ["分批止盈", "Scaling Out"]
+  context: "出自章节: 24.1 分批止盈（Scaling Out）"
+- canonical: auto_major_trend_reversal_mtr
+  aliases: ["主要趋势反转", "Major Trend Reversal, MTR"]
+  context: "出自章节: 16.4 主要趋势反转（Major Trend Reversal, MTR）/ HH MTR / LL MTR"
+- canonical: auto_the_illusion_of_certainty
+  aliases: ["确定性的幻觉", "The Illusion of Certainty"]
+  context: "出自章节: 2.10 确定性的幻觉（The Illusion of Certainty）"
+- canonical: auto_quick_identification_framework
+  aliases: ["趋势与交易区间的最小识别框架", "Quick Identification Framework"]
+  context: "出自章节: 4.6 趋势与交易区间的最小识别框架（Quick Identification Framework）"
+- canonical: auto_morphing
+  aliases: ["形态的动态演变/蜕变", "Morphing"]
+  context: "出自章节: 14.8 形态的动态演变/蜕变（Morphing）"
+- canonical: auto_follow_through_bar_ft_bar
+  aliases: ["跟随棒", "Follow-Through Bar, FT Bar"]
+  context: "出自章节: 8.15 跟随棒（Follow-Through Bar, FT Bar）"
+- canonical: auto_stop_loss_and_risk_definition
+  aliases: ["止损与风险定义", "Stop Loss and Risk Definition"]
+  context: "出自章节: 第23章：止损与风险定义（Stop Loss and Risk Definition）"
+- canonical: auto_stop_entry
+  aliases: ["止损入场", "Stop Entry"]
+  context: "出自章节: 19.1 止损入场（Stop Entry）"
+- canonical: auto_failures_and_traps
+  aliases: ["失败形态与陷阱", "Failures and Traps"]
+  context: "出自章节: 第18章：失败形态与陷阱（Failures and Traps）"
+- canonical: auto_execution
+  aliases: ["入场、止损、出场与仓位", "Execution"]
+  context: "出自章节: 卷五：执行——入场、止损、出场与仓位（Execution）"
+- canonical: auto_outside_bar_ob
+  aliases: ["外包棒", "Outside Bar, OB"]
+  context: "出自章节: 8.3 外包棒（Outside Bar, OB）"
+- canonical: auto_probabilistic_thinking
+  aliases: ["概率思维", "Probabilistic Thinking"]
+  context: "出自章节: 1.2 概率思维（Probabilistic Thinking）"
+- canonical: auto_good_trade
+  aliases: ["好交易", "Good Trade"]
+  context: "出自章节: 2.3 好交易（Good Trade）≠ 高胜率交易（High Win Rate Trade）"
+- canonical: auto_high_win_rate_trade
+  aliases: ["高胜率交易", "High Win Rate Trade"]
+  context: "出自章节: 2.3 好交易（Good Trade）≠ 高胜率交易（High Win Rate Trade）"
+- canonical: auto_before_you_open_the_chart
+  aliases: ["在你打开图表之前必须内化的东西", "Before You Open the Chart"]
+  context: "出自章节: 卷一：在你打开图表之前必须内化的东西（Before You Open the Chart）"
+- canonical: auto_the_cost_of_missing_a_trade
+  aliases: ["踏空的隐性成本", "The Cost of Missing a Trade"]
+  context: "出自章节: 2.7 踏空的隐性成本（The Cost of Missing a Trade）"
+- canonical: auto_four_phase_market_cycle
+  aliases: ["市场循环四阶段模型", "Four-Phase Market Cycle"]
+  context: "出自章节: 4.7 市场循环四阶段模型（Four-Phase Market Cycle）"
+- canonical: auto_reversal_bar
+  aliases: ["反转棒", "Reversal Bar"]
+  context: "出自章节: 8.7 反转棒（Reversal Bar）、信号棒（Signal Bar）与入场棒（Entry Bar）的严格区分"
+- canonical: auto_signal_bar
+  aliases: ["信号棒", "Signal Bar"]
+  context: "出自章节: 8.7 反转棒（Reversal Bar）、信号棒（Signal Bar）与入场棒（Entry Bar）的严格区分"
+- canonical: auto_entry_bar
+  aliases: ["入场棒", "Entry Bar"]
+  context: "出自章节: 8.7 反转棒（Reversal Bar）、信号棒（Signal Bar）与入场棒（Entry Bar）的严格区分"
+- canonical: auto_bull_trap
+  aliases: ["诱多", "Bull Trap"]
+  context: "出自章节: 18.6 诱多（Bull Trap）/ 诱空（Bear Trap）"
+- canonical: auto_bear_trap
+  aliases: ["诱空", "Bear Trap"]
+  context: "出自章节: 18.6 诱多（Bull Trap）/ 诱空（Bear Trap）"
+- canonical: auto_hedging_fallacy
+  aliases: ["离场观望与对冲的谬误", "Hedging Fallacy"]
+  context: "出自章节: 25.7 离场观望与对冲的谬误（Hedging Fallacy）"
+- canonical: auto_pattern_recognition
+  aliases: ["回调、反转、延续与失败", "Pattern Recognition"]
+  context: "出自章节: 卷四：形态识别——回调、反转、延续与失败（Pattern Recognition）"
+- canonical: auto_overlap_analysis
+  aliases: ["重叠度分析", "Overlap Analysis"]
+  context: "出自章节: 9.2 重叠度分析（Overlap Analysis）"
