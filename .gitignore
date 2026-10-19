@@ -1,6 +1,8 @@
 .venv/
+.omp/
 .env
 __pycache__/
+integrations/paknow-mcp/dist/
 *.pyc
 .pytest_cache/
 .ruff_cache/

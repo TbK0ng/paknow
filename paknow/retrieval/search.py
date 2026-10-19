@@ -7,6 +7,7 @@ from functools import lru_cache
 from typing import Any
 
 from qdrant_client.models import (
+    Filter,
     Fusion,
     FusionQuery,
     Prefetch,
@@ -28,6 +29,7 @@ def hybrid_search(
     top_k: int = 40,
     dense_limit: int = 40,
     sparse_limit: int = 40,
+    query_filter: Filter | None = None,
 ) -> list[ScoredPoint]:
     client = get_client()
     dense = embed_query(query_text).tolist()
@@ -41,6 +43,7 @@ def hybrid_search(
         collection_name=COLLECTION_TEXT,
         prefetch=prefetch,
         query=FusionQuery(fusion=Fusion.RRF),
+        query_filter=query_filter,
         limit=top_k,
         with_payload=True,
     ).points

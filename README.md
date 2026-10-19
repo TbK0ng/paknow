@@ -149,7 +149,30 @@ cp .env.example .env   # HF_HOME 默认 E:\use_model（模型缓存迁出 C 盘�
 - `POST /charts` — 上传截图分析（vision）
 - `GET /evidence/{id}` / `GET /sources/{doc_id}` — 证据/来源定位
 - `GET /sources/{doc_id}/page/{page}/image` — PDF 页渲染（查看器用）
+- `POST /search` — 只检索不生成（供 Agent 补证/核对）
+- `GET /documents` — 资料库文档目录
+- `GET /figures/{figure_id}/image` — 图资产原图
 - `GET /runs/{run_id}` — 审计 trace；`GET /sops` — SOP 版本
+
+## Pi / MCP 集成
+
+仓库内提供独立的 `integrations/paknow-mcp/`：一个不导入 PAknow 内部模块的
+MCP 适配器，通过 HTTP 调用上述接口。它暴露 `paknow_ask`、`paknow_chart`、
+`paknow_search`、`paknow_evidence`、`paknow_documents`、`paknow_source`、
+`paknow_page_image`、`paknow_figure_image`、`paknow_run`、`paknow_sops`、
+`paknow_health`，并附带通用的 `skills/paknow/SKILL.md`（意图路由、引用保真、
+能力边界、失败处理）。
+
+```bash
+cd integrations/paknow-mcp
+uv pip install -e .
+paknow-mcp                       # stdio
+# 或 streamable HTTP
+paknow-mcp --transport streamable-http --port 8765
+```
+
+发布包包含 wheel、sdist、skill、`MANIFEST.json` 与 `SHA256SUMS`；构建与
+解包验证脚本见 `integrations/paknow-mcp/scripts/`。
 
 ## 验证
 

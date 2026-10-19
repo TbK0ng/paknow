@@ -1,17 +1,21 @@
 """FastAPI service (plan §12.2)."""
 from __future__ import annotations
 
+import mimetypes
 from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, UploadFile
 from fastapi.responses import FileResponse, Response
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from qdrant_client.models import FieldCondition, Filter, MatchValue
 
 from paknow.db import SessionLocal
 from paknow.db.models import DocumentRow, EvidenceUnitRow, FigureAssetRow, RunTraceRow
 from paknow.evidence.citations import resolve_citations
+from paknow.ingest.store import object_path
 from paknow.memory.sop import list_sops
+from paknow.retrieval.search import diversify, hybrid_search, point_to_doc, rerank
 from paknow.retrieval.visual import mask_right_bytes
 from paknow.workflows.graph import run_query
 
@@ -22,6 +26,13 @@ _VIEWER_INDEX = Path(__file__).resolve().parent.parent / "viewer" / "index.html"
 
 class QueryRequest(BaseModel):
     query: str
+
+
+class SearchRequest(BaseModel):
+    query: str
+    top_k: int = Field(default=8, ge=1, le=20)
+    doc_id: str | None = None
+    block_type: str | None = None
 
 
 def _resolve_answer(result: dict[str, Any]) -> dict[str, Any]:
@@ -47,6 +58,51 @@ def health() -> dict[str, str]:
 @app.post("/query")
 def query(req: QueryRequest) -> dict[str, Any]:
     return _resolve_answer(run_query(req.query))
+
+
+@app.post("/search")
+def search(req: SearchRequest) -> dict[str, Any]:
+    """Retrieval-only search. No routing or generation, so agents can inspect
+    evidence without paying for a full answer pipeline."""
+    must = []
+    if req.doc_id:
+        must.append(FieldCondition(key="doc_id", match=MatchValue(value=req.doc_id)))
+    if req.block_type:
+        must.append(FieldCondition(key="block_type", match=MatchValue(value=req.block_type)))
+    query_filter = Filter(must=must) if must else None
+
+    candidates = [
+        point_to_doc(p)
+        for p in hybrid_search(req.query, top_k=40, query_filter=query_filter)
+    ]
+    if len(candidates) >= 2:
+        try:
+            candidates = rerank(req.query, candidates[:20], top_k=20)
+        except Exception:
+            # Retrieval must still work when the local reranker is unavailable.
+            pass
+    hits = diversify(candidates, top_k=req.top_k, max_per_doc=5)
+    return {"query": req.query, "count": len(hits), "hits": hits}
+
+
+@app.get("/documents")
+def documents() -> list[dict[str, Any]]:
+    with SessionLocal() as s:
+        rows = s.query(DocumentRow).order_by(DocumentRow.title).all()
+    return [
+        {
+            "doc_id": d.doc_id,
+            "title": d.title,
+            "author": d.author,
+            "translator": d.translator,
+            "language": d.language,
+            "format": d.format,
+            "edition": d.edition,
+            "page_count": d.page_count,
+            "entry_count": d.entry_count,
+        }
+        for d in rows
+    ]
 
 
 @app.post("/charts")
@@ -136,6 +192,22 @@ def sops() -> list[dict[str, Any]]:
 @app.get("/", include_in_schema=False)
 def index() -> FileResponse:
     return FileResponse(_VIEWER_INDEX)
+
+
+@app.get("/figures/{figure_id}/image")
+def figure_image(figure_id: str) -> FileResponse:
+    """Serve a stored figure asset by id. Used by remote agent clients that
+    cannot resolve ``FigureAssetRow.rel_path`` on their own filesystem."""
+    with SessionLocal() as s:
+        row = s.get(FigureAssetRow, figure_id)
+        if row is None:
+            raise HTTPException(404, "figure not found")
+        rel_path = row.rel_path
+    path = object_path(rel_path)
+    if not path.is_file():
+        raise HTTPException(404, "figure object missing")
+    media_type = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
+    return FileResponse(path, media_type=media_type)
 
 
 @app.get("/sources/{doc_id}/page/{page}/image")
