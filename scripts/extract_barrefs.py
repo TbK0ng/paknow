@@ -17,8 +17,12 @@ from paknow.db import SessionLocal, init_db
 from paknow.db.models import BarRefRow, EvidenceUnitRow
 from paknow.gateway import gateway
 
-_BAR_HINT_RE = re.compile(r"(K\s*线|bar|bars?|B)\s*\d|\d+\s*号?\s*K", re.I)
-_BATCH = 8
+_BAR_HINT_RE = re.compile(
+    r"(?:K\s*线|bar\w*|B)\s*[0-9０-９]|\d+\s*(?:号|根|个)\s*K|第\s*[0-9０-９]+\s*[Kk]",
+    re.I,
+)
+_BATCH = 6
+_MAX_TOKENS = 2400
 
 
 class BarRef(BaseModel):
@@ -62,30 +66,29 @@ def extract() -> int:
     init_db()
     units = _candidates()
     print(f"candidates: {len(units)}", flush=True)
-    existing: set[str] = set()
-    with SessionLocal() as s:
-        existing = {r.ref_id for r in s.query(BarRefRow.ref_id).all()}
     saved = 0
     t0 = time.time()
     for start in range(0, len(units), _BATCH):
         batch = units[start : start + _BATCH]
-        if not batch or all(
-            hashlib.sha1(f"{u.doc_id}:{u.evidence_id}:0".encode()).hexdigest()[:16] in existing
-            for u in batch
-        ):
+        if not batch:
             continue
         user_lines = [f"[{i}] {u.text[:400]}" for i, u in enumerate(batch)]
-        try:
-            result = gateway.chat_json(
-                BarRefs,
-                [
-                    {"role": "system", "content": _SYSTEM},
-                    {"role": "user", "content": "片段：\n" + "\n".join(user_lines)},
-                ],
-                max_tokens=1500,
-            )
-        except Exception as e:  # noqa: BLE001
-            print(f"batch {start} failed: {e}", flush=True)
+        result = None
+        for _attempt in range(2):
+            try:
+                result = gateway.chat_json(
+                    BarRefs,
+                    [
+                        {"role": "system", "content": _SYSTEM},
+                        {"role": "user", "content": "片段：\n" + "\n".join(user_lines)},
+                    ],
+                    max_tokens=_MAX_TOKENS,
+                )
+                break
+            except Exception as e:  # noqa: BLE001
+                last_err = e
+        if result is None:
+            print(f"batch {start} failed: {last_err}", flush=True)
             continue
         for ref in result.refs:
             if not (0 <= ref.idx < len(batch)):
@@ -93,7 +96,10 @@ def extract() -> int:
             if not ref.bars:
                 continue
             u = batch[ref.idx]
-            ref_id = hashlib.sha1(f"{u.doc_id}:{u.evidence_id}:{len(ref.bars)}".encode()).hexdigest()[:16]
+            bars_key = "|".join(sorted(b.strip() for b in ref.bars))
+            ref_id = hashlib.sha1(
+                f"{u.doc_id}:{u.evidence_id}:{bars_key}:{ref.pattern}".encode()
+            ).hexdigest()[:16]
             fig_id = (u.figure_ids or [None])[0]
             with SessionLocal() as s:
                 s.merge(
