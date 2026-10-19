@@ -1,0 +1,51 @@
+sop_id: knowledge_qa_term_evidence_first
+version: 1
+status: shadow
+intent_scope:
+- knowledge_qa
+- 术语定义
+- 形态规则细节
+- 统计数值查询
+- 机制/过程解释
+preconditions:
+- 问题属于知识问答，需要概念解释、规则判定或统计数值
+- 首轮检索零命中或命中片段与问题不匹配
+- 问题含专有术语（可能中英混用/别名）或需要聚合统计
+steps:
+- operation: expand_terms
+  note: 对问题中的专有术语生成同义词、英文原词、缩写与常见别名（如 Always In / 始终在场、双底 / double bottom、多头旗形 / bull
+    flag），并保留原始术语用于精确匹配
+- operation: step_back
+  note: 将具体问句抽象为上位概念问句（如“某某形态的胜率”上退为“该形态的定义、成立条件与统计口径”），先用上位概念召回基础语料
+- operation: multi_query
+  note: 并行发起 3-5 个改写查询：定义式（什么是X）、规则式（X的成立条件/两个低点是否必须相同）、统计式（X胜率/统计口径）、机制式（X如何转换/触发）
+- operation: hybrid_search
+  note: 对每组查询同时做关键词精确检索与向量语义检索，合并去重；术语题优先精确匹配命中
+- operation: expand_figures
+  note: 若命中片段引用图表/示例，展开其图表说明与上下文段落，避免只拿到标题或图注
+- operation: check_evidence
+  note: 逐条核对证据是否直接回答问句：定义题需定义句，规则题需条件句，数值题需明确统计口径与样本来源；标注每条证据的支撑强度
+- operation: rerank
+  note: 按“直接回答问句 > 术语匹配度 > 来源权威性”重排，保留 top-k 作为回答依据
+required_evidence:
+- 与问题术语精确对应的定义/规则原文片段
+- 数值类问题：明确说明统计口径、样本范围或数据来源的片段
+- 机制类问题：描述转换条件或因果链条的连续段落（非孤立短语）
+- 至少一条与问句形式直接对应的直接证据（定义句/条件句/数值句）
+fallback: 若扩展与多查询后仍无直接证据：先输出已确认的相关概念与边界说明，显式标注“未检索到该形态胜率的统计数据”，并给出可查证的替代口径或建议追问（如具体市场/周期/样本区间），不得编造数值
+stop: 当出现至少一条直接对应问句形式的证据且经 check_evidence 判定支撑强度足够，或已完成 expand_terms+step_back+multi_query
+  全轮检索仍无直接证据时停止
+failure_patterns:
+- no_evidence：术语未扩展导致零命中或只召回泛化页面
+- no_answer：证据只覆盖上位概念，未落到问句所需的具体规则或数值
+- retrieval_error：仅用单一查询串检索，未做混合检索与重排，命中噪声片段
+- 数值类问句缺少统计口径即作答或直接弃答
+compatible_versions: {}
+validation:
+  dataset: null
+  paired_runs: 0
+  wins: 0
+  losses: 0
+  ties: 0
+  approved: false
+  notes: null

@@ -1,0 +1,124 @@
+# 中英术语词典初稿 (plan §5.5)。人工校验状态为 pending；查询扩展用。
+# canonical: 规范概念 id；aliases: 中文/英文/缩写/大小写变体。
+# ambiguity: 歧义说明；context: 消歧语境。
+- canonical: high_2
+  aliases: ["高二", "High 2", "H2", "second entry high"]
+- canonical: low_2
+  aliases: ["低二", "Low 2", "L2"]
+- canonical: always_in
+  aliases: ["Always In", "始终在场", "永远在场", "AI"]   # AI 仅限价格行为语境
+  ambiguity: "AI 通常指人工智能，仅在本语境为 Always In"
+- canonical: breakout_pullback
+  aliases: ["突破回调", "breakout pullback", "BP"]
+- canonical: failed_breakout
+  aliases: ["失败突破", "failed breakout", "FB", "假突破"]
+- canonical: buy_the_close
+  aliases: ["BTC", "Buy The Close", "收盘买入"]
+  ambiguity: "BTC 通常指比特币，价格行为语境指 Buy The Close"
+  context: "价格行为/收盘语境"
+- canonical: sell_the_close
+  aliases: ["STC", "Sell The Close", "收盘卖出"]
+- canonical: double_bottom
+  aliases: ["双底", "double bottom", "DB"]
+- canonical: double_bottom_bull_flag
+  aliases: ["双底多头旗形", "double bottom bull flag", "DBBF"]
+- canonical: strong_trend
+  aliases: ["强趋势", "strong trend"]
+- canonical: trading_range
+  aliases: ["交易区间", "交易区间日", "trading range", "TR"]
+- canonical: second_entry
+  aliases: ["第二次入场", "二次入场", "second entry", "second signal", "二次信号"]
+- canonical: climax
+  aliases: ["高潮", "climax", "高潮反转", "climax reversal"]
+- canonical: ema
+  aliases: ["EMA", "指数移动平均", "均线"]
+- canonical: bar
+  aliases: ["K线", "K 线", "bar", "蜡烛", "candle"]
+- canonical: pullback
+  aliases: ["回调", "pullback", "回撤"]
+- canonical: micro_trendline
+  aliases: ["微趋势线", "micro trend line", "MTL"]
+- canonical: gap
+  aliases: ["缺口", "gap", "跳空"]
+- canonical: reversal
+  aliases: ["反转", "reversal"]
+- canonical: breakout
+  aliases: ["突破", "breakout"]
+- canonical: trend
+  aliases: ["趋势", "trend"]
+- canonical: swing
+  aliases: ["波段", "swing", "摆动"]
+- canonical: channel
+  aliases: ["通道", "channel"]
+- canonical: wedge
+  aliases: ["楔形", "wedge"]
+- canonical: measured_move
+  aliases: ["测量运动", "measured move", "MM"]
+- canonical: signal_bar
+  aliases: ["信号K线", "信号 K 线", "signal bar"]
+- canonical: entry_bar
+  aliases: ["入场K线", "入场 K 线", "entry bar"]
+- canonical: higher_timeframe
+  aliases: ["高周期", "higher timeframe", "HTF"]
+- canonical: lower_timeframe
+  aliases: ["低周期", "lower timeframe", "LTF"]
+- canonical: with_trend
+  aliases: ["顺势", "with trend", "WT"]
+- canonical: countertrend
+  aliases: ["逆势", "countertrend", "counter trend", "CT"]
+- canonical: two_legged
+  aliases: ["两段式", "two-legged", "two legged", "two legs"]
+- canonical: wedge_flag
+  aliases: ["楔形旗形", "wedge flag"]
+- canonical: broad_channel
+  aliases: ["宽通道", "broad channel"]
+- canonical: trading_range_day
+  aliases: ["交易区间日", "trading range day", "TR day"]
+- canonical: trend_day
+  aliases: ["趋势日", "trend day"]
+- canonical: open_of_day
+  aliases: ["开盘", "开盘阶段", "open of day"]
+- canonical: stop
+  aliases: ["止损", "stop", "保护止损", "protective stop"]
+- canonical: target
+  aliases: ["目标", "target", "目标位"]
+
+# ---- 新增：趋势生命周期 / 市场周期（pabook.pdf 第5章 + 全书） ----
+- canonical: market_cycle
+  aliases: ["市场周期", "market cycle", "周期转换", "趋势生命周期", "life cycle of a trend", "趋势的诞生运行衰亡", "四个阶段", "four phases", "趋势如何演变", "周期如何转换"]
+  ambiguity: "市场周期 ≈ 趋势生命周期，指趋势在 脉冲/通道/区间 之间的循环，非宏观经济的市场周期"
+- canonical: spike
+  aliases: ["脉冲", "spike", "尖峰", "spike and channel", "脉冲和通道"]
+- canonical: tight_channel
+  aliases: ["紧密通道", "tight channel", "窄通道"]
+- canonical: broad_channel
+  aliases: ["宽松通道", "broad channel", "宽通道"]
+- canonical: transition
+  aliases: ["过渡", "transition", "过渡期", "过渡阶段"]
+- canonical: two_sided_trading
+  aliases: ["双边交易", "two-sided trading", "双向交易", "时多时空"]
+- canonical: trend_lifecycle_stages
+  aliases: ["趋势生命周期阶段", "四阶段", "趋势演变阶段", "trend lifecycle stages", "spike channel range"]
+  context: "脉冲(Spike)→紧密通道(Tight Channel)→宽松通道(Broad Channel)→交易区间(TR)，多数趋势按此顺序演变"
+
+# ---- 新增：牛熊旗 / 三波（Price Action 笔记.pdf + 三卷本） ----
+- canonical: bull_flag
+  aliases: ["牛旗", "bull flag", "多头旗形", "牛市旗形"]
+- canonical: bear_flag
+  aliases: ["熊旗", "bear flag", "空头旗形", "熊市旗形"]
+- canonical: three_pushes
+  aliases: ["三波", "three pushes", "三次推进", "三推", "三波下跌", "三波上涨"]
+- canonical: trend_bar
+  aliases: ["趋势K线", "趋势 K 线", "trend bar", "顺势K线"]
+- canonical: trading_range_bar
+  aliases: ["区间K线", "区间 K 线", "trading range bar", "交易区间K线"]
+- canonical: signal_candle
+  aliases: ["信号K线", "signal bar", "信号蜡烛"]
+- canonical: measured_move_gap
+  aliases: ["测量运动缺口", "measured move gap", "跳空测量运动"]
+- canonical: double_top
+  aliases: ["双顶", "double top", "DT"]
+- canonical: lower_high
+  aliases: ["更低高点", "lower high", "LH", "次低高点"]
+- canonical: higher_low
+  aliases: ["更高低点", "higher low", "HL", "更高低"]
