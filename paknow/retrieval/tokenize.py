@@ -9,7 +9,7 @@ import re
 from collections import Counter
 from functools import lru_cache
 
-from paknow.retrieval.dictionary import load_terms
+from paknow.retrieval.dictionary import load_terms, match_terms
 
 _PROTECT_RE = re.compile(
     r"(?i)\b(?:EMA\s*\d*|H\d+|L\d+|图\s*\d+(?:\.\d+)?|Figure\s*\d+(?:\.\d+)?|BTC|STC)\b"
@@ -31,12 +31,8 @@ def _jieba():
 def _tokens(text: str) -> list[str]:
     toks: list[str] = []
     lower = text.lower()
-    # dictionary aliases -> canonical concept id (longest alias wins)
-    for term in load_terms():
-        for a in sorted(term.aliases, key=len, reverse=True):
-            if a.lower() in lower:
-                toks.append(term.canonical)
-                break
+    # dictionary aliases -> canonical concept id (boundary-aware matching)
+    toks.extend(match_terms(text))
     # protected numeric/abbreviation patterns
     toks.extend(m.group(0).replace(" ", "") for m in _PROTECT_RE.finditer(text))
     # English words

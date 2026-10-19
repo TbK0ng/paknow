@@ -5,6 +5,7 @@ from typing import Any
 
 from paknow.db import SessionLocal
 from paknow.db.models import RunTraceRow
+from paknow.memory.versions import component_versions
 
 
 def save_trace(
@@ -17,18 +18,23 @@ def save_trace(
     answer: dict[str, Any] | None,
     failures: list[str],
     elapsed_ms: int | None,
+    sop_id: str | None = None,
 ) -> None:
+    request: dict[str, Any] = {"query": query}
+    if sop_id:
+        request["sop"] = sop_id
     with SessionLocal() as s:
         s.add(
             RunTraceRow(
                 run_id=run_id,
-                request={"query": query},
+                request=request,
                 intents=intents,
                 routes=routes,
                 evidence_ids=evidence_ids,
                 output=answer,
                 failures=failures,
                 elapsed_ms=elapsed_ms,
+                version_snapshot=component_versions(),
             )
         )
         s.commit()

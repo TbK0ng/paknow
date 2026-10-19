@@ -12,11 +12,16 @@ from typing import Any, TypedDict
 
 from langgraph.graph import END, START, StateGraph
 
+from paknow.graph.retrieve import concept_lookup, expand_evidence_ids, transition_chains
+from paknow.memory.sop import select_sop
 from paknow.memory.trace import save_trace
-from paknow.retrieval.search import expand_evidence, hybrid_search, point_to_doc
+from paknow.retrieval.dictionary import expand_query
+from paknow.retrieval.search import expand_evidence, hybrid_search, point_to_doc, rerank
+from paknow.retrieval.toc import toc_recall
 from paknow.workflows.evidence import check_sufficiency
 from paknow.workflows.generate import generate
 from paknow.workflows.router import QueryPlan, retrieval_queries, route
+from paknow.workflows.sop_exec import apply_sop
 
 
 class QState(TypedDict, total=False):
@@ -40,6 +45,19 @@ class QState(TypedDict, total=False):
     run_id: str
     t0: float
     failures: list[str]
+    # SOP-driven retrieval directives (selected in route, applied in retrieve/check/generate)
+    sop_id: str | None
+    sop_status: str
+    sop_extra_queries: list[str]
+    sop_evidence_requirements: list[str]
+    sop_fallback: str | None
+    sop_stop: str | None
+    sop_skipped_ops: list[str]
+    # graph/toc recall contexts
+    graph_context: dict[str, Any]
+    graph_evidence: list[dict[str, Any]]
+    toc_context: list[dict[str, Any]]
+    context_units: list[dict[str, Any]]
 
 
 def _route_node(state: QState) -> QState:
@@ -54,6 +72,9 @@ def _route_node(state: QState) -> QState:
     state["hyde"] = plan.hyde
     state["max_rounds"] = plan.max_search_rounds
     state["round"] = 0
+    sop = select_sop(plan.intent)
+    if sop:
+        apply_sop(sop, state, state["query"])
     return state
 
 
@@ -61,6 +82,9 @@ def _retrieve_node(state: QState) -> QState:
     queries = retrieval_queries(state["plan"], state["query"])
     if state.get("next_query"):
         queries.append(state["next_query"])
+    for q in state.get("sop_extra_queries", []):
+        if q not in queries:
+            queries.append(q)
     seen: dict[str, dict[str, Any]] = {}
     for q in queries[:6]:
         try:
@@ -71,7 +95,20 @@ def _retrieve_node(state: QState) -> QState:
                     seen[eid] = d
         except Exception as e:  # noqa: BLE001
             state.setdefault("failures", []).append(f"retrieve: {e}")
-    hits = sorted(seen.values(), key=lambda x: x.get("score") or 0.0, reverse=True)[:14]
+
+    hits = sorted(seen.values(), key=lambda x: x.get("score") or 0.0, reverse=True)
+    # cross-encoder rerank over the top candidates (falls back to RRF order)
+    if len(hits) >= 2:
+        try:
+            hits = rerank(state["query"], hits[:20], top_k=14)
+            for h in hits:
+                h["reranked"] = True
+        except Exception as e:  # noqa: BLE001
+            state.setdefault("failures", []).append(f"rerank: {e}")
+            hits = hits[:14]
+    else:
+        hits = hits[:14]
+
     state["hits"] = hits
     state["round"] = state.get("round", 0) + 1
     ev_ids = [h["evidence_id"] for h in hits if h.get("evidence_id")]
@@ -82,13 +119,44 @@ def _retrieve_node(state: QState) -> QState:
         full = by_id.get(h.get("evidence_id"))
         if full:
             h.update(full)
+    state["context_units"] = [
+        u
+        for u in expanded.get("units", [])
+        if u.get("is_parent") or u.get("is_adjacent")
+    ]
+
+    # graph recall: concepts/claims + transition cycles + claim-linked evidence
+    routes = state.get("routes", [])
+    needs = state.get("evidence_needs", [])
+    if "graph_local" in routes or "cycle" in needs or state.get("is_framework"):
+        terms = expand_query(state["query"])["canonical"]
+        gctx: dict[str, Any] = {
+            "concepts_claims": concept_lookup(terms + state.get("sub_queries", [])),
+            "cycles": transition_chains(),
+        }
+        related = expand_evidence_ids(ev_ids)
+        if related:
+            gctx["related_claims"] = related
+        state["graph_context"] = gctx
+        rel_ids = [r["evidence_id"] for r in related if r.get("evidence_id")]
+        if rel_ids:
+            rel_exp = expand_evidence(rel_ids[:6], parent_limit=0, adjacent_limit=0)
+            state["graph_evidence"] = rel_exp.get("units", [])
+
+    # toc recall: chapter framework for structural questions
+    if "toc" in routes or "toc" in needs:
+        state["toc_context"] = toc_recall(state["query"])
     return state
 
 
 def _check_node(state: QState) -> QState:
+    needs = list(state.get("evidence_needs", []))
+    for req in state.get("sop_evidence_requirements", []):
+        if req not in needs:
+            needs.append(req)
     suff = check_sufficiency(
         state["query"],
-        state.get("evidence_needs", []),
+        needs[:8],
         state.get("hits", []),
         round_=state.get("round", 0),
         max_rounds=state.get("max_rounds", 3),
@@ -107,8 +175,21 @@ def _after_check(state: QState) -> str:
 
 def _generate_node(state: QState) -> QState:
     mode = "synthesis" if state.get("is_framework") else "extractive"
+    units = [h for h in state.get("hits", []) if h.get("evidence_id")]
+    have = {u["evidence_id"] for u in units}
+    for src in ("graph_evidence", "context_units"):
+        for u in state.get(src, []):
+            if u.get("evidence_id") and u["evidence_id"] not in have:
+                units.append(u)
+                have.add(u["evidence_id"])
     state["answer"] = generate(
-        state["query"], state.get("hits", []), state.get("images"), mode=mode
+        state["query"],
+        units,
+        state.get("images"),
+        mode=mode,
+        graph_context=state.get("graph_context"),
+        toc_context=state.get("toc_context"),
+        fallback=state.get("sop_fallback"),
     )
     return state
 
@@ -125,6 +206,7 @@ def _record_node(state: QState) -> QState:
         answer=ans,
         failures=state.get("failures", []),
         elapsed_ms=int((time.time() - state["t0"]) * 1000),
+        sop_id=state.get("sop_id"),
     )
     # auto memory-optimization (non-blocking; runs the 评价→蒸馏→发布 loop)
     _maybe_auto_optimize()

@@ -116,3 +116,48 @@ def list_sops(status: str | None = None) -> list[dict[str, Any]]:
             }
             for r in q.all()
         ]
+
+
+_STATUS_RANK = {"active": 3, "shadow": 2, "candidate": 1}
+
+
+def select_sop(intent: str) -> dict[str, Any] | None:
+    """Best applicable SOP for an intent: active > shadow > candidate.
+
+    Skips SOPs whose ``compatible_versions`` no longer match the current
+    corpus/model fingerprint (plan §9.6 stale-memory guard).
+    """
+    from paknow.memory.versions import component_versions
+
+    current = component_versions()
+    best: SOPRow | None = None
+    with SessionLocal() as s:
+        for r in s.query(SOPRow).all():
+            if r.status not in _STATUS_RANK:
+                continue
+            scope = [x.lower() for x in (r.intent_scope or [])]
+            if intent.lower() not in scope and "knowledge_qa" not in scope:
+                continue
+            if r.compatible_versions:
+                if any(current.get(k) != v for k, v in r.compatible_versions.items()):
+                    continue
+            if best is None or (
+                _STATUS_RANK[r.status],
+                r.version,
+            ) > (_STATUS_RANK[best.status], best.version):
+                best = r
+    if best is None:
+        return None
+    return {
+        "sop_id": best.sop_id,
+        "status": best.status,
+        "version": best.version,
+        "intent_scope": best.intent_scope or [],
+        "preconditions": best.preconditions or [],
+        "steps": best.steps or [],
+        "required_evidence": best.required_evidence or [],
+        "fallback": best.fallback,
+        "stop": best.stop,
+        "failure_patterns": best.failure_patterns or [],
+        "compatible_versions": best.compatible_versions or {},
+    }

@@ -68,12 +68,18 @@ def route(query: str, images: list[bytes] | None = None) -> QueryPlan:
 
 def retrieval_queries(plan: QueryPlan, query: str) -> list[str]:
     """Assemble the expanded query set for retrieval (original + step_back +
-    sub_queries + hyde), deduped and bounded."""
+    sub_queries + hyde + disambiguation variants), deduped and bounded."""
     out: list[str] = []
     seen: set[str] = set()
     for q in [query, plan.step_back, *plan.sub_queries, plan.hyde]:
         q = q.strip()
         if q and q not in seen:
+            seen.add(q)
+            out.append(q)
+    # ambiguous abbreviations (BTC/AI/...) get a context-biased variant
+    for ctx in expand_query(query).get("disambig", []):
+        q = f"{query} {ctx}".strip()
+        if q not in seen:
             seen.add(q)
             out.append(q)
     return out[:6]

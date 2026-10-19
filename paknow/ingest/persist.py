@@ -8,11 +8,22 @@ from paknow.evidence.contracts import EvidenceUnit, FigureAsset
 
 def persist_units(units: list[EvidenceUnit]) -> int:
     seen: set[str] = set()
+    ordered: list[EvidenceUnit] = []
+    for u in units:
+        if u.evidence_id in seen:
+            continue
+        seen.add(u.evidence_id)
+        ordered.append(u)
+    # reading-order adjacency (non-footer neighbors) for context expansion
+    content = [u.evidence_id for u in ordered if u.block_type != "footer"]
+    pos = {eid: i for i, eid in enumerate(content)}
+    for u in ordered:
+        if u.block_type == "footer" or u.evidence_id not in pos:
+            continue
+        i = pos[u.evidence_id]
+        u.adjacent_ids = [e for e in (content[i - 1] if i else None, content[i + 1] if i + 1 < len(content) else None) if e]
     with SessionLocal() as s:
-        for u in units:
-            if u.evidence_id in seen:
-                continue
-            seen.add(u.evidence_id)
+        for u in ordered:
             s.merge(_unit_row(u))
         s.commit()
     return len(units)

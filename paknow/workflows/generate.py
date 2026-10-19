@@ -1,6 +1,7 @@
 """Evidence-grounded answer generation with citation binding (plan §7.3)."""
 from __future__ import annotations
 
+import json
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -43,7 +44,13 @@ def _render_unit(i: int, u: dict[str, Any]) -> str:
     if u.get("figure_label"):
         loc.append(str(u["figure_label"]))
     src = " · ".join(loc) or "未知出处"
-    return f"[{i}] ({src}) {u['text']}"
+    tags = []
+    if u.get("is_parent"):
+        tags.append("父块上下文")
+    if u.get("is_adjacent"):
+        tags.append("邻接段落")
+    tag = f"（{'/'.join(tags)}）" if tags else ""
+    return f"[{i}] ({src}){tag} {u['text']}"
 
 
 def build_context(units: list[dict[str, Any]]) -> str:
@@ -57,9 +64,29 @@ def generate(
     *,
     mode: str = "extractive",
     max_tokens: int = 8192,
+    graph_context: dict[str, Any] | None = None,
+    toc_context: list[dict[str, Any]] | None = None,
+    fallback: str | None = None,
 ) -> dict[str, Any]:
     context = build_context(units)
-    user = f"问题：{query}\n\n证据（引用编号 [n]）：\n{context}"
+    parts = [f"问题：{query}"]
+    if toc_context:
+        parts.append(
+            "目录框架（相关章节，用于定位知识范围，不直接引用编号）：\n"
+            + "\n".join(
+                f"- 《{t.get('doc_title', '')}》 {' › '.join(t['chapter_path'])}"
+                for t in toc_context
+            )
+        )
+    if graph_context:
+        parts.append(
+            "知识图谱上下文（概念/主张/周期链，用于校验与归纳，不直接引用编号）：\n"
+            + json.dumps(graph_context, ensure_ascii=False, indent=1)
+        )
+    if fallback:
+        parts.append(f"证据不足时的处理要求：{fallback}")
+    parts.append(f"证据（引用编号 [n]）：\n{context}")
+    user = "\n\n".join(parts)
     system = _SYNTHESIS_SYSTEM if mode == "synthesis" else _ANSWER_SYSTEM
     messages = [
         {"role": "system", "content": system},

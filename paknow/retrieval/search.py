@@ -92,10 +92,39 @@ def point_to_doc(p: ScoredPoint) -> dict[str, Any]:
     }
 
 
-def expand_evidence(evidence_ids: list[str]) -> dict[str, Any]:
-    """Fetch full units + linked figures + adjacent units from the DB."""
+def expand_evidence(
+    evidence_ids: list[str],
+    *,
+    parent_limit: int = 6,
+    adjacent_limit: int = 4,
+) -> dict[str, Any]:
+    """Fetch full units + linked figures + parent/adjacent context units."""
     with SessionLocal() as s:
-        rows = {r.evidence_id: r for r in s.query(EvidenceUnitRow).filter(EvidenceUnitRow.evidence_id.in_(evidence_ids)).all()}
+        rows = {
+            r.evidence_id: r
+            for r in s.query(EvidenceUnitRow)
+            .filter(EvidenceUnitRow.evidence_id.in_(evidence_ids))
+            .all()
+        }
+        parents: set[str] = set()
+        adjacents: set[str] = set()
+        for eid in evidence_ids:
+            r = rows.get(eid)
+            if r is None:
+                continue
+            if r.parent_id and r.parent_id not in rows and len(parents) < parent_limit:
+                parents.add(r.parent_id)
+            for aid in r.adjacent_ids or []:
+                if aid not in rows and aid not in parents and len(adjacents) < adjacent_limit:
+                    adjacents.add(aid)
+        if parents or adjacents:
+            extra_ids = parents | adjacents
+            for r in (
+                s.query(EvidenceUnitRow)
+                .filter(EvidenceUnitRow.evidence_id.in_(extra_ids))
+                .all()
+            ):
+                rows[r.evidence_id] = r
         fig_ids: set[str] = set()
         for r in rows.values():
             fig_ids.update(r.figure_ids or [])
@@ -112,6 +141,8 @@ def expand_evidence(evidence_ids: list[str]) -> dict[str, Any]:
             "figure_label": r.figure_label,
             "epub_href": r.epub_href,
             "figure_ids": r.figure_ids or [],
+            "is_parent": r.evidence_id in parents,
+            "is_adjacent": r.evidence_id in adjacents,
         }
         for r in rows.values()
     ]
