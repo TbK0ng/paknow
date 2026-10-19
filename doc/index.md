@@ -114,6 +114,15 @@
 
     [:octicons-arrow-right-24: 阅读](chapter8-service.md)
 
+-   :material-compare-horizontal:{ .lg .middle } **All-in-RAG 全链路对照**
+
+    ---
+
+    教程每个环节介绍了什么方法、本项目怎么实现、哪些是没想到、
+    哪些是权衡后替代，以及仍未闭环的欠账。
+
+    [:octicons-arrow-right-24: 阅读](chapter12-allinrag-comparison.md)
+
 </div>
 
 ## 状态与验证

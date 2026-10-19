@@ -22,7 +22,7 @@
 
 ```
 本地 PDF/EPUB → 解析(EPUB 原生 / PDF PyMuPDF) → 证据单元+图资产(内容寻址)
-   → 索引(BGE-M3 dense+sparse / 目录 / ColPali 视觉)  → 多路召回+RRF融合
+   → 索引(BGE-M3 dense+sparse / 目录 / Qwen 视觉观察)  → 多路召回+RRF融合
    → 证据充分性检查(有界补检索) → deepseek-flash 生成(逐项引用) → RunTrace
 ```
 
@@ -38,6 +38,70 @@
 | 工作流 | `paknow/workflows/{router,evidence,generate,graph}.py`（LangGraph） |
 | 记忆 | `paknow/memory/{trace,sop}.py` |
 | 服务 | `apps/api/main.py`（FastAPI）+ `apps/viewer/index.html` |
+
+## RAG 全链路对照：All-in-RAG 的方法清单与本项目取舍
+
+> 对照 [Datawhale All-in-RAG](https://datawhalechina.github.io/all-in-rag/) 的完整教程链路。
+> 逐环节回答三个问题：**教程介绍了哪些方法、PAknow 实际怎么实现、当前选择是“没想到”
+> 还是“权衡后替代”，为什么**。
+>
+> 方法级审计（含代码位置、数据库计数、未接线清单）见
+> [`doc/chapter12-allinrag-comparison.md`](doc/chapter12-allinrag-comparison.md)。
+
+### 结论先行
+
+教程给的是“通用文本 RAG 的标准件”；PAknow 在**证据定位、多模态派生、条件化图谱、
+SOP 记忆**上做了加法定制，在**评估、索引调优、上下文压缩、元数据过滤、Agentic
+工具生态**上做了减法或欠账。加法多数是语料逼出来的；减法多数有环境或成本理由，
+但**评估、metadata 过滤、压缩**是真实缺口，不能包装成设计。
+
+| 环节 | All-in-RAG 的代表方法 | PAknow 的实现 | 判定 |
+|---|---|---|---|
+| 架构范式 | Naive / Advanced / Modular、RAG vs 微调、框架 vs 裸写 | LangGraph 固定状态机 + 自定义证据契约 | **采用 Modular**；不做自主多工具 Agent |
+| 数据加载 | 9 种 loader、Unstructured 元素、Docling/MinerU/OCR | 原生 EPUB + PyMuPDF；块/bbox/图注/物理页/印刷页 | **采用且更强**；表格未抽取，Docling/MinerU 未实测 |
+| 分块 | 固定/递归/语义/结构/句子窗口/父子块 | 单元优先，超长切 600–1200 字符；邻接 81,809 条 | **等价采用结构分块+邻接**；父子块实测失败后替代 |
+| 嵌入 | MTEB 选型、dense/sparse、CLIP/Visualized-BGE/ColPali | BGE-M3 dense+sparse + 领域分词；Qwen2.5-VL 观察 | **主链路采用**；ColPali 尝试失败后转观察式，无 image-to-image |
+| 向量库/索引 | FAISS/Chroma/Milvus/Qdrant、FLAT/IVF/HNSW/DiskANN | Qdrant 嵌入式；命名向量 + RRF | **采用 Qdrant**；HNSW/量化未调优 |
+| 检索 | 混合、RRF/加权、重排、压缩、校正、上下文扩展 | RRF + cross-encoder + 多样性 + 邻接 + 有界补检索 | **主链路采用**；压缩未做，metadata 过滤未接线 |
+| 查询构建 | 多查询、Step-Back、HyDE、LLM/向量路由、Text2SQL/Cypher | 单次 QueryPlan + 消歧 + SOP 补充查询 | **改写采用**；单次调用替代多步 Agent；Text2SQL/Cypher 不适用 |
+| 生成 | OutputParser/Pydantic、Function Calling、GBNF、引用 | `chat_json` + Pydantic + `[n]` 后端绑定 | **结构化与引用更强**；Function Calling/流式未做 |
+| 评估 | RAG Triad、Precision/Recall/MRR/MAP、Ragas、Phoenix | 程序化 trace 信号 + SOP 闭环 | **最大缺口**：没有质量评测，SOP `active` 关闭 |
+| 图谱 | KG 构建、Neo4j/Cypher、GraphRAG/LightRAG/FRAG/GraphIRAG | 条件化概念/主张/边 + 有界 BFS + 生命周期环 | **局部图检索采用**；无社区摘要/全局 GraphRAG |
+| Agentic | Plan→Retrieve→Critique→Refine、工具生态、多 Agent | 受控核验-补检索，最多 3 轮 | **受控采用**；无自主工具选择/多 Agent |
+| 记忆/工程 | 教程仅 trace；PAknow 额外做 SOP | SOP 生命周期 + git + FastAPI + 查看器 | **超出教程**；UserFact/ImportJob 未接线，无流式/缓存 |
+
+### 未闭环 / 未接线清单
+
+- **评测**：没有冻结的金标准、RAG Triad、Recall@k、Ragas/Phoenix、B0–B7 消融；
+  这是 SOP 无法晋升 `active` 的直接原因。
+- **元数据过滤**：`QueryPlan.metadata` 已生成，但检索层没有消费。
+- **空路由**：`visual_page` / `numeric` 出现在 QueryPlan 里，主链路没有实现。
+- **视觉集合**：`page_visual` 集合 0 点；当前只有“文本描述找图”，没有图像相似检索。
+- **上下文压缩**：没有 LLMChainExtractor/Filter；靠 14 条证据截断 + 4 条邻接控制窗口。
+- **索引调优**：没有 HNSW 参数、量化、Recall@k/延迟基准。
+- **工具调用**：没有 Function Calling；当前能力没有需要模型执行的外部工具。
+- **两张表未接线**：`user_facts`、`import_jobs` 有 schema，主链路未使用。
+- **体验**：无流式、无查询缓存、无鉴权/多租户。
+
+### 为什么这些减法成立
+
+| 约束 | 对设计的影响 |
+|---|---|
+| 语料是 7 本图文混排、条件密集的交易书 | 证据单元必须带页/图/bbox/质量；通用 chunk 技巧收益低 |
+| 离线、无 Docker、16GB 显存、Blackwell | Qdrant 嵌入式、PyMuPDF、Qwen2.5-VL；Milvus/ColPali 不可行 |
+| 每个结论要能回到原文 | 引用不交给模型生成；`[n]` 由后端映射到 `evidence_id` |
+| 派生材料不能冒充原文 | 视觉观察/图谱主张/SOP 都不可直接引用 |
+| 记忆必须可验证、可回滚 | SOP 用 YAML + git；自动闭环最多到 `shadow` |
+| 延迟/成本可控 | 路由/核验/生成各一次云端调用；不做多步 Agent |
+
+### 最值得补的三件事
+
+1. **评测闭环**：金标准 + RAG Triad/Ragas + Recall@k + 回归门槛。先证明重排/图谱/toc/
+   邻接各自有没有增量，再谈 SOP 晋升。
+2. **把计划字段接线**：`metadata` 过滤、`visual_page`/`numeric` 路由，要么实现，
+   要么从 QueryPlan 删除，避免“字段存在但主链路不消费”。
+3. **压缩与索引基准**：上下文压缩 + HNSW/量化/延迟-召回曲线。当前 8 万点已接近
+   嵌入式 Qdrant 的舒适区，需要用数据决定是否切 server。
 
 ## 技术文档站
 
