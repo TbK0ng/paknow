@@ -37,13 +37,13 @@ class BarRefs(BaseModel):
     refs: list[BarRef] = Field(default_factory=list)
 
 
-_SYSTEM = """你是图表K线指代解析器。给定若干图表说明/图注片段（编号前缀 [n]），提取"带明确编号的K线指代"：
+_SYSTEM = """你是图表K线指代解析器。给定若干图注或图表说明段落（编号前缀 [n]），提取"带明确编号的K线指代"：
 - idx: 该 ref 所属片段的编号（[n] 里的整数，0-based）。
 - bars: 涉及的K线编号，统一写 "K线N"（如 "K线2"、"K线3"）；区间写 "K线2-4"。
 - pattern: 这些K线构成的形态/事件中文名（如 双底、突破、回调、牛旗、交易区间），没有就留空。
 - relation: 关系动词（构成/测试/突破/跌破/回撤/双顶/第二次测试…），没有就留空。
 - snippet: 原文关键片段（≤50字）。
-只提取明确带编号的指代；没有编号或表述模糊就跳过。每个片段可提取 0~3 条。"""
+叙述性说明段落（如"图7.4从K线2急跌至K线3……"）也要提取——只要出现带编号的K线指代就提取，不管片段是图注还是说明。没有编号指代才跳过。每个片段可提取 0~4 条。"""
 
 
 def _candidates() -> list[EvidenceUnitRow]:
@@ -61,11 +61,21 @@ def _candidates() -> list[EvidenceUnitRow]:
     return [r for r in rows if _BAR_HINT_RE.search(r.text or "")]
 
 
-def extract() -> int:
+def extract(only_missing: bool = False) -> int:
     settings.ensure_dirs()
     init_db()
     units = _candidates()
-    print(f"candidates: {len(units)}", flush=True)
+    if only_missing:
+        with SessionLocal() as s:
+            covered = {
+                r[0]
+                for r in s.query(BarRefRow.evidence_id)
+                .filter(BarRefRow.evidence_id.isnot(None))
+                .distinct()
+                .all()
+            }
+        units = [u for u in units if u.evidence_id not in covered]
+    print(f"candidates: {len(units)} (only_missing={only_missing})", flush=True)
     saved = 0
     t0 = time.time()
     for start in range(0, len(units), _BATCH):
@@ -124,4 +134,6 @@ def extract() -> int:
 
 
 if __name__ == "__main__":
-    extract()
+    import sys
+
+    extract(only_missing="--only-missing" in sys.argv)
