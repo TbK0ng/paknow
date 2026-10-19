@@ -68,6 +68,7 @@ class QState(TypedDict, total=False):
     toc_context: list[dict[str, Any]]
     context_units: list[dict[str, Any]]
     barrefs: list[dict[str, Any]]
+    acc: dict[str, dict[str, Any]]
 
 
 def _route_node(state: QState) -> QState:
@@ -89,13 +90,19 @@ def _route_node(state: QState) -> QState:
 
 
 def _retrieve_node(state: QState) -> QState:
-    queries = retrieval_queries(state["plan"], state["query"])
-    if state.get("next_query"):
-        queries.append(state["next_query"])
-    for q in state.get("sop_extra_queries", []):
-        if q not in queries:
+    # targeted gap query first (drives this round), then SOP extras, then plan set
+    queries: list[str] = []
+    seen_q: set[str] = set()
+    for q in [
+        state.get("next_query"),
+        *state.get("sop_extra_queries", []),
+        *retrieval_queries(state["plan"], state["query"]),
+    ]:
+        q = (q or "").strip()
+        if q and q not in seen_q:
+            seen_q.add(q)
             queries.append(q)
-    seen: dict[str, dict[str, Any]] = {}
+    seen: dict[str, dict[str, Any]] = dict(state.get("acc", {}))
     for q in queries[:6]:
         try:
             for p in hybrid_search(q, top_k=40):
@@ -105,6 +112,7 @@ def _retrieve_node(state: QState) -> QState:
                     seen[eid] = d
         except Exception as e:  # noqa: BLE001
             state.setdefault("failures", []).append(f"retrieve: {e}")
+    state["acc"] = seen  # accumulate across retrieval rounds
 
     hits = sorted(seen.values(), key=lambda x: x.get("score") or 0.0, reverse=True)
     # cross-encoder rerank over the top candidates (falls back to RRF order)
@@ -292,6 +300,7 @@ def run_query(query: str, images: list[bytes] | None = None) -> dict[str, Any]:
         "failures": [],
         "round": 0,
         "max_rounds": 3,
+        "acc": {},
     }
     final = _graph.invoke(state)
     return {

@@ -49,6 +49,8 @@ def _render_unit(i: int, u: dict[str, Any]) -> str:
         tags.append("父块上下文")
     if u.get("is_adjacent"):
         tags.append("邻接段落")
+    if u.get("quality") == "derived_observation":
+        tags.append("视觉观察·非原文")
     tag = f"（{'/'.join(tags)}）" if tags else ""
     return f"[{i}] ({src}){tag} {u['text']}"
 

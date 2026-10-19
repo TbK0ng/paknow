@@ -136,7 +136,7 @@ def select_sop(intent: str) -> dict[str, Any] | None:
             if r.status not in _STATUS_RANK:
                 continue
             scope = [x.lower() for x in (r.intent_scope or [])]
-            if intent.lower() not in scope and "knowledge_qa" not in scope:
+            if intent.lower() not in scope:
                 continue
             if r.compatible_versions:
                 if any(current.get(k) != v for k, v in r.compatible_versions.items()):

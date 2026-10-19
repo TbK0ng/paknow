@@ -20,6 +20,7 @@ from paknow.db.models import RunTraceRow
 from paknow.gateway import gateway
 from paknow.memory import sop as sop_registry
 from paknow.memory.contracts import SOPStatus
+from paknow.memory.versions import component_versions
 
 AUTO_THRESHOLD = 20  # new unscored traces before auto-optimization
 
@@ -108,29 +109,33 @@ def run_loop(threshold: int = 3, limit: int = 300) -> list[dict[str, Any]]:
         total = sum(problems.values())
         if total < threshold:
             continue
-        cand = distill(intent, problems, samples_by_intent.get(intent, []))
-        status = SOPStatus.shadow if total >= threshold * 2 else SOPStatus.candidate
-        sop_registry.create_sop(
-            cand.sop_id,
-            intent_scope=cand.intent_scope,
-            preconditions=cand.preconditions,
-            steps=cand.steps,
-            required_evidence=cand.required_evidence,
-            fallback=cand.fallback,
-            stop=cand.stop,
-            failure_patterns=cand.failure_patterns,
-        )
-        if status == SOPStatus.shadow:
-            sop_registry.promote(cand.sop_id, SOPStatus.shadow)
-        published.append(
-            {
-                "sop_id": cand.sop_id,
-                "intent": intent,
-                "problems": dict(problems),
-                "status": status.value,
-                "rationale": cand.rationale,
-            }
-        )
+        try:
+            cand = distill(intent, problems, samples_by_intent.get(intent, []))
+            status = SOPStatus.shadow if total >= threshold * 2 else SOPStatus.candidate
+            sop_registry.create_sop(
+                cand.sop_id,
+                intent_scope=cand.intent_scope,
+                preconditions=cand.preconditions,
+                steps=cand.steps,
+                required_evidence=cand.required_evidence,
+                fallback=cand.fallback,
+                stop=cand.stop,
+                failure_patterns=cand.failure_patterns,
+                compatible_versions=component_versions(),
+            )
+            if status == SOPStatus.shadow:
+                sop_registry.promote(cand.sop_id, SOPStatus.shadow)
+            published.append(
+                {
+                    "sop_id": cand.sop_id,
+                    "intent": intent,
+                    "problems": dict(problems),
+                    "status": status.value,
+                    "rationale": cand.rationale,
+                }
+            )
+        except Exception as e:  # noqa: BLE001  one intent failing must not kill the loop
+            published.append({"intent": intent, "error": str(e)})
 
     # mark processed traces so they are not re-evaluated next time
     ids = [t.run_id for t in traces]

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import base64
 import json
+import time
 from typing import Any
 
 from openai import OpenAI
@@ -29,6 +30,18 @@ class ModelGateway:
             api_key=settings.deepseek_api_key, base_url=settings.deepseek_base_url
         )
 
+    def _create(self, **kwargs: Any) -> Any:
+        """Completion call with one retry for transient failures."""
+        last: Exception | None = None
+        for attempt in range(2):
+            try:
+                return self._client.chat.completions.create(**kwargs)
+            except Exception as e:  # noqa: BLE001
+                last = e
+                if attempt == 0:
+                    time.sleep(1.5)
+        raise last  # type: ignore[misc]
+
     def chat(
         self,
         messages: list[dict[str, str]],
@@ -47,7 +60,7 @@ class ModelGateway:
         )
         if self.effort:
             kwargs["extra_body"] = {"effort": self.effort}
-        resp = self._client.chat.completions.create(**kwargs)
+        resp = self._create(**kwargs)
         return resp.choices[0].message.content or ""
 
     def chat_json(
@@ -80,7 +93,7 @@ class ModelGateway:
         )
         if self.effort:
             kwargs["extra_body"] = {"effort": self.effort}
-        resp = self._client.chat.completions.create(**kwargs)
+        resp = self._create(**kwargs)
         raw = resp.choices[0].message.content or "{}"
         data = json.loads(raw)
         return schema.model_validate(data)
