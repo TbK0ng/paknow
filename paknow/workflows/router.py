@@ -22,6 +22,7 @@ _QUERY_SYSTEM = """你是交易资料系统的查询理解与构建器。输入�
 - hyde: 写一段假设性的完整回答（150~300字，用于召回，不是最终答案），把该问题可能的标准答案骨架写出来。
 - evidence_needs: definition/context/figure/counterexample/comparison/toc/cycle(周期阶段)。
 - routes: hybrid_text/toc/graph_local/visual_page/numeric。
+- wants_examples: 用户是否明确要求举例/图例（"举个例子/有哪些图/哪里出现过/给我看图"）。仅在明确要例子时为 true；理解类问题（"什么是/如何判断/为什么"）为 false。
 - metadata: 结构化过滤提示（如 {doc_hint}），没有就 {}。
 - data_state: market_ready|screenshot_only|none；请求数值但无行情数据时不得走 numeric。
 - 只按问题本身判断，不依赖尚未生成的答案。
@@ -36,6 +37,7 @@ class QueryPlan(BaseModel):
     hyde: str = ""
     evidence_needs: list[str] = Field(default_factory=list)
     routes: list[str] = Field(default_factory=list)
+    wants_examples: bool = False
     metadata: dict[str, Any] = Field(default_factory=dict)
     data_state: str = "none"
     missing_fields: list[str] = Field(default_factory=list)

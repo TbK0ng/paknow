@@ -76,6 +76,25 @@ def rerank(query_text: str, docs: list[dict[str, Any]], top_k: int | None = None
     return [docs[i] for i in order]
 
 
+def caption_search(query_text: str, top_k: int = 10) -> list[ScoredPoint]:
+    """Caption-only recall: surface figure captions/observations whose
+    figure_ids populate the example catalog for 'show me' queries."""
+    from qdrant_client.models import FieldCondition, Filter, MatchValue
+
+    client = get_client()
+    dense = embed_query(query_text).tolist()
+    return client.query_points(
+        collection_name=COLLECTION_TEXT,
+        query=dense,
+        using="dense",
+        query_filter=Filter(
+            must=[FieldCondition(key="block_type", match=MatchValue(value="caption"))]
+        ),
+        limit=top_k,
+        with_payload=True,
+    ).points
+
+
 def diversify(
     hits: list[dict[str, Any]], *, top_k: int = 14, max_per_doc: int = 5
 ) -> list[dict[str, Any]]:

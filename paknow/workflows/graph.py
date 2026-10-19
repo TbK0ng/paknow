@@ -20,6 +20,7 @@ from paknow.memory.trace import save_trace
 from paknow.retrieval.barref import barref_lookup
 from paknow.retrieval.dictionary import expand_query
 from paknow.retrieval.search import (
+    caption_search,
     diversify,
     expand_evidence,
     hybrid_search,
@@ -69,6 +70,7 @@ class QState(TypedDict, total=False):
     context_units: list[dict[str, Any]]
     barrefs: list[dict[str, Any]]
     acc: dict[str, dict[str, Any]]
+    wants_examples: bool
 
 
 def _route_node(state: QState) -> QState:
@@ -77,6 +79,7 @@ def _route_node(state: QState) -> QState:
     state["intent"] = plan.intent
     state["is_framework"] = plan.is_framework
     state["routes"] = plan.routes
+    state["wants_examples"] = plan.wants_examples
     state["evidence_needs"] = plan.evidence_needs
     state["sub_queries"] = plan.sub_queries
     state["step_back"] = plan.step_back
@@ -167,7 +170,44 @@ def _retrieve_node(state: QState) -> QState:
     state["barrefs"] = barref_lookup(state["query"])
     if state["barrefs"]:
         _merge_barref_figures(state)
+
+    # "show me examples": recall caption units so the answer can pick real
+    # figures by id (their figure_ids feed the catalog)
+    if state.get("wants_examples"):
+        try:
+            cap_fig_ids: set[str] = set()
+            for p in caption_search(state["query"], top_k=10):
+                d = point_to_doc(p)
+                cap_fig_ids.update(d.get("figure_ids") or [])
+            if cap_fig_ids:
+                _merge_figures_by_ids(state, cap_fig_ids)
+        except Exception as e:  # noqa: BLE001
+            state.setdefault("failures", []).append(f"caption_search: {e}")
     return state
+
+
+def _merge_figures_by_ids(state: QState, fig_ids: set[str]) -> None:
+    """Attach figure rows (for the catalog / viewer) by id."""
+    have = {f.get("figure_id") for f in state.get("figures", [])}
+    missing = fig_ids - have
+    if not missing:
+        return
+    with SessionLocal() as s:
+        figs = (
+            s.query(FigureAssetRow)
+            .filter(FigureAssetRow.figure_id.in_(missing))
+            .all()
+        )
+    for f in figs:
+        state.setdefault("figures", []).append(
+            {
+                "figure_id": f.figure_id,
+                "rel_path": f.rel_path,
+                "width_px": f.width_px,
+                "height_px": f.height_px,
+                "figure_label": f.figure_label,
+            }
+        )
 
 
 def _merge_barref_figures(state: QState) -> None:
@@ -239,6 +279,11 @@ def _generate_node(state: QState) -> QState:
         toc_context=state.get("toc_context"),
         fallback=state.get("sop_fallback"),
         barrefs=state.get("barrefs"),
+        wants_examples=state.get("wants_examples", False),
+        figure_catalog=[
+            {"figure_id": f.get("figure_id"), "figure_label": f.get("figure_label")}
+            for f in state.get("figures", [])
+        ],
     )
     return state
 
@@ -303,13 +348,18 @@ def run_query(query: str, images: list[bytes] | None = None) -> dict[str, Any]:
         "acc": {},
     }
     final = _graph.invoke(state)
+    ans = final.get("answer") or {}
+    # only figures the answer actually chose to show (analysis-first, not a gallery)
+    cited_figs = set(ans.get("figure_ids") or [])
+    figures = [f for f in final.get("figures", []) if f.get("figure_id") in cited_figs]
     return {
         "run_id": final["run_id"],
         "intent": final.get("intent"),
         "is_framework": final.get("is_framework", False),
         "routes": final.get("routes", []),
+        "wants_examples": final.get("wants_examples", False),
         "hits": final.get("hits", []),
-        "figures": final.get("figures", []),
+        "figures": figures,
         "barrefs": final.get("barrefs", []),
         "answer": final.get("answer"),
     }
