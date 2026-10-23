@@ -4,7 +4,7 @@
 
 **Blocked by:** 01
 
-**Status:** needs-triage
+**Status:** ready-for-agent
 
 - [ ] `--text-width` 控制多样性宽度，默认 14，三种召回模式共用
 - [ ] 四次运行串行完成（embedded Qdrant 单进程），每次记录题数、命中、净增益、截断与失败

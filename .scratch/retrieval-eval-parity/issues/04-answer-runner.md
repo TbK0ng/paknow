@@ -4,7 +4,7 @@
 
 **Blocked by:** 01, 03
 
-**Status:** needs-triage
+**Status:** claimed
 
 - [ ] `run_query` 透传图谱开关，两条臂除该开关外参数一致
 - [ ] 每题一次无状态调用，生成侧看不到期望证据与答案要点

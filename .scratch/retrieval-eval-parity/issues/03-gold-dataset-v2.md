@@ -4,12 +4,12 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] 新数据集 60 题，分层 20/20/10/10，独立 SHA-256 sidecar
-- [ ] 原 20 题的 `question`、`expanded_queries`、`expected_evidence`、`expected_relations` 逐字段不变
-- [ ] 新题每题有证据锚点、问法与 2–5 条期望答案要点，每条要点绑定来源证据
-- [ ] 带条件主张的要点写明条件与语气；问法不复用百科条目标题原文
-- [ ] 独立核对（只给题面与候选证据文本）已执行；不通过或分歧项进残差表，不进题库
-- [ ] 校验：题数、分层计数、id 唯一、原 20 题不变、每题锚点与要点齐全
-- [ ] 数据集哈希校验沿用既有机制
+- [x] 新数据集 60 题，分层 20/20/10/10，独立 SHA-256 sidecar
+- [x] 原 20 题的 `question`、`expanded_queries`、`expected_evidence`、`expected_relations` 逐字段不变
+- [x] 新题每题有证据锚点、问法与 2–5 条期望答案要点，每条要点绑定来源证据
+- [x] 带条件主张的要点写明条件与语气；问法不复用百科条目标题原文
+- [x] 独立核对（只给题面与候选证据文本）已执行；不通过或分歧项进残差表，不进题库
+- [x] 校验：题数、分层计数、id 唯一、原 20 题不变、每题锚点与要点齐全
+- [x] 数据集哈希校验沿用既有机制
