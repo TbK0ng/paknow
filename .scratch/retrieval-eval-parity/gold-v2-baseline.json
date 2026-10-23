@@ -3,7 +3,6 @@
   "frozen_at": "2026-10-23",
   "protocol": "per-item frozen expanded_queries (6); answer eval runs the production chain per arm",
   "top_k": 20,
-  "text_width": 14,
   "summary": {
     "items": 60,
     "expected_total": 123,

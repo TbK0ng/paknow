@@ -27,6 +27,16 @@
           "from": "open_of_day",
           "to": "breakout"
         }
+      ],
+      "expected_points": [
+        {
+          "text": "高开后走势被归为「开盘即空头趋势」。",
+          "evidence_id": "887ee7c246cdbf4a193ae7e4a2591bbd"
+        },
+        {
+          "text": "随后三角形下方的突破失败。",
+          "evidence_id": "887ee7c246cdbf4a193ae7e4a2591bbd"
+        }
       ]
     },
     {
@@ -53,6 +63,20 @@
           "from": "open_of_day",
           "to": "breakout"
         }
+      ],
+      "expected_points": [
+        {
+          "text": "开盘即多头趋势时，昨日最低点下方的突破失败。",
+          "evidence_id": "eb0060c008738555e2583eccc08759a2"
+        },
+        {
+          "text": "开盘即多头趋势中也可以是卖出高潮，且空头突破失败。",
+          "evidence_id": "7e71a9e4c42b86d41d0e6dd8a72b6747"
+        },
+        {
+          "text": "开盘即突破模式同样会出现突破失败。",
+          "evidence_id": "1d83a0a9080240344c9177e5ab2cc4b4"
+        }
       ]
     },
     {
@@ -76,6 +100,16 @@
           "relation": "PART_OF",
           "from": "double_top",
           "to": "wedge"
+        }
+      ],
+      "expected_points": [
+        {
+          "text": "双顶上方突破失败，属于楔形顶的一种变体。",
+          "evidence_id": "94bbeb00f09f549082761927fcf7b968"
+        },
+        {
+          "text": "判定变体的关键是双顶上方出现突破失败。",
+          "evidence_id": "94bbeb00f09f549082761927fcf7b968"
         }
       ]
     },
@@ -103,6 +137,20 @@
           "from": "failed_breakout",
           "to": "breakout"
         }
+      ],
+      "expected_points": [
+        {
+          "text": "18根K线区间下方的突破失败。",
+          "evidence_id": "ece546c3b83ba9ff8baa6c49bbba8733"
+        },
+        {
+          "text": "该区间先向下突破，随后向上突破。",
+          "evidence_id": "4b6ee5d889e220cb45c01c17a6b1bdcd"
+        },
+        {
+          "text": "下方突破失败之后，随后向上突破区间。",
+          "evidence_id": "8a0d524251b9729ee1a76ae2f568932d"
+        }
       ]
     },
     {
@@ -129,6 +177,20 @@
           "from": "failed_breakout",
           "to": "breakout"
         }
+      ],
+      "expected_points": [
+        {
+          "text": "18根K线区间下方的突破失败之后，可能随后向上突破。",
+          "evidence_id": "3546dcad106552ec66fea23d4e70c856"
+        },
+        {
+          "text": "也可能随后上方的突破同样失败。",
+          "evidence_id": "074854a6b27a2b41c66b31879399177f"
+        },
+        {
+          "text": "若区间上方的突破失败，则随后向下突破。",
+          "evidence_id": "d819d7ff2ca0c4e4967e326371aca21e"
+        }
       ]
     },
     {
@@ -153,6 +215,16 @@
           "relation": "INVALIDATED_BY",
           "from": "failed_breakout",
           "to": "climax"
+        }
+      ],
+      "expected_points": [
+        {
+          "text": "空头通道下方的突破失败，会以竭尽性卖出高潮收场。",
+          "evidence_id": "0e2c249d3b76bd8d87e9a41e8f60304d"
+        },
+        {
+          "text": "这种失败的突破属于竭尽性卖出高潮。",
+          "evidence_id": "01a8d5e972736f9a93ec96631a270e90"
         }
       ]
     },
@@ -179,6 +251,16 @@
           "from": "failed_breakout",
           "to": "wedge"
         }
+      ],
+      "expected_points": [
+        {
+          "text": "18根K线区间下方的突破失败，构成楔形底。",
+          "evidence_id": "c4259e41e8a1ff68f38a6a45146ea84f"
+        },
+        {
+          "text": "该楔形底属于强势楔形底。",
+          "evidence_id": "e7f8295f98ab4f50c283fbf61cffcba9"
+        }
       ]
     },
     {
@@ -202,6 +284,16 @@
           "relation": "TRANSITIONS_TO",
           "from": "climax",
           "to": "auto_major_trend_reversal_mtr"
+        }
+      ],
+      "expected_points": [
+        {
+          "text": "买入高潮失败之后，随后形成楔形牛旗。",
+          "evidence_id": "133fafbcf874c332ff9c1a15299b7543"
+        },
+        {
+          "text": "同时形成高（HL）主要趋势反转。",
+          "evidence_id": "133fafbcf874c332ff9c1a15299b7543"
         }
       ]
     },
@@ -228,6 +320,16 @@
           "from": "gap",
           "to": "reversal"
         }
+      ],
+      "expected_points": [
+        {
+          "text": "向下跳空后出现卖出高潮，但向上反转失败。",
+          "evidence_id": "e8a4845ca3960812aa92332c6c34c13d"
+        },
+        {
+          "text": "向上反转失败之后，市场走出熊旗。",
+          "evidence_id": "825b57972094d7f0b375f5a5a990f18b"
+        }
       ]
     },
     {
@@ -251,6 +353,16 @@
           "relation": "INVALIDATED_BY",
           "from": "climax",
           "to": "high_2"
+        }
+      ],
+      "expected_points": [
+        {
+          "text": "卖出高潮、向下跳空之后形成 H2 底部。",
+          "evidence_id": "70074b9992cb9216f018d26b3c659a25"
+        },
+        {
+          "text": "该 H2 底部随后失败。",
+          "evidence_id": "70074b9992cb9216f018d26b3c659a25"
         }
       ]
     },
@@ -276,6 +388,24 @@
           "kind": "claim",
           "relation": "SUPPORTED_BY",
           "concept": "double_bottom_bull_flag"
+        }
+      ],
+      "expected_points": [
+        {
+          "text": "双底多头旗形和双顶熊旗都是常见形态。",
+          "evidence_id": "38de0072aaf37b666ca771d380096a96"
+        },
+        {
+          "text": "双底多头旗形出现在上涨之后（如图中 bar 2 之后的 bar 3、4）。",
+          "evidence_id": "38de0072aaf37b666ca771d380096a96"
+        },
+        {
+          "text": "双底多头旗形很少完美，第二个低点可以略微跌破第一个低点。",
+          "evidence_id": "cef8b481f6df7299941c4b676c15c999"
+        },
+        {
+          "text": "双底之后快速离开第二个低点、突破后横盘，往往带来很强的趋势。",
+          "evidence_id": "bca2e3898d49a9a6149a1cb2668cb883"
         }
       ]
     },
@@ -303,6 +433,24 @@
           "relation": "SUPPORTED_BY",
           "concept": "trading_range"
         }
+      ],
+      "expected_points": [
+        {
+          "text": "大趋势之后更常见的结果是交易区间，而不是直接反转成相反趋势。",
+          "evidence_id": "e755693118a08f01cde502901d0a2963"
+        },
+        {
+          "text": "当K线与前一根大量重叠时，可能正在形成交易区间。",
+          "evidence_id": "6bf656e645a27e4f907333ea588dcb7c"
+        },
+        {
+          "text": "开盘前90分钟若出现大量重叠K线、长影线与反复反转，当天通常走成交易区间日。",
+          "evidence_id": "c60dded0e13239457aefff8ed49432db"
+        },
+        {
+          "text": "所有高潮都以交易区间结束。",
+          "evidence_id": "89392667981e012caed61cfb1179e3fc"
+        }
       ]
     },
     {
@@ -328,6 +476,24 @@
           "kind": "claim",
           "relation": "SUPPORTED_BY",
           "concept": "gap"
+        }
+      ],
+      "expected_points": [
+        {
+          "text": "大幅跳空低开之后，常见两段回调至均线，再向下突破进入空头趋势。",
+          "evidence_id": "b05f7402a6f80706f4512bed2c5997d8"
+        },
+        {
+          "text": "5分钟图上的跳空开盘只是突破与尖峰（spike）的另一种形式。",
+          "evidence_id": "1b3c4a17ac8c689e2a0ecde9027df8fe"
+        },
+        {
+          "text": "大幅跳空开盘提高当天走成趋势日的概率，但仍可能变成交易区间日。",
+          "evidence_id": "2f84c72607665ba007e01aadcb393aee"
+        },
+        {
+          "text": "趋势K线是跳空的一种变体。",
+          "evidence_id": "dded563fceb3227616b981d604da3203"
         }
       ]
     },
@@ -355,6 +521,20 @@
           "relation": "SUPPORTED_BY",
           "concept": "trend"
         }
+      ],
+      "expected_points": [
+        {
+          "text": "开盘后前几根K线常常预示之后的走势；多头表现积极时趋势更可能恢复。",
+          "evidence_id": "9117c447e1fdb66bc1cdef15c58d3845"
+        },
+        {
+          "text": "日内趋势变化都遵循标准的价格行为原则。",
+          "evidence_id": "7647d8b10d55959dc8868e16f5f0b234"
+        },
+        {
+          "text": "昨日是从开盘开始的强多头趋势日时，今日延续并收在开盘价上方的概率较高。",
+          "evidence_id": "1c216bfdaa9eafae8eeb7a473038b45a"
+        }
       ]
     },
     {
@@ -381,6 +561,24 @@
           "relation": "SUPPORTED_BY",
           "concept": "reversal"
         }
+      ],
+      "expected_points": [
+        {
+          "text": "大多数反转形态至少 80% 会失败。",
+          "evidence_id": "dad1f6d51d393a7d023e82f26ca3fccd"
+        },
+        {
+          "text": "失败的反转形态往往变成楔形牛旗或其他类型的牛旗。",
+          "evidence_id": "dad1f6d51d393a7d023e82f26ca3fccd"
+        },
+        {
+          "text": "寻找反转入场之前，应先看到对趋势线的强力突破。",
+          "evidence_id": "a22445b3f64e9601378b8da782fc637a"
+        },
+        {
+          "text": "一个方向的趋势K线之后紧跟反方向的趋势K线，构成高潮反转。",
+          "evidence_id": "ad5df18d8b827d41cc3a4bd64e5edb33"
+        }
       ]
     },
     {
@@ -404,6 +602,20 @@
           "kind": "claim",
           "relation": "SUPPORTED_BY",
           "concept": "channel"
+        }
+      ],
+      "expected_points": [
+        {
+          "text": "若测试低点的动能太强（如处在陡峭通道中），继续下一段下跌比反转向上更可能。",
+          "evidence_id": "3b07a477c10e307acbe189e2424a1c82"
+        },
+        {
+          "text": "此时应等待突破该通道后是否形成突破回调，再考虑做多。",
+          "evidence_id": "3b07a477c10e307acbe189e2424a1c82"
+        },
+        {
+          "text": "空头通道中，聪明交易者只在K线下方买入，并更倾向于在上方做空。",
+          "evidence_id": "0bcafd210d34306f5fd0fcd15e0a195c"
         }
       ]
     },
@@ -430,6 +642,20 @@
           "relation": "SUPPORTED_BY",
           "concept": "breakout"
         }
+      ],
+      "expected_points": [
+        {
+          "text": "连续两次一 tick 突破构成三推形态，可能很重要。",
+          "evidence_id": "964597e441c0de153d9ef2105d842285"
+        },
+        {
+          "text": "5分钟图上的突破很常见，但带数根跟进K线的强突破通常一天只出现一到三次。",
+          "evidence_id": "ce2b62d6e9578e6d2dd755f048409d5f"
+        },
+        {
+          "text": "当天第一根K线很小时，不是可靠的空头失败突破信号K线。",
+          "evidence_id": "53d1ed976584910b48c36aa23580d936"
+        }
       ]
     },
     {
@@ -452,6 +678,20 @@
           "kind": "claim",
           "relation": "SUPPORTED_BY",
           "concept": "double_top"
+        }
+      ],
+      "expected_points": [
+        {
+          "text": "个股在开盘第一小时常形成双顶或双底旗形。",
+          "evidence_id": "8eac6759d8b55a0ba5aa9e8be4cadda1"
+        },
+        {
+          "text": "这类旗形大多可以交易。",
+          "evidence_id": "8eac6759d8b55a0ba5aa9e8be4cadda1"
+        },
+        {
+          "text": "交易时应先部分止盈，并把止损移到保本位，以防形态失败。",
+          "evidence_id": "8eac6759d8b55a0ba5aa9e8be4cadda1"
         }
       ]
     },
@@ -478,6 +718,24 @@
           "relation": "SUPPORTED_BY",
           "concept": "wedge"
         }
+      ],
+      "expected_points": [
+        {
+          "text": "若K线持续与前一根大量重叠，说明市场接受该价格而非拒绝，反转向上不太可能。",
+          "evidence_id": "8ef770a0d81c76cec759ad9a593f5834"
+        },
+        {
+          "text": "通道很陡时，等待更高的低点再做多更安全。",
+          "evidence_id": "8ef770a0d81c76cec759ad9a593f5834"
+        },
+        {
+          "text": "没有更高的低点，就不应买入该楔形。",
+          "evidence_id": "8ef770a0d81c76cec759ad9a593f5834"
+        },
+        {
+          "text": "小形态可视为小楔形，并应有到达楔形起点的回调。",
+          "evidence_id": "9fa2638af2f5465db6c88764842e9e44"
+        }
       ]
     },
     {
@@ -502,6 +760,24 @@
           "kind": "claim",
           "relation": "SUPPORTED_BY",
           "concept": "pullback"
+        }
+      ],
+      "expected_points": [
+        {
+          "text": "趋势中总会有回调，且趋势延续越久回调往往越大。",
+          "evidence_id": "4c652ffaee935db256aac204fb806ef2"
+        },
+        {
+          "text": "反转出现之前，每次回调至少会测试前一个极值，且通常创出新的极值。",
+          "evidence_id": "4c652ffaee935db256aac204fb806ef2"
+        },
+        {
+          "text": "强趋势之后常跟随一个动能很低的三段回调。",
+          "evidence_id": "3b08ac8b255117e428f6e08f5aafa308"
+        },
+        {
+          "text": "股票常会精确回测突破位；在突破位上方一 tick 重新入场通常是好交易。",
+          "evidence_id": "54c4bd4a184d6f709936370de1095174"
         }
       ]
     },

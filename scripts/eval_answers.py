@@ -32,7 +32,6 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import sys
 import time
@@ -44,6 +43,15 @@ from typing import Any, Callable, Iterable, Mapping, Sequence
 ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
+
+from scripts.eval_common import (  # noqa: E402
+    append_checkpoint,
+    display_path,
+    file_sha256,
+    load_checkpoint,
+    record_key,
+    write_jsonl,
+)
 
 DEFAULT_DATASET = ROOT / "evals" / "gold" / "graph_expansion_v2.json"
 ANSWERS_DIR = ROOT / ".scratch" / "retrieval-eval-parity" / "answers"
@@ -61,22 +69,6 @@ COVERAGE_BUCKETS = ("0", "(0,0.5)", "[0.5,1)", "1")
 
 def load_dataset(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
-
-
-def _display_path(path: Path) -> str:
-    """Repo-relative when possible, absolute otherwise (temp datasets)."""
-    try:
-        return str(path.resolve().relative_to(ROOT))
-    except ValueError:
-        return str(path)
-
-
-def dataset_digest(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as fh:
-        for chunk in iter(lambda: fh.read(1 << 20), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def select_items(dataset: Mapping[str, Any], limit: int = 0) -> list[dict]:
@@ -145,29 +137,38 @@ def coverage_bucket(ratio: float) -> str:
 # ---------------------------------------------------------------------------
 
 
-def error_record(item: Mapping[str, Any], arm: str, error: str, elapsed: float) -> dict:
+def _record(item: Mapping[str, Any], arm: str) -> dict:
+    """The fields both a successful and an errored arm always carry."""
+    expected = list(item.get("expected_evidence", []))
     return {
         "id": item["id"],
         "arm": arm,
         "category": item.get("category"),
         "question": item["question"],
-        "status": "error",
-        "error": error,
         "answer": "",
         "cited_evidence_ids": [],
         "citable_ids": [],
         "graph_evidence_ids": [],
         "routes": [],
         "rounds": 0,
-        "failures": [error],
-        "expected_evidence": list(item.get("expected_evidence", [])),
+        "failures": [],
+        "expected_evidence": expected,
         "invalid_citations": [],
         "graph_citations": [],
         "hard_pass": False,
         "expected_covered": [],
-        "expected_missing": list(item.get("expected_evidence", [])),
+        "expected_missing": list(expected),
         "coverage": 0.0,
         "coverage_complete": False,
+    }
+
+
+def error_record(item: Mapping[str, Any], arm: str, error: str, elapsed: float) -> dict:
+    return {
+        **_record(item, arm),
+        "status": "error",
+        "error": error,
+        "failures": [error],
         "elapsed_s": round(elapsed, 3),
     }
 
@@ -200,10 +201,7 @@ def run_item(
     checks = citation_checks(cited, citable, graph_ids)
     coverage = expected_coverage(expected, citable)
     return {
-        "id": item["id"],
-        "arm": arm,
-        "category": item.get("category"),
-        "question": item["question"],
+        **_record(item, arm),
         "status": "ok",
         "answer": answer.get("answer") or "",
         "cited_evidence_ids": cited,
@@ -212,7 +210,6 @@ def run_item(
         "routes": list(result.get("routes") or []),
         "rounds": int(result.get("rounds") or 0),
         "failures": list(result.get("failures") or []),
-        "expected_evidence": expected,
         **checks,
         **coverage,
         "elapsed_s": round(elapsed, 3),
@@ -243,35 +240,6 @@ def refresh_checks(record: Mapping[str, Any]) -> dict:
 # ---------------------------------------------------------------------------
 # checkpoint / resume
 # ---------------------------------------------------------------------------
-
-
-def record_key(record: Mapping[str, Any]) -> tuple[str, str]:
-    return (str(record["id"]), str(record["arm"]))
-
-
-def load_checkpoint(path: Path) -> dict[tuple[str, str], dict]:
-    """Latest record per (item, arm); the last line wins."""
-    latest: dict[tuple[str, str], dict] = {}
-    if not path.exists():
-        return latest
-    for line in path.read_text(encoding="utf-8").splitlines():
-        line = line.strip()
-        if not line:
-            continue
-        try:
-            record = json.loads(line)
-        except json.JSONDecodeError:
-            # a killed process may leave a partial trailing line
-            continue
-        latest[record_key(record)] = record
-    return latest
-
-
-def append_checkpoint(path: Path, record: Mapping[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("a", encoding="utf-8") as fh:
-        fh.write(json.dumps(record, ensure_ascii=False) + "\n")
-        fh.flush()
 
 
 def merge_records(
@@ -395,13 +363,6 @@ def summarize_delta(records: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
-def write_records(path: Path, records: Sequence[Mapping[str, Any]]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8") as fh:
-        for record in records:
-            fh.write(json.dumps(record, ensure_ascii=False) + "\n")
-
-
 def build_payload(
     *,
     dataset_path: Path,
@@ -417,7 +378,7 @@ def build_payload(
         if r.get("status") != "ok"
     ]
     return {
-        "dataset": _display_path(dataset_path),
+        "dataset": display_path(dataset_path),
         "dataset_sha256": digest,
         "timestamp": timestamp,
         "limit": limit,
@@ -478,7 +439,7 @@ def main() -> None:
 
     dataset = load_dataset(args.dataset)
     items = select_items(dataset, args.limit)
-    digest = dataset_digest(args.dataset)
+    digest = file_sha256(args.dataset)
     checkpoint = load_checkpoint(checkpoint_path) if args.resume else {}
     todo = pending_keys(items, ARMS, checkpoint)
 
@@ -518,7 +479,7 @@ def main() -> None:
         sum(float(r.get("elapsed_s") or 0) for r in records), 1
     )
     payload["ran"] = len(todo)
-    write_records(out_dir / "records.jsonl", records)
+    write_jsonl(out_dir / "records.jsonl", records)
     (out_dir / "summary.json").write_text(
         json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
     )

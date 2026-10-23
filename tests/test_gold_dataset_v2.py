@@ -75,7 +75,7 @@ def test_evidence_ids_are_hex_strings():
             assert len(evidence_id) == 32
 
 
-def test_new_items_have_authoring_anchors_and_bound_answer_points():
+def test_new_items_have_authoring_anchors():
     v1_ids = {item["id"] for item in _load(V1_DATASET)["items"]}
     items = [item for item in _load(V2_DATASET)["items"] if item["id"] not in v1_ids]
 
@@ -86,9 +86,16 @@ def test_new_items_have_authoring_anchors_and_bound_answer_points():
         assert all(HEX_ID.match(a) for a in anchors)
         assert set(item["expected_evidence"]) <= set(anchors)
 
+
+def test_every_item_carries_bound_answer_points():
+    items = _load(V2_DATASET)["items"]
+
+    assert len(items) == 60
+    for item in items:
         points = item.get("expected_points")
-        assert points and 2 <= len(points) <= 5, item["id"]
+        assert isinstance(points, list) and 2 <= len(points) <= 5, item["id"]
         for point in points:
+            assert set(point) == {"text", "evidence_id"}, (item["id"], point)
             assert point["text"].strip(), item["id"]
             assert point["evidence_id"] in item["expected_evidence"], (item["id"], point)
 

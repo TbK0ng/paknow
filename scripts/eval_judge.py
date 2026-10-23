@@ -26,10 +26,11 @@ unsupported-claim counts and expected-evidence coverage, with every per-record
 verdict retained. Checkpointing is per (item, arm), so an interrupted run
 resumes without re-paying for finished records.
 
-Expected answer points: the 40 new v2 items carry authored ``expected_points``
-bound to evidence ids. The 20 original items ship unchanged and have none; for
-those the expected-evidence text is used as the correctness anchor and the
-record is marked ``points_source: "evidence_excerpt"``.
+Expected answer points: all 60 v2 items carry ``expected_points`` bound to
+evidence ids (the 20 original items' points are derived from their frozen
+expected-evidence text). A dataset item without points falls back to that text
+as the correctness anchor and the record is marked
+``points_source: "evidence_excerpt"``.
 
 Usage:
     python scripts/eval_judge.py --sample 10 --out .scratch/retrieval-eval-parity/judgements/spot
@@ -39,7 +40,6 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import sys
 import time
@@ -58,6 +58,14 @@ from scripts.eval_answers import (  # noqa: E402
     ANSWERS_DIR,
     DEFAULT_DATASET,
     refresh_checks,
+)
+from scripts.eval_common import (  # noqa: E402
+    append_checkpoint,
+    display_path,
+    file_sha256,
+    load_checkpoint,
+    read_jsonl,
+    write_jsonl,
 )
 
 DEFAULT_ANSWERS = ANSWERS_DIR / "20261023T104318Z"
@@ -117,27 +125,9 @@ Ask = Callable[[type[BaseModel], list[dict[str, str]]], Any]
 # ---------------------------------------------------------------------------
 
 
-def load_records(path: Path) -> list[dict]:
-    records: list[dict] = []
-    for line in path.read_text(encoding="utf-8").splitlines():
-        line = line.strip()
-        if not line:
-            continue
-        records.append(json.loads(line))
-    return records
-
-
 def load_items(path: Path) -> dict[str, dict]:
     dataset = json.loads(path.read_text(encoding="utf-8"))
     return {str(item["id"]): item for item in dataset["items"]}
-
-
-def file_digest(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as fh:
-        for chunk in iter(lambda: fh.read(1 << 20), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def fetch_evidence_texts(ids: Iterable[str]) -> dict[str, str]:
@@ -322,37 +312,6 @@ def judge_record(
 # ---------------------------------------------------------------------------
 
 
-def record_key(record: Mapping[str, Any]) -> tuple[str, str]:
-    return (str(record["id"]), str(record["arm"]))
-
-
-def load_checkpoint(path: Path) -> dict[tuple[str, str], dict]:
-    """Latest verdict per (item, arm); the last line wins."""
-    latest: dict[tuple[str, str], dict] = {}
-    if not path.exists():
-        return latest
-    for line in path.read_text(encoding="utf-8").splitlines():
-        line = line.strip()
-        if not line:
-            continue
-        try:
-            record = json.loads(line)
-        except json.JSONDecodeError:
-            # a killed process may leave a partial trailing line
-            continue
-        if "id" not in record or "arm" not in record:
-            continue
-        latest[record_key(record)] = record
-    return latest
-
-
-def append_checkpoint(path: Path, record: Mapping[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("a", encoding="utf-8") as fh:
-        fh.write(json.dumps(record, ensure_ascii=False) + "\n")
-        fh.flush()
-
-
 def pending_keys(
     order: Sequence[tuple[str, str]], checkpoint: Mapping[tuple[str, str], dict]
 ) -> list[tuple[str, str]]:
@@ -493,13 +452,6 @@ def aggregate(records: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
-def write_records(path: Path, records: Sequence[Mapping[str, Any]]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8") as fh:
-        for record in records:
-            fh.write(json.dumps(record, ensure_ascii=False) + "\n")
-
-
 def build_payload(
     *,
     answers_path: Path,
@@ -512,10 +464,10 @@ def build_payload(
 ) -> dict:
     payload = {
         "timestamp": timestamp,
-        "answers": str(answers_path),
-        "answers_sha256": file_digest(answers_path / "records.jsonl"),
-        "dataset": str(dataset_path),
-        "dataset_sha256": file_digest(dataset_path),
+        "answers": display_path(answers_path),
+        "answers_sha256": file_sha256(answers_path / "records.jsonl"),
+        "dataset": display_path(dataset_path),
+        "dataset_sha256": file_sha256(dataset_path),
         "judge": {
             "model": model,
             "temperature": 0.0,
@@ -629,7 +581,7 @@ def main() -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
     checkpoint_path = out_dir / "checkpoint.jsonl"
 
-    records = load_records(args.answers / "records.jsonl")
+    records = read_jsonl(args.answers / "records.jsonl")
     items = load_items(args.dataset)
     order = [(str(r["id"]), str(r["arm"])) for r in records]
     by_key = {(str(r["id"]), str(r["arm"])): r for r in records}
@@ -701,7 +653,7 @@ def main() -> None:
     )
     payload["ran"] = len(todo)
     payload["evidence_units_fetched"] = len(evidence_texts)
-    write_records(out_dir / "records.jsonl", judged_records)
+    write_jsonl(out_dir / "records.jsonl", judged_records)
     summary_path.write_text(
         json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
     )
