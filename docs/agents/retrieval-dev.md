@@ -149,6 +149,70 @@ Budget: one chain call per (item, arm); the chain itself makes roughly 3–4
 full 60×2 batch stays within the spec's 600–900 calls. Run it in the same
 serialized window as the recall eval: embedded Qdrant is single-process.
 
+### Answer judgement (needs DB + cloud key, no Qdrant)
+
+`scripts/eval_judge.py` judges the committed answer batch
+(`.scratch/retrieval-eval-parity/answers/<timestamp>/records.jsonl`) against
+`evals/gold/graph_expansion_v2.json`. One verdict per (item, arm):
+
+1. **Hard constraints first, deterministically.** A record whose answer run
+   errored, whose answer is empty, or whose stored citations break the citation
+   constraints (out-of-set id, graph-only id) is a `fail` verdict and is never
+   sent to the model. The constraints are recomputed from the stored ids on
+   every run, so a tightened definition applies to an old batch without
+   re-running the answers.
+2. **One blind `gateway.chat_json` call otherwise.** The message carries only
+   the question, the expected answer points, the answer text and the text of the
+   evidence the answer cited — fetched read-only from the metadata DB
+   (`evidence_units`, one `SELECT`, no writes; each unit clipped to 1200 chars).
+   The arm, item id, stratum, routes, rounds and retrieval failures never enter
+   the message: a `text` and a `graph` record with the same answer produce
+   byte-identical messages.
+3. **Strict schema.** `JudgeScores`: `correctness`, `condition_preservation` and
+   `citation_support`, each an integer 0–2, plus `unsupported_claims:
+   list[str]`. A missing field, out-of-range value, coerced type or extra key
+   fails that record. The three scores are never merged into one number and the
+   hard verdict stays the verdict. The call raises `max_tokens` to 16384: the
+   reasoning budget shares that ceiling, and at 8192 the longest answers came
+   back with empty content at `finish=length`.
+
+The 40 new v2 items carry authored `expected_points` bound to evidence ids; the
+20 original items ship unchanged and have none, so for those the
+expected-evidence text is the correctness anchor and the record says
+`points_source: "evidence_excerpt"`. Those anchors are terse heading/summary
+fragments ("失败，构成楔形底"), so their correctness scores are a lower bound: an
+answer that paraphrases the idea without reproducing the fragment can still
+score 0. Compare strata with that in mind.
+
+Artifacts go to `.scratch/retrieval-eval-parity/judgements/<UTC-timestamp>/`:
+`records.jsonl` (per-record verdict: hard reasons, the three scores, unsupported
+claims, coverage, evidence size), `summary.json` (counts, per-arm and
+per-stratum hard-pass rate / score distributions / unsupported-claim counts,
+paired graph-minus-text deltas, hard failures, the exact prompt and schema, wall
+time) and `checkpoint.jsonl`. `--limit N` judges the first N pending records,
+`--sample N` judges N spread evenly over the batch (use it for the pre-full-run
+manual spot check), `--resume --out <dir>` retries errored records only.
+
+```bash
+# 10-record spot check, then the full batch
+PAKNOW_DB_URL=sqlite:///E:/PAknow/data/paknow.db PYTHONPATH=. \
+  E:/PAknow/.venv/Scripts/python.exe scripts/eval_judge.py --sample 10 \
+  --out .scratch/retrieval-eval-parity/judgements/spot-$(date -u +%Y%m%dT%H%M%SZ)
+
+PAKNOW_DB_URL=sqlite:///E:/PAknow/data/paknow.db PYTHONPATH=. \
+  E:/PAknow/.venv/Scripts/python.exe scripts/eval_judge.py \
+  --out .scratch/retrieval-eval-parity/judgements/$(date -u +%Y%m%dT%H%M%SZ)
+
+# retry errored records only
+PAKNOW_DB_URL=sqlite:///E:/PAknow/data/paknow.db PYTHONPATH=. \
+  E:/PAknow/.venv/Scripts/python.exe scripts/eval_judge.py \
+  --resume --out .scratch/retrieval-eval-parity/judgements/<timestamp>
+```
+
+`--answers PATH` points the judge at a different batch. It needs the metadata DB
+and the cloud key but no Qdrant and no embedding model: it reads stored answers
+and evidence text only, so it does not take the embedded-Qdrant lock.
+
 ### Taxonomy rebuild (needs DB)
 
 ```bash
