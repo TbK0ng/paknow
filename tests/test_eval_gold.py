@@ -6,7 +6,10 @@ offline run against the text index (not a CI gate).
 """
 from __future__ import annotations
 
+import hashlib
 import json
+
+import pytest
 
 from scripts import eval_gold
 
@@ -186,11 +189,13 @@ def test_regression_payload_has_a_stable_key_order_and_is_serializable():
         "protocol",
         "top_k",
         "mode",
+        "baseline_reused",
         "baseline_summary",
         "summary",
         "items",
     ]
     assert payload["mode"] == "graph"
+    assert payload["baseline_reused"] is False
     assert payload["items"][0]["id"] == "mech-01"
     first = json.dumps(payload, ensure_ascii=False, indent=2)
     again = json.dumps(
@@ -252,3 +257,190 @@ def test_evaluate_graph_item_reuses_the_frozen_queries(monkeypatch):
     assert row["still_missing"] == ["c"]
     assert row["graph_unique"] is True
     assert row["truncation"]["truncated"] is False
+
+
+# ---------------------------------------------------------------------------
+# frozen dataset hash for baseline reuse
+# ---------------------------------------------------------------------------
+
+
+def _write(path, content: str) -> None:
+    path.write_text(content, encoding="utf-8")
+
+
+def test_committed_sidecar_matches_the_frozen_dataset():
+    sidecar = eval_gold.DEFAULT_DATASET_HASH
+    assert sidecar.exists()
+    expected = eval_gold.read_dataset_hash(sidecar)
+    actual = eval_gold.dataset_sha256(eval_gold.DEFAULT_DATASET)
+
+    assert expected == actual
+    assert len(actual) == 64
+
+
+def test_verify_frozen_dataset_accepts_a_matching_sidecar(tmp_path):
+    dataset = tmp_path / "dataset.json"
+    _write(dataset, '{"items": []}')
+    digest = hashlib.sha256(dataset.read_bytes()).hexdigest()
+    sidecar = tmp_path / "dataset.sha256"
+    _write(sidecar, digest + "\n")
+
+    assert eval_gold.verify_frozen_dataset(dataset, sidecar=sidecar) == digest
+
+
+def test_verify_frozen_dataset_accepts_sha256sum_output(tmp_path):
+    dataset = tmp_path / "dataset.json"
+    _write(dataset, '{"items": []}')
+    digest = hashlib.sha256(dataset.read_bytes()).hexdigest()
+    sidecar = tmp_path / "dataset.sha256"
+    _write(sidecar, f"{digest}  dataset.json\n")
+
+    assert eval_gold.verify_frozen_dataset(dataset, sidecar=sidecar) == digest
+
+
+def test_verify_frozen_dataset_rejects_a_changed_dataset(tmp_path):
+    dataset = tmp_path / "dataset.json"
+    _write(dataset, '{"items": []}')
+    sidecar = tmp_path / "dataset.sha256"
+    _write(sidecar, hashlib.sha256(b"something else").hexdigest())
+
+    with pytest.raises(SystemExit) as excinfo:
+        eval_gold.verify_frozen_dataset(dataset, sidecar=sidecar)
+
+    message = str(excinfo.value)
+    assert "hash mismatch" in message
+    assert "rerun --mode baseline" in message
+
+
+def test_verify_frozen_dataset_requires_the_sidecar(tmp_path):
+    dataset = tmp_path / "dataset.json"
+    _write(dataset, '{"items": []}')
+    sidecar = tmp_path / "missing.sha256"
+
+    with pytest.raises(SystemExit) as excinfo:
+        eval_gold.verify_frozen_dataset(dataset, sidecar=sidecar)
+
+    message = str(excinfo.value)
+    assert "sidecar" in message
+    assert str(sidecar) in message
+
+
+def test_verify_frozen_dataset_rejects_a_malformed_sidecar(tmp_path):
+    dataset = tmp_path / "dataset.json"
+    _write(dataset, '{"items": []}')
+    sidecar = tmp_path / "dataset.sha256"
+    _write(sidecar, "not-a-sha256\n")
+
+    with pytest.raises(SystemExit, match="SHA-256"):
+        eval_gold.verify_frozen_dataset(dataset, sidecar=sidecar)
+
+
+def test_reuse_baseline_is_rejected_outside_graph_mode():
+    with pytest.raises(SystemExit, match="only valid with --mode graph"):
+        eval_gold.require_reuse_mode("baseline", reuse=True)
+    eval_gold.require_reuse_mode("graph", reuse=True)
+    eval_gold.require_reuse_mode("baseline", reuse=False)
+
+
+def test_reuse_baseline_flag_fails_fast_in_baseline_mode(monkeypatch):
+    monkeypatch.setattr(
+        "sys.argv", ["eval_gold.py", "--mode", "baseline", "--reuse-baseline"]
+    )
+
+    with pytest.raises(SystemExit, match="only valid with --mode graph"):
+        eval_gold.main()
+
+
+def _reuse_fixture(tmp_path):
+    dataset = tmp_path / "dataset.json"
+    dataset.write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "frozen_at": "2026-10-23",
+                "retrieval_protocol": "p",
+                "queries_per_item": 6,
+                "items": [
+                    {
+                        "id": "enc-01",
+                        "category": "encyclopedia",
+                        "question": "q",
+                        "expanded_queries": ["q", "q2", "q3", "q4", "q5", "q6"],
+                        "expected_evidence": ["a", "b"],
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    sidecar = tmp_path / "dataset.sha256"
+    sidecar.write_text(
+        hashlib.sha256(dataset.read_bytes()).hexdigest() + "\n", encoding="utf-8"
+    )
+    baseline = tmp_path / "baseline.json"
+    baseline.write_text(
+        json.dumps(
+            {
+                "dataset": str(dataset),
+                "frozen_at": "2026-10-23",
+                "protocol": "p",
+                "top_k": 20,
+                "summary": {"expected_found": 1},
+                "items": [
+                    {
+                        "id": "enc-01",
+                        "category": "encyclopedia",
+                        "question": "q",
+                        "expected": ["a", "b"],
+                        "found": ["a"],
+                        "missing": ["b"],
+                        "hit": True,
+                        "graph_unique": True,
+                        "union_size": 1,
+                        "hits": ["a"],
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    return dataset, sidecar, baseline
+
+
+def test_reuse_baseline_writes_verified_provenance_without_touching_baseline(
+    tmp_path, monkeypatch
+):
+    dataset, sidecar, baseline = _reuse_fixture(tmp_path)
+    before = baseline.read_bytes()
+    out = tmp_path / "regression.json"
+
+    def fake_retrieve(query, queries, **kwargs):
+        return _FakeResult(
+            ["a"],
+            ["b"],
+            {"selected": 1, "tokens": 10, "truncated_edges": False,
+             "truncated_evidence": False, "truncated_tokens": False},
+        )
+
+    monkeypatch.setattr(eval_gold, "retrieve_evidence", fake_retrieve)
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "eval_gold.py",
+            "--mode", "graph",
+            "--dataset", str(dataset),
+            "--dataset-hash", str(sidecar),
+            "--baseline", str(baseline),
+            "--out", str(out),
+            "--reuse-baseline",
+        ],
+    )
+
+    eval_gold.main()
+
+    payload = json.loads(out.read_text(encoding="utf-8"))
+    assert payload["baseline_reused"] is True
+    assert payload["summary"]["newly_recalled"] == 1
+    assert payload["dataset"] == str(dataset)
+    assert baseline.read_bytes() == before
+
