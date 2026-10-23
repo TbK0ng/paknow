@@ -29,6 +29,10 @@ Commands, path overrides, and failure modes for retrieval/eval/taxonomy/alignmen
 
 Canonical concept ids live only in `configs/terms.yaml`. Resolve cross-module links through `paknow/graph/identity.py` (`canonical_for` / `resolved_canonical`); a `TermMatch.canonical` is a local match, not an identity. See `GLOSSARY.md` 概念身份.
 
+## Feature workflow
+
+Record the integration base as `**Review base:** <sha>` in the feature spec before `/code-review`; the review pins its diff to that commit. On close, run `python scripts/check_scratch.py` and update or delete `HANDOFF.md` so it does not describe a retired API or frontier.
+
 ## Agent skills
 
 ### Issue tracker
