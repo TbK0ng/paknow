@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import mimetypes
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import FastAPI, HTTPException, UploadFile
 from fastapi.responses import FileResponse, Response
@@ -13,6 +13,7 @@ from qdrant_client.models import FieldCondition, Filter, MatchValue
 from paknow.db import SessionLocal
 from paknow.db.models import DocumentRow, EvidenceUnitRow, FigureAssetRow, RunTraceRow
 from paknow.evidence.citations import resolve_citations
+from paknow.gateway import gateway
 from paknow.ingest.store import object_path
 from paknow.memory.sop import list_sops
 from paknow.retrieval.search import diversify, hybrid_search, point_to_doc, rerank
@@ -23,8 +24,21 @@ app = FastAPI(title="PAknow", version="0.1.0")
 
 _VIEWER_INDEX = Path(__file__).resolve().parent.parent / "viewer" / "index.html"
 
+#: Turns of the current dialogue sent to the standalone-query rewriter.
+MAX_HISTORY_TURNS = 8
+
+
+class ChatTurn(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str
+
 
 class QueryRequest(BaseModel):
+    query: str
+    history: list[ChatTurn] = Field(default_factory=list)
+
+
+class StandaloneQuery(BaseModel):
     query: str
 
 
@@ -33,6 +47,69 @@ class SearchRequest(BaseModel):
     top_k: int = Field(default=8, ge=1, le=20)
     doc_id: str | None = None
     block_type: str | None = None
+
+
+def _standalone_query(query: str, history: list[ChatTurn]) -> tuple[str, bool]:
+    """Rewrite a follow-up into a standalone question using recent turns.
+
+    Retrieval only sees the rewritten question, so pronouns and elisions in the
+    follow-up ("那它呢") do not silently degrade recall. Any failure falls back
+    to the raw question: the dialogue still works, it just loses the context.
+    """
+    if not history:
+        return query, False
+    turns = [turn for turn in history[-MAX_HISTORY_TURNS:] if turn.content.strip()]
+    if not turns:
+        return query, False
+    transcript = "\n".join(
+        f"{'用户' if turn.role == 'user' else '助手'}：{turn.content.strip()}"
+        for turn in turns
+    )
+    try:
+        out = gateway.chat_json(
+            StandaloneQuery,
+            [
+                {
+                    "role": "system",
+                    "content": (
+                        "你是检索查询改写器。根据对话历史，把用户的最新问题改写成"
+                        "一个可独立检索的中文问题。只补全指代与省略，不回答、不解释、"
+                        "不添加历史里没有的事实。"
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": f"对话历史：\n{transcript}\n\n最新问题：{query}",
+                },
+            ],
+            max_tokens=256,
+        )
+        rewritten = (out.query or "").strip()
+    except Exception:  # noqa: BLE001 - a failed rewrite must not break the answer
+        return query, False
+    if not rewritten or rewritten == query:
+        return query, False
+    return rewritten, True
+
+
+def _graph_entry(entry: dict[str, Any]) -> dict[str, Any]:
+    """Compact graph-expansion row for the viewer; evidence text is truncated."""
+    return {
+        "evidence_id": entry.get("evidence_id"),
+        "relation": entry.get("relation"),
+        "from_label": entry.get("from_label"),
+        "to_label": entry.get("to_label"),
+        "claim": entry.get("claim"),
+        "concept": entry.get("concept"),
+        "source": entry.get("source"),
+        "seen_index": entry.get("seen_index"),
+        "doc_id": entry.get("doc_id"),
+        "chapter_path": entry.get("chapter_path") or [],
+        "pdf_page": entry.get("pdf_page"),
+        "printed_page": entry.get("printed_page"),
+        "figure_label": entry.get("figure_label"),
+        "text": (entry.get("text") or "")[:240],
+    }
 
 
 def _resolve_answer(result: dict[str, Any]) -> dict[str, Any]:
@@ -47,6 +124,9 @@ def _resolve_answer(result: dict[str, Any]) -> dict[str, Any]:
         "uncertainty": ans.get("uncertainty"),
         "citations": citations,
         "figures": result.get("figures"),
+        "rounds": result.get("rounds"),
+        "graph_stats": result.get("graph_stats") or {},
+        "graph": [_graph_entry(e) for e in (result.get("graph_evidence") or [])],
     }
 
 
@@ -57,7 +137,11 @@ def health() -> dict[str, str]:
 
 @app.post("/query")
 def query(req: QueryRequest) -> dict[str, Any]:
-    return _resolve_answer(run_query(req.query))
+    standalone, rewritten = _standalone_query(req.query, req.history)
+    payload = _resolve_answer(run_query(standalone))
+    payload["query_used"] = standalone
+    payload["rewritten"] = rewritten
+    return payload
 
 
 @app.post("/search")
