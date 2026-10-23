@@ -53,31 +53,54 @@ def test_graph_only_is_expected_graph_evidence_the_text_arm_lacks():
     assert eval_gold.graph_only(["a"], text_ids={"a"}, graph_ids={"a", "b"}) == []
 
 
-def test_net_gain_is_graph_expected_hits_minus_text_arm_expected_hits():
+def test_union_found_is_expected_units_of_either_arm():
+    assert eval_gold.union_found(
+        ["a", "b", "c"], text_ids={"a", "b"}, graph_ids={"b", "c"}
+    ) == ["a", "b", "c"]
+    assert eval_gold.union_found(["a", "d"], text_ids={"a"}, graph_ids={"c"}) == ["a"]
+
+
+def test_net_gain_counts_the_graph_arm_union_not_graph_evidence():
+    # text {a,b} + graph {b,c}: the overlap b must not cancel the gain
     rows = [
-        {**_row("mech-01"), "graph_found": ["a", "b"], "regression_text_found": ["a"],
-         "graph_only": ["b"]},
-        {**_row("mech-02"), "graph_found": [], "regression_text_found": ["a"],
-         "graph_only": []},
+        {**_row("mech-01"), "graph_found": ["b", "c"],
+         "regression_text_found": ["a", "b"], "graph_only": ["c"],
+         "union_found": ["a", "b", "c"]},
     ]
 
     summary = eval_gold.summarize_graph(rows)
 
     assert summary["graph_found"] == 2
-    assert summary["regression_text_found"] == 2
     assert summary["graph_only"] == 1
-    assert summary["net_gain"] == 0
+    assert summary["regression_text_found"] == 2
+    assert summary["union_found"] == 3
+    assert summary["net_gain"] == 1
 
 
-def test_net_gain_is_negative_when_the_graph_arm_reaches_less():
+def test_net_gain_totals_union_found_across_rows():
     rows = [
-        {**_row("mech-01"), "graph_found": ["a"], "regression_text_found": ["a", "b"],
-         "graph_only": []},
+        {**_row("mech-01"), "graph_found": ["a", "b"], "regression_text_found": ["a"],
+         "graph_only": ["b"], "union_found": ["a", "b"]},
+        {**_row("mech-02"), "graph_found": [], "regression_text_found": ["a"],
+         "graph_only": [], "union_found": ["a"]},
     ]
 
     summary = eval_gold.summarize_graph(rows)
 
-    assert summary["net_gain"] == -1
+    assert summary["union_found"] == 3
+    assert summary["regression_text_found"] == 2
+    assert summary["net_gain"] == 1
+
+
+def test_net_gain_is_zero_when_both_arms_reach_the_same_units():
+    rows = [
+        {**_row("mech-01"), "graph_found": [], "regression_text_found": ["a", "b"],
+         "graph_only": [], "union_found": ["a", "b"]},
+    ]
+
+    summary = eval_gold.summarize_graph(rows)
+
+    assert summary["net_gain"] == 0
 
 
 def test_evaluate_text_item_runs_the_seam_with_graph_off(monkeypatch):
@@ -232,6 +255,7 @@ def _row(row_id: str) -> dict:
         "graph_unique": True,
         "graph_unique_recovered": True,
         "graph_only": ["a"],
+        "union_found": ["a"],
         "graph_entries": 1,
         "graph_stats": {"selected": 1, "tokens": 12},
         "truncation": {"truncated": False, "hit_limits": [], "selected": 1, "tokens": 12},
@@ -561,7 +585,8 @@ def test_reuse_baseline_writes_verified_provenance_without_touching_baseline(
     assert payload["baseline_reused"] is True
     assert payload["summary"]["newly_recalled"] == 1
     assert payload["summary"]["graph_only"] == 1
-    assert payload["summary"]["net_gain"] == 0  # both arms reached exactly one expected unit
+    assert payload["summary"]["union_found"] == 2  # text found a, graph found b
+    assert payload["summary"]["net_gain"] == 1
     assert payload["text_arm_summary"]["expected_found"] == 1
     assert payload["dataset"] == str(dataset)
     assert baseline.read_bytes() == before

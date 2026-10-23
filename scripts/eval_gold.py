@@ -19,8 +19,10 @@ Three modes:
   per-question diff against both arms: expected units newly recalled over the
   union probe, graph-only expected units (in graph evidence but not in the
   text arm), baseline units lost by the new text path, budget truncations,
-  the fixed graph-unique verdict and the net gain (graph hits - text hits).
-  Truncation flags stay in the report but are not a verdict.
+  the fixed graph-unique verdict and the net gain. The graph arm's expected
+  hits are text hits plus graph evidence (``union_found``), so net gain is
+  ``union_found - regression_text_found``. Truncation flags stay in the report
+  but are not a verdict.
 
 Graph mode can reuse an already recorded union-probe baseline with
 ``--reuse-baseline``. That path verifies ``evals/gold/graph_expansion.sha256``
@@ -61,7 +63,7 @@ DEFAULT_DATASET_HASH = ROOT / "evals" / "gold" / "graph_expansion.sha256"
 DEFAULT_BASELINE = ROOT / ".scratch" / "graph-expansion" / "gold-baseline.json"
 DEFAULT_BASELINE_OUT = ROOT / ".scratch" / "graph-expansion" / "gold-baseline.json"
 DEFAULT_TEXT_OUT = ROOT / ".scratch" / "retrieval-eval-parity" / "gold-text.json"
-DEFAULT_GRAPH_OUT = ROOT / ".scratch" / "graph-expansion" / "gold-regression.json"
+DEFAULT_GRAPH_OUT = ROOT / ".scratch" / "retrieval-eval-parity" / "gold-regression.json"
 
 _HASH_HEX = frozenset("0123456789abcdef")
 
@@ -174,6 +176,17 @@ def graph_only(
     return [eid for eid in expected if eid in graph and eid not in text]
 
 
+def union_found(
+    expected: Sequence[str],
+    *,
+    text_ids: Iterable[str],
+    graph_ids: Iterable[str],
+) -> list[str]:
+    """Expected units the graph arm reaches: text hits plus graph evidence."""
+    covered = set(text_ids) | set(graph_ids)
+    return [eid for eid in expected if eid in covered]
+
+
 def classify_diff(
     expected: Sequence[str],
     *,
@@ -260,15 +273,16 @@ def summarize_text(rows: list[dict]) -> dict:
 def summarize_graph(rows: list[dict]) -> dict:
     truncations = [r["truncation"] for r in rows]
     text_found = sum(len(r["regression_text_found"]) for r in rows)
-    graph_found = sum(len(r["graph_found"]) for r in rows)
+    union = sum(len(r["union_found"]) for r in rows)
     return {
         "items": len(rows),
         "expected_total": sum(len(r["expected"]) for r in rows),
         "baseline_found": sum(len(r["baseline_found"]) for r in rows),
         "regression_text_found": text_found,
-        "graph_found": graph_found,
+        "graph_found": sum(len(r["graph_found"]) for r in rows),
         "graph_only": sum(len(r["graph_only"]) for r in rows),
-        "net_gain": graph_found - text_found,
+        "union_found": union,
+        "net_gain": union - text_found,
         "recovered_expected": sum(len(r["recovered_expected"]) for r in rows),
         "newly_recalled": sum(len(r["newly_recalled"]) for r in rows),
         "lost": sum(len(r["lost"]) for r in rows),
@@ -365,6 +379,7 @@ def evaluate_graph_item(
         "expected": expected,
         **diff,
         "graph_only": graph_only(expected, text_ids=text_arm, graph_ids=graph_ids),
+        "union_found": union_found(expected, text_ids=text_arm, graph_ids=graph_ids),
         "graph_entries": len(graph_ids),
         "graph_stats": dict(result.graph_stats),
         "truncation": truncation_report(
@@ -487,8 +502,8 @@ def print_graph_table(rows: list[dict], summary: dict) -> None:
     print(
         "production-parity: "
         f"text arm {summary['regression_text_found']}, "
-        f"graph {summary['graph_found']}, "
-        f"graph-only {summary['graph_only']}, "
+        f"graph arm union {summary['union_found']} "
+        f"(graph evidence {summary['graph_found']}, graph-only {summary['graph_only']}), "
         f"net gain {summary['net_gain']:+d}"
     )
     print(

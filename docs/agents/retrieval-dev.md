@@ -15,7 +15,7 @@ from the directory named in each block. Python is the shared venv
 | BGE-M3 / reranker / VL cache | `E:\use_model` (`HF_HOME` is set by `paknow/config.py`) | `HF_HOME`, or the `hf_home` setting |
 | Gold dataset | `evals/gold/graph_expansion.json` | `--dataset` |
 | Frozen union-probe baseline | `.scratch/graph-expansion/gold-baseline.json` | `--baseline` |
-| Union-probe / text / graph output | `.scratch/graph-expansion/gold-baseline.json`, `.scratch/retrieval-eval-parity/gold-text.json`, `.scratch/graph-expansion/gold-regression.json` | `--out` |
+| Union-probe / text / graph output | `.scratch/graph-expansion/gold-baseline.json`, `.scratch/retrieval-eval-parity/gold-{text,regression}.json` | `--out` |
 
 `project_root` is derived from the installed package location, so a worktree
 resolves `data/` inside the worktree. Worktrees are created without the ignored
@@ -61,13 +61,15 @@ Three recall modes, all reading the same frozen queries:
 |---|---|---|---|
 | `baseline` | `hybrid_search(top_k=--top-k)` per query, union | `.scratch/graph-expansion/gold-baseline.json` | Union probe: upper-bound reference. Byte-identical across reruns; only re-record when the dataset or metric is intentionally re-frozen. |
 | `text` | `retrieve_evidence(..., expand_graph=False)` | `.scratch/retrieval-eval-parity/gold-text.json` | Production-parity baseline: same seam, rerank, diversity and width as the online text channel, only the graph layer off. |
-| `graph` | `retrieve_evidence(...)` plus a `text` round per item | `.scratch/graph-expansion/gold-regression.json` | Shipped chain. Reports the union-probe delta and the production-parity delta (graph-only hits, net gain = graph expected hits − text expected hits). |
+| `graph` | `retrieve_evidence(...)` plus a `text` round per item | `.scratch/retrieval-eval-parity/gold-regression.json` | Shipped chain. Reports the union-probe delta and the production-parity delta (graph-only hits, net gain = graph-arm expected hits − text-arm expected hits). |
 
 Recall metrics in graph mode: `graph_only` (expected units in graph evidence
-but not in the text arm) is the primary metric; `net_gain` is graph expected
-hits minus text expected hits. Truncation counts are still reported but are
-not a verdict. Graph evidence budget is `MAX_EVIDENCE=14`, bounded by
-`MAX_CONTEXT_TOKENS=1200`; edge traversal stays at `MAX_EDGES=32`.
+but not in the text arm) is the primary metric. The graph arm's expected hits
+are `union_found` = text hits ∪ graph evidence, so `net_gain = union_found −
+regression_text_found`; `graph_found` (graph evidence only) stays a separate
+field. Truncation counts are still reported but are not a verdict. Graph
+evidence budget is `MAX_EVIDENCE=14`, bounded by `MAX_CONTEXT_TOKENS=1200`;
+edge traversal stays at `MAX_EDGES=32`.
 
 ```bash
 # production-parity baseline, then graph regression against the committed union probe

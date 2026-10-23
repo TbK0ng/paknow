@@ -4,7 +4,6 @@
   "protocol": "hybrid_search(top_k=20) per frozen query; top-20 union; no routing, no rerank",
   "top_k": 20,
   "mode": "graph",
-  "baseline_reused": true,
   "baseline_summary": {
     "items": 20,
     "expected_total": 50,
@@ -14,28 +13,18 @@
     "items_with_all_hits": 10,
     "items_graph_unique": 10
   },
-  "text_arm_summary": {
-    "items": 20,
-    "expected_total": 50,
-    "expected_found": 16,
-    "expected_missing": 34,
-    "items_with_any_hit": 12,
-    "items_with_all_hits": 5
-  },
   "summary": {
     "items": 20,
     "expected_total": 50,
     "baseline_found": 24,
     "regression_text_found": 16,
-    "graph_found": 13,
-    "graph_only": 12,
-    "net_gain": -3,
-    "recovered_expected": 9,
-    "newly_recalled": 9,
-    "lost": 5,
+    "graph_found": 9,
+    "recovered_expected": 6,
+    "newly_recalled": 6,
+    "lost": 6,
     "text_path_lost": 8,
-    "still_missing": 17,
-    "graph_entries": 280,
+    "still_missing": 20,
+    "graph_entries": 160,
     "items_graph_unique": 10,
     "items_graph_unique_recovered": 5,
     "items_truncated": 20,
@@ -69,26 +58,24 @@
       "still_missing": [],
       "graph_unique": false,
       "graph_unique_recovered": false,
-      "graph_only": [],
-      "graph_entries": 14,
+      "graph_entries": 8,
       "graph_stats": {
-        "candidates": 16,
-        "selected": 14,
+        "candidates": 10,
+        "selected": 8,
         "truncated_edges": false,
         "truncated_evidence": true,
         "truncated_tokens": false,
-        "tokens": 694,
+        "tokens": 387,
         "seeds": 8,
-        "accumulated": 14,
-        "enabled": true
+        "accumulated": 8
       },
       "truncation": {
         "truncated": true,
         "hit_limits": [
           "evidence"
         ],
-        "selected": 14,
-        "tokens": 694
+        "selected": 8,
+        "tokens": 387
       },
       "failures": [],
       "query_count": 6
@@ -123,26 +110,24 @@
       ],
       "graph_unique": true,
       "graph_unique_recovered": false,
-      "graph_only": [],
-      "graph_entries": 14,
+      "graph_entries": 8,
       "graph_stats": {
-        "candidates": 21,
-        "selected": 14,
+        "candidates": 12,
+        "selected": 8,
         "truncated_edges": false,
         "truncated_evidence": true,
         "truncated_tokens": false,
-        "tokens": 774,
+        "tokens": 442,
         "seeds": 8,
-        "accumulated": 14,
-        "enabled": true
+        "accumulated": 8
       },
       "truncation": {
         "truncated": true,
         "hit_limits": [
           "evidence"
         ],
-        "selected": 14,
-        "tokens": 774
+        "selected": 8,
+        "tokens": 442
       },
       "failures": [],
       "query_count": 6
@@ -169,26 +154,24 @@
       "still_missing": [],
       "graph_unique": false,
       "graph_unique_recovered": false,
-      "graph_only": [],
-      "graph_entries": 14,
+      "graph_entries": 8,
       "graph_stats": {
-        "candidates": 18,
-        "selected": 14,
+        "candidates": 11,
+        "selected": 8,
         "truncated_edges": false,
         "truncated_evidence": true,
         "truncated_tokens": false,
-        "tokens": 730,
+        "tokens": 386,
         "seeds": 8,
-        "accumulated": 14,
-        "enabled": true
+        "accumulated": 8
       },
       "truncation": {
         "truncated": true,
         "hit_limits": [
           "evidence"
         ],
-        "selected": 14,
-        "tokens": 730
+        "selected": 8,
+        "tokens": 386
       },
       "failures": [],
       "query_count": 6
@@ -224,26 +207,24 @@
       "still_missing": [],
       "graph_unique": false,
       "graph_unique_recovered": false,
-      "graph_only": [],
-      "graph_entries": 14,
+      "graph_entries": 8,
       "graph_stats": {
-        "candidates": 16,
-        "selected": 14,
+        "candidates": 10,
+        "selected": 8,
         "truncated_edges": false,
         "truncated_evidence": true,
         "truncated_tokens": false,
-        "tokens": 694,
+        "tokens": 387,
         "seeds": 8,
-        "accumulated": 14,
-        "enabled": true
+        "accumulated": 8
       },
       "truncation": {
         "truncated": true,
         "hit_limits": [
           "evidence"
         ],
-        "selected": 14,
-        "tokens": 694
+        "selected": 8,
+        "tokens": 387
       },
       "failures": [],
       "query_count": 6
@@ -279,26 +260,24 @@
       "still_missing": [],
       "graph_unique": false,
       "graph_unique_recovered": false,
-      "graph_only": [],
-      "graph_entries": 14,
+      "graph_entries": 8,
       "graph_stats": {
-        "candidates": 16,
-        "selected": 14,
+        "candidates": 10,
+        "selected": 8,
         "truncated_edges": false,
         "truncated_evidence": true,
         "truncated_tokens": false,
-        "tokens": 694,
+        "tokens": 387,
         "seeds": 8,
-        "accumulated": 14,
-        "enabled": true
+        "accumulated": 8
       },
       "truncation": {
         "truncated": true,
         "hit_limits": [
           "evidence"
         ],
-        "selected": 14,
-        "tokens": 694
+        "selected": 8,
+        "tokens": 387
       },
       "failures": [],
       "query_count": 6
@@ -331,26 +310,24 @@
       "still_missing": [],
       "graph_unique": false,
       "graph_unique_recovered": false,
-      "graph_only": [],
-      "graph_entries": 14,
+      "graph_entries": 8,
       "graph_stats": {
-        "candidates": 23,
-        "selected": 14,
+        "candidates": 14,
+        "selected": 8,
         "truncated_edges": false,
         "truncated_evidence": true,
         "truncated_tokens": false,
-        "tokens": 946,
+        "tokens": 597,
         "seeds": 8,
-        "accumulated": 14,
-        "enabled": true
+        "accumulated": 8
       },
       "truncation": {
         "truncated": true,
         "hit_limits": [
           "evidence"
         ],
-        "selected": 14,
-        "tokens": 946
+        "selected": 8,
+        "tokens": 597
       },
       "failures": [],
       "query_count": 6
@@ -380,26 +357,24 @@
       "still_missing": [],
       "graph_unique": false,
       "graph_unique_recovered": false,
-      "graph_only": [],
-      "graph_entries": 14,
+      "graph_entries": 8,
       "graph_stats": {
-        "candidates": 17,
-        "selected": 14,
+        "candidates": 9,
+        "selected": 8,
         "truncated_edges": false,
         "truncated_evidence": true,
         "truncated_tokens": false,
-        "tokens": 691,
+        "tokens": 453,
         "seeds": 8,
-        "accumulated": 14,
-        "enabled": true
+        "accumulated": 8
       },
       "truncation": {
         "truncated": true,
         "hit_limits": [
           "evidence"
         ],
-        "selected": 14,
-        "tokens": 691
+        "selected": 8,
+        "tokens": 453
       },
       "failures": [],
       "query_count": 6
@@ -426,26 +401,24 @@
       "still_missing": [],
       "graph_unique": false,
       "graph_unique_recovered": false,
-      "graph_only": [],
-      "graph_entries": 14,
+      "graph_entries": 8,
       "graph_stats": {
-        "candidates": 15,
-        "selected": 14,
+        "candidates": 9,
+        "selected": 8,
         "truncated_edges": false,
         "truncated_evidence": true,
         "truncated_tokens": false,
-        "tokens": 818,
+        "tokens": 465,
         "seeds": 8,
-        "accumulated": 14,
-        "enabled": true
+        "accumulated": 8
       },
       "truncation": {
         "truncated": true,
         "hit_limits": [
           "evidence"
         ],
-        "selected": 14,
-        "tokens": 818
+        "selected": 8,
+        "tokens": 465
       },
       "failures": [],
       "query_count": 6
@@ -478,26 +451,24 @@
       "still_missing": [],
       "graph_unique": false,
       "graph_unique_recovered": false,
-      "graph_only": [],
-      "graph_entries": 14,
+      "graph_entries": 8,
       "graph_stats": {
-        "candidates": 18,
-        "selected": 14,
+        "candidates": 10,
+        "selected": 8,
         "truncated_edges": false,
         "truncated_evidence": true,
         "truncated_tokens": false,
-        "tokens": 810,
+        "tokens": 441,
         "seeds": 8,
-        "accumulated": 14,
-        "enabled": true
+        "accumulated": 8
       },
       "truncation": {
         "truncated": true,
         "hit_limits": [
           "evidence"
         ],
-        "selected": 14,
-        "tokens": 810
+        "selected": 8,
+        "tokens": 441
       },
       "failures": [],
       "query_count": 6
@@ -524,26 +495,24 @@
       "still_missing": [],
       "graph_unique": false,
       "graph_unique_recovered": false,
-      "graph_only": [],
-      "graph_entries": 14,
+      "graph_entries": 8,
       "graph_stats": {
-        "candidates": 16,
-        "selected": 14,
+        "candidates": 9,
+        "selected": 8,
         "truncated_edges": false,
         "truncated_evidence": true,
         "truncated_tokens": false,
-        "tokens": 892,
+        "tokens": 461,
         "seeds": 8,
-        "accumulated": 14,
-        "enabled": true
+        "accumulated": 8
       },
       "truncation": {
         "truncated": true,
         "hit_limits": [
           "evidence"
         ],
-        "selected": 14,
-        "tokens": 892
+        "selected": 8,
+        "tokens": 461
       },
       "failures": [],
       "query_count": 6
@@ -585,30 +554,24 @@
       "still_missing": [],
       "graph_unique": true,
       "graph_unique_recovered": true,
-      "graph_only": [
-        "38de0072aaf37b666ca771d380096a96",
-        "cef8b481f6df7299941c4b676c15c999",
-        "bca2e3898d49a9a6149a1cb2668cb883"
-      ],
-      "graph_entries": 14,
+      "graph_entries": 8,
       "graph_stats": {
-        "candidates": 19,
-        "selected": 14,
+        "candidates": 12,
+        "selected": 8,
         "truncated_edges": false,
         "truncated_evidence": true,
         "truncated_tokens": false,
-        "tokens": 906,
+        "tokens": 522,
         "seeds": 8,
-        "accumulated": 14,
-        "enabled": true
+        "accumulated": 8
       },
       "truncation": {
         "truncated": true,
         "hit_limits": [
           "evidence"
         ],
-        "selected": 14,
-        "tokens": 906
+        "selected": 8,
+        "tokens": 522
       },
       "failures": [],
       "query_count": 6
@@ -644,26 +607,24 @@
       ],
       "graph_unique": true,
       "graph_unique_recovered": false,
-      "graph_only": [],
-      "graph_entries": 14,
+      "graph_entries": 8,
       "graph_stats": {
-        "candidates": 16,
-        "selected": 14,
+        "candidates": 9,
+        "selected": 8,
         "truncated_edges": false,
         "truncated_evidence": true,
         "truncated_tokens": false,
-        "tokens": 923,
+        "tokens": 602,
         "seeds": 8,
-        "accumulated": 14,
-        "enabled": true
+        "accumulated": 8
       },
       "truncation": {
         "truncated": true,
         "hit_limits": [
           "evidence"
         ],
-        "selected": 14,
-        "tokens": 923
+        "selected": 8,
+        "tokens": 602
       },
       "failures": [],
       "query_count": 6
@@ -689,12 +650,12 @@
       "regression_text_found": [
         "dded563fceb3227616b981d604da3203"
       ],
-      "graph_found": [
-        "2f84c72607665ba007e01aadcb393aee"
-      ],
+      "graph_found": [],
       "recovered_expected": [],
       "newly_recalled": [],
-      "lost": [],
+      "lost": [
+        "2f84c72607665ba007e01aadcb393aee"
+      ],
       "text_path_lost": [
         "2f84c72607665ba007e01aadcb393aee"
       ],
@@ -704,28 +665,24 @@
       ],
       "graph_unique": true,
       "graph_unique_recovered": false,
-      "graph_only": [
-        "2f84c72607665ba007e01aadcb393aee"
-      ],
-      "graph_entries": 14,
+      "graph_entries": 8,
       "graph_stats": {
-        "candidates": 18,
-        "selected": 14,
+        "candidates": 10,
+        "selected": 8,
         "truncated_edges": false,
         "truncated_evidence": true,
         "truncated_tokens": false,
-        "tokens": 747,
+        "tokens": 378,
         "seeds": 8,
-        "accumulated": 14,
-        "enabled": true
+        "accumulated": 8
       },
       "truncation": {
         "truncated": true,
         "hit_limits": [
           "evidence"
         ],
-        "selected": 14,
-        "tokens": 747
+        "selected": 8,
+        "tokens": 378
       },
       "failures": [],
       "query_count": 6
@@ -766,28 +723,24 @@
       ],
       "graph_unique": true,
       "graph_unique_recovered": true,
-      "graph_only": [
-        "dded563fceb3227616b981d604da3203"
-      ],
-      "graph_entries": 14,
+      "graph_entries": 8,
       "graph_stats": {
-        "candidates": 16,
-        "selected": 14,
+        "candidates": 9,
+        "selected": 8,
         "truncated_edges": false,
         "truncated_evidence": true,
         "truncated_tokens": false,
-        "tokens": 923,
+        "tokens": 602,
         "seeds": 8,
-        "accumulated": 14,
-        "enabled": true
+        "accumulated": 8
       },
       "truncation": {
         "truncated": true,
         "hit_limits": [
           "evidence"
         ],
-        "selected": 14,
-        "tokens": 923
+        "selected": 8,
+        "tokens": 602
       },
       "failures": [],
       "query_count": 6
@@ -823,26 +776,24 @@
       ],
       "graph_unique": true,
       "graph_unique_recovered": false,
-      "graph_only": [],
-      "graph_entries": 14,
+      "graph_entries": 8,
       "graph_stats": {
-        "candidates": 18,
-        "selected": 14,
+        "candidates": 11,
+        "selected": 8,
         "truncated_edges": false,
         "truncated_evidence": true,
         "truncated_tokens": false,
-        "tokens": 787,
+        "tokens": 483,
         "seeds": 8,
-        "accumulated": 14,
-        "enabled": true
+        "accumulated": 8
       },
       "truncation": {
         "truncated": true,
         "hit_limits": [
           "evidence"
         ],
-        "selected": 14,
-        "tokens": 787
+        "selected": 8,
+        "tokens": 483
       },
       "failures": [],
       "query_count": 6
@@ -879,29 +830,24 @@
       "still_missing": [],
       "graph_unique": true,
       "graph_unique_recovered": true,
-      "graph_only": [
-        "3b07a477c10e307acbe189e2424a1c82",
-        "0bcafd210d34306f5fd0fcd15e0a195c"
-      ],
-      "graph_entries": 14,
+      "graph_entries": 8,
       "graph_stats": {
-        "candidates": 23,
-        "selected": 14,
+        "candidates": 14,
+        "selected": 8,
         "truncated_edges": false,
         "truncated_evidence": true,
         "truncated_tokens": false,
-        "tokens": 907,
+        "tokens": 597,
         "seeds": 8,
-        "accumulated": 14,
-        "enabled": true
+        "accumulated": 8
       },
       "truncation": {
         "truncated": true,
         "hit_limits": [
           "evidence"
         ],
-        "selected": 14,
-        "tokens": 907
+        "selected": 8,
+        "tokens": 597
       },
       "failures": [],
       "query_count": 6
@@ -927,45 +873,39 @@
       ],
       "graph_found": [
         "964597e441c0de153d9ef2105d842285",
-        "ce2b62d6e9578e6d2dd755f048409d5f",
-        "53d1ed976584910b48c36aa23580d936"
+        "ce2b62d6e9578e6d2dd755f048409d5f"
       ],
       "recovered_expected": [
-        "964597e441c0de153d9ef2105d842285",
-        "53d1ed976584910b48c36aa23580d936"
+        "964597e441c0de153d9ef2105d842285"
       ],
       "newly_recalled": [
-        "964597e441c0de153d9ef2105d842285",
-        "53d1ed976584910b48c36aa23580d936"
+        "964597e441c0de153d9ef2105d842285"
       ],
       "lost": [],
       "text_path_lost": [],
-      "still_missing": [],
-      "graph_unique": true,
-      "graph_unique_recovered": true,
-      "graph_only": [
-        "964597e441c0de153d9ef2105d842285",
+      "still_missing": [
         "53d1ed976584910b48c36aa23580d936"
       ],
-      "graph_entries": 14,
+      "graph_unique": true,
+      "graph_unique_recovered": true,
+      "graph_entries": 8,
       "graph_stats": {
-        "candidates": 16,
-        "selected": 14,
+        "candidates": 10,
+        "selected": 8,
         "truncated_edges": false,
         "truncated_evidence": true,
         "truncated_tokens": false,
-        "tokens": 654,
+        "tokens": 347,
         "seeds": 8,
-        "accumulated": 14,
-        "enabled": true
+        "accumulated": 8
       },
       "truncation": {
         "truncated": true,
         "hit_limits": [
           "evidence"
         ],
-        "selected": 14,
-        "tokens": 654
+        "selected": 8,
+        "tokens": 347
       },
       "failures": [],
       "query_count": 6
@@ -992,26 +932,24 @@
       "still_missing": [],
       "graph_unique": false,
       "graph_unique_recovered": false,
-      "graph_only": [],
-      "graph_entries": 14,
+      "graph_entries": 8,
       "graph_stats": {
-        "candidates": 21,
-        "selected": 14,
+        "candidates": 12,
+        "selected": 8,
         "truncated_edges": false,
         "truncated_evidence": true,
         "truncated_tokens": false,
-        "tokens": 774,
+        "tokens": 442,
         "seeds": 8,
-        "accumulated": 14,
-        "enabled": true
+        "accumulated": 8
       },
       "truncation": {
         "truncated": true,
         "hit_limits": [
           "evidence"
         ],
-        "selected": 14,
-        "tokens": 774
+        "selected": 8,
+        "tokens": 442
       },
       "failures": [],
       "query_count": 6
@@ -1033,49 +971,40 @@
       ],
       "regression_text_found": [],
       "graph_found": [
-        "8ef770a0d81c76cec759ad9a593f5834",
-        "9fa2638af2f5465db6c88764842e9e44",
-        "964597e441c0de153d9ef2105d842285"
+        "8ef770a0d81c76cec759ad9a593f5834"
       ],
       "recovered_expected": [
-        "8ef770a0d81c76cec759ad9a593f5834",
-        "9fa2638af2f5465db6c88764842e9e44",
-        "964597e441c0de153d9ef2105d842285"
+        "8ef770a0d81c76cec759ad9a593f5834"
       ],
       "newly_recalled": [
-        "8ef770a0d81c76cec759ad9a593f5834",
-        "9fa2638af2f5465db6c88764842e9e44",
-        "964597e441c0de153d9ef2105d842285"
+        "8ef770a0d81c76cec759ad9a593f5834"
       ],
       "lost": [],
       "text_path_lost": [],
-      "still_missing": [],
-      "graph_unique": true,
-      "graph_unique_recovered": true,
-      "graph_only": [
-        "8ef770a0d81c76cec759ad9a593f5834",
+      "still_missing": [
         "9fa2638af2f5465db6c88764842e9e44",
         "964597e441c0de153d9ef2105d842285"
       ],
-      "graph_entries": 14,
+      "graph_unique": true,
+      "graph_unique_recovered": true,
+      "graph_entries": 8,
       "graph_stats": {
-        "candidates": 16,
-        "selected": 14,
+        "candidates": 9,
+        "selected": 8,
         "truncated_edges": false,
         "truncated_evidence": true,
         "truncated_tokens": false,
-        "tokens": 734,
+        "tokens": 456,
         "seeds": 8,
-        "accumulated": 14,
-        "enabled": true
+        "accumulated": 8
       },
       "truncation": {
         "truncated": true,
         "hit_limits": [
           "evidence"
         ],
-        "selected": 14,
-        "tokens": 734
+        "selected": 8,
+        "tokens": 456
       },
       "failures": [],
       "query_count": 6
@@ -1108,26 +1037,24 @@
       ],
       "graph_unique": true,
       "graph_unique_recovered": false,
-      "graph_only": [],
-      "graph_entries": 14,
+      "graph_entries": 8,
       "graph_stats": {
-        "candidates": 16,
-        "selected": 14,
+        "candidates": 9,
+        "selected": 8,
         "truncated_edges": false,
         "truncated_evidence": true,
         "truncated_tokens": false,
-        "tokens": 923,
+        "tokens": 602,
         "seeds": 8,
-        "accumulated": 14,
-        "enabled": true
+        "accumulated": 8
       },
       "truncation": {
         "truncated": true,
         "hit_limits": [
           "evidence"
         ],
-        "selected": 14,
-        "tokens": 923
+        "selected": 8,
+        "tokens": 602
       },
       "failures": [],
       "query_count": 6
