@@ -32,6 +32,13 @@ A missing sidecar or a hash mismatch is a hard failure: the frozen dataset
 changed, so rerun the baseline. ``--mode text`` writes its own artifact path
 and never touches the union-probe file.
 
+``--text-width`` (default 14) is the recall width handed to the diversity step.
+``text`` and ``graph`` apply it to every arm they run, so the width ablation can
+vary one parameter while everything else stays fixed. The union probe has no
+diversity step: the flag is accepted and recorded there, but its numbers do not
+depend on it. The production default is unchanged, so a plain run reproduces the
+online width.
+
 This is an offline evaluation, not a CI gate: it needs the text index and the
 embedding model. It does not call the routing model.
 
@@ -39,6 +46,7 @@ Usage:
     python scripts/eval_gold.py
     python scripts/eval_gold.py --mode text
     python scripts/eval_gold.py --mode graph
+    python scripts/eval_gold.py --mode graph --text-width 20
     python scripts/eval_gold.py --mode graph --reuse-baseline
     python scripts/eval_gold.py --limit 4 --out .scratch/graph-expansion/baseline.json
 """
@@ -324,10 +332,13 @@ def evaluate_item(item: dict, *, top_k: int) -> dict:
     }
 
 
-def evaluate_text_item(item: dict) -> dict:
+def evaluate_text_item(item: dict, *, text_width: int = 14) -> dict:
     """Run one frozen question through the seam with graph expansion off."""
     result = retrieve_evidence(
-        item["question"], list(item["expanded_queries"]), expand_graph=False
+        item["question"],
+        list(item["expanded_queries"]),
+        expand_graph=False,
+        text_width=text_width,
     )
     hits = _evidence_ids(result.text_hits)
     hit_set = set(hits)
@@ -354,13 +365,17 @@ def evaluate_graph_item(
     *,
     baseline_union: Iterable[str],
     text_ids: Iterable[str] | None = None,
+    text_width: int = 14,
 ) -> dict:
     """Run one frozen question through the shipped retrieval seam.
 
     ``text_ids`` is the production-parity text arm for the same question; when
     omitted the round's own text hits are used, which must be identical.
+    ``text_width`` is passed to the same diversity step as the text arm.
     """
-    result = retrieve_evidence(item["question"], list(item["expanded_queries"]))
+    result = retrieve_evidence(
+        item["question"], list(item["expanded_queries"]), text_width=text_width
+    )
     text_arm = (
         _evidence_ids(result.text_hits) if text_ids is None else list(text_ids)
     )
@@ -401,12 +416,14 @@ def build_text_payload(
     dataset: Mapping[str, Any],
     rows: list[dict],
     top_k: int,
+    text_width: int,
 ) -> dict:
     return {
         "dataset": dataset_path,
         "frozen_at": dataset.get("frozen_at"),
         "protocol": dataset.get("retrieval_protocol"),
         "top_k": top_k,
+        "text_width": text_width,
         "mode": "text",
         "expand_graph": False,
         "summary": summarize_text(rows),
@@ -422,6 +439,7 @@ def build_regression_payload(
     rows: list[dict],
     text_summary: Mapping[str, Any],
     top_k: int,
+    text_width: int,
     baseline_reused: bool = False,
 ) -> dict:
     return {
@@ -429,6 +447,7 @@ def build_regression_payload(
         "frozen_at": dataset.get("frozen_at"),
         "protocol": dataset.get("retrieval_protocol"),
         "top_k": top_k,
+        "text_width": text_width,
         "mode": "graph",
         "baseline_reused": baseline_reused,
         "baseline_summary": baseline.get("summary"),
@@ -516,6 +535,21 @@ def print_graph_table(rows: list[dict], summary: dict) -> None:
     )
 
 
+def _positive_int(value: str) -> int:
+    """argparse type for a recall width: an integer of at least 1."""
+    try:
+        number = int(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError(
+            f"expected a positive integer, got {value!r}"
+        ) from None
+    if number < 1:
+        raise argparse.ArgumentTypeError(
+            f"expected a positive integer, got {value!r}"
+        )
+    return number
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--dataset", type=Path, default=DEFAULT_DATASET)
@@ -523,6 +557,16 @@ def main() -> None:
     ap.add_argument("--baseline", type=Path, default=DEFAULT_BASELINE)
     ap.add_argument("--out", type=Path, default=None)
     ap.add_argument("--top-k", type=int, default=20, help="per-query top-K; 20 matches online recall width")
+    ap.add_argument(
+        "--text-width",
+        type=_positive_int,
+        default=14,
+        help=(
+            "recall width passed to the diversity step; 14 is the production "
+            "default. Recorded in every artifact; the union probe has no "
+            "diversity step, so its numbers are unchanged."
+        ),
+    )
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--dataset-hash", type=Path, default=DEFAULT_DATASET_HASH)
     ap.add_argument(
@@ -553,23 +597,30 @@ def main() -> None:
         rows = [evaluate_item(item, top_k=args.top_k) for item in items]
         summary = summarize(rows)
         print_table(rows, summary)
+        print(
+            f"\ntext width: {args.text_width} "
+            "(recorded; the union probe has no diversity step)"
+        )
         payload = {
             "dataset": _display_path(args.dataset),
             "frozen_at": dataset.get("frozen_at"),
             "protocol": dataset.get("retrieval_protocol"),
             "top_k": args.top_k,
+            "text_width": args.text_width,
             "summary": summary,
             "items": rows,
         }
     elif args.mode == "text":
-        rows = [evaluate_text_item(item) for item in items]
+        rows = [evaluate_text_item(item, text_width=args.text_width) for item in items]
         summary = summarize_text(rows)
         print_text_table(rows, summary)
+        print(f"\ntext width: {args.text_width} (diversity top_k)")
         payload = build_text_payload(
             dataset_path=_display_path(args.dataset),
             dataset=dataset,
             rows=rows,
             top_k=args.top_k,
+            text_width=args.text_width,
         )
     else:
         baseline_reused = False
@@ -581,7 +632,9 @@ def main() -> None:
             baseline_reused = True
         baseline = json.loads(args.baseline.read_text(encoding="utf-8"))
         baseline_rows = {row["id"]: row for row in baseline.get("items", [])}
-        text_rows = [evaluate_text_item(item) for item in items]
+        text_rows = [
+            evaluate_text_item(item, text_width=args.text_width) for item in items
+        ]
         text_by_id = {row["id"]: row for row in text_rows}
         rows = []
         for item in items:
@@ -595,6 +648,7 @@ def main() -> None:
                     item,
                     baseline_union=base_row["hits"],
                     text_ids=text_by_id[item["id"]]["hits"],
+                    text_width=args.text_width,
                 )
             )
         payload = build_regression_payload(
@@ -604,9 +658,11 @@ def main() -> None:
             rows=rows,
             text_summary=summarize_text(text_rows),
             top_k=args.top_k,
+            text_width=args.text_width,
             baseline_reused=baseline_reused,
         )
         print_graph_table(rows, payload["summary"])
+        print(f"\ntext width: {args.text_width} (diversity top_k, both arms)")
         if baseline_reused:
             print(
                 f"\nbaseline: reused verified artifact {_display_path(args.baseline)} "
