@@ -1,10 +1,10 @@
 site_name: PAknow 技术文档
 site_description: 多模态检索、证据图谱与可验证 SOP 记忆系统——按设计流程讲技术选型
 site_url: https://tbk0ng.github.io/paknow/
-docs_dir: doc
+docs_dir: book
 repo_url: https://github.com/TbK0ng/paknow
 repo_name: TbK0ng/paknow
-edit_uri: edit/main/doc/
+edit_uri: edit/main/book/
 theme:
   name: material
   language: zh

@@ -1,14 +1,15 @@
 """Smoke test: PDF parse a small range; verify page 93 / figure 4.5 example."""
 from paknow.config import settings
 from paknow.db import init_db
+from paknow.ingest.manifest import resolve_source
 from paknow.ingest.pipeline import ingest_pdf
 
 settings.ensure_dirs()
 init_db()
 
-path = "Reading Price Charts Bar by Bar.pdf"
+path = resolve_source("Reading Price Charts Bar by Bar.pdf")
 # parse pages 88..96 (1-based 89..96) around the 图 4.5 example (physical p93)
-row, result = ingest_pdf(path, page_range=(85, 97))
+row, result = ingest_pdf(str(path), page_range=(85, 97))
 
 print(f"doc_id      = {row.doc_id}")
 print(f"page_count  = {result.page_count} (total)")

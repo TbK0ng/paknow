@@ -8,8 +8,15 @@ from __future__ import annotations
 from pydantic import BaseModel, Field
 
 from paknow.db import SessionLocal
-from paknow.db.models import ClaimRow, GraphEdgeRow, GraphNodeRow
+from paknow.db.models import ClaimRow, ConceptAliasRow, GraphEdgeRow, GraphNodeRow
 from paknow.gateway import gateway
+from paknow.graph.identity import (
+    candidate_key,
+    canonical_for,
+    concept_kind_for,
+    concept_node_id,
+    label_for,
+)
 from paknow.ids import stable_id
 
 _EXTRACT_SYSTEM = """你是价格行为资料的领域抽取器。从给定文本提取：
@@ -42,12 +49,38 @@ def extract_from_text(text: str) -> ExtractionResult:
         return ExtractionResult()
 
 
+def _queue_candidate(s, surface: str) -> None:
+    """Record an unresolved extracted concept for human review; no node is made."""
+    key = candidate_key(surface)
+    if s.get(ConceptAliasRow, key) is None:
+        s.add(
+            ConceptAliasRow(
+                canonical_concept=key,
+                aliases=[surface],
+                context="extracted_unmatched",
+                review_status="pending",
+            )
+        )
+
+
 def persist_extraction(doc_id: str, evidence_id: str, result: ExtractionResult) -> None:
     with SessionLocal() as s:
         for concept in result.concepts:
-            node_id = stable_id("node", concept)
+            canonical = canonical_for(concept)
+            if canonical is None:
+                _queue_candidate(s, concept)
+                continue
+            node_id = concept_node_id(canonical)
             if s.get(GraphNodeRow, node_id) is None:
-                s.add(GraphNodeRow(node_id=node_id, node_type="concept", label=concept, concept_id=concept))
+                s.add(
+                    GraphNodeRow(
+                        node_id=node_id,
+                        node_type="concept",
+                        label=label_for(canonical),
+                        concept_id=canonical,
+                        concept_kind=concept_kind_for(canonical),
+                    )
+                )
         for c in result.claims:
             claim_id = stable_id("claim", evidence_id, c.subject, c.predicate)
             if s.get(ClaimRow, claim_id) is None:
@@ -55,6 +88,7 @@ def persist_extraction(doc_id: str, evidence_id: str, result: ExtractionResult) 
                     ClaimRow(
                         claim_id=claim_id,
                         subject=c.subject,
+                        subject_concept_id=canonical_for(c.subject),
                         predicate=c.predicate,
                         polarity=c.polarity,
                         qualifiers={"context": c.context, "modality": c.modality},

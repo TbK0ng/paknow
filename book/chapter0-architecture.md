@@ -29,7 +29,7 @@
 
 | 派生材料 | 来源 | 处理方式 |
 |---|---|---|
-| 视觉观察文本 | Qwen2.5-VL 对图的描述 | `quality=derived_observation`，生成时进"图读辅助"块，**不可引用** |
+| 视觉观察文本 | Qwen2.5-VL 对图的描述 | `provenance=derived_observation`，生成时进"图读辅助"块，**不可引用** |
 | 图谱主张 | LLM 从图注/标题抽取 | 带 `extraction_status`，检索时作为"上下文"而非证据 |
 | SOP | 从失败记录蒸馏 | 有生命周期，`shadow` 状态参与但不作为唯一依据 |
 

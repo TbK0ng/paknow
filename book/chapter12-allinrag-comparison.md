@@ -90,7 +90,7 @@ PAknow 保留了 Critique/Refine，只去掉了自主工具选择。原因是当
 | Unstructured `basic` / `by_title` | 自定义块分类 + 章节路径 | 权衡替代 | 需要图注/页脚/bbox 的细粒度控制 |
 | SentenceWindowNodeParser | 检索后展开相邻单元（最多 4 条） | 已采用等价 | 教程用 metadata 窗口；PAknow 用阅读顺序邻接，避免索引膨胀 |
 | 父子块：小块检索、大块生成 | 子块 `parent_id` 指向原单元；但原单元未持久化，743/743 悬空 | **权衡替代 + 事故** | 实测父块不可解析，改为 81,809 条邻接回填 |
-| 元数据注入（Header 1/2/3） | `chapter_path`、`figure_label`、`pdf_page`、`bbox`、`quality` | 已采用且更强 | 引用与过滤都依赖这些字段 |
+| 元数据注入（Header 1/2/3） | `chapter_path`、`figure_label`、`pdf_page`、`bbox`、`provenance` | 已采用且更强 | 引用与过滤都依赖这些字段 |
 | 智能去重 / 合并父文档 | 80 字归一化哈希 + 每书最多 5 条 | 已采用等价 | 不做 embedding 聚类；当前重复主要是同段/多版本 |
 | 多表递归检索 / PandasQueryEngine | 未使用 | 不适用 | 没有多工作表结构化数据；也有代码执行安全风险 |
 | 表格感知分块 | 未实现 | **未实现** | 当前语料表格少；扩语料要补 |
@@ -114,7 +114,7 @@ PAknow 保留了 Critique/Refine，只去掉了自主工具选择。原因是当
 | ColPali / ColQwen2 页面多向量 | 尝试后失败：Blackwell CUDA 崩溃 / `colpali_engine` 依赖 transformers 4.x | 权衡替代 | 硬件/依赖约束，不是“没想到” |
 | 图像到图像相似检索 | 未实现；`page_visual` 集合 0 点 | **未实现** | 只能做“文本描述找图”，不能做“以图搜图” |
 | VLM 观察式索引 | Qwen2.5-VL-3B 生成 `derived_observation`，进同一 dense+sparse 索引 | 已采用且是替代方案 | Blackwell 兼容；观察文本不是权威原文 |
-| 观察文本的引用边界 | `quality=derived_observation`，生成时移出可引用证据，进“图读辅助”块 | 已采用且更强 | 防止派生材料冒充原文；725 条 prompt 污染已清洗 |
+| 观察文本的引用边界 | `provenance=derived_observation`，生成时移出可引用证据，进“图读辅助”块 | 已采用且更强 | 防止派生材料冒充原文；725 条 prompt 污染已清洗 |
 | 上传图表分析 | 云端 vision + `cutoff` 右侧遮罩 + 先观察后检索 | 超出教程 | 教程的多模态是“检索图”，不是“分析用户图” |
 | 页面视觉索引 | `COLLECTION_VISUAL` 已建但 0 点；`search_pages` 实际走文本观察 | 接线缺口 | 多向量页面检索没有落地 |
 
@@ -301,7 +301,7 @@ Docker，且 Qdrant 的命名向量刚好满足“同点 dense+sparse + RRF”�
 |---|---|---|---|
 | 运行轨迹 | Agentic 章节有 `retrieval_history` | `RunTrace` + 版本快照 + 失败记录 | 已采用且更强 |
 | 长期记忆 | 未覆盖 | SOP 生命周期 + git 版本 | 超出教程 |
-| 记忆晋升 | 未覆盖 | `observed → candidate → replay_validated → shadow → active` | 部分实现；`active` 被评测卡住 |
+| 记忆晋升 | 未覆盖 | `candidate → replay_validated → shadow → active` | 部分实现；`active` 被评测卡住 |
 | 自动优化 | 未覆盖 | 评价→蒸馏→发布，自动到 `shadow` | 已实现（局部） |
 | 用户事实记忆 | 未覆盖 | `UserFactRow` 表存在，主链路未使用 | 接线缺口 |
 | 作业/重试 | 未覆盖 | `ImportJobRow` 契约存在，主链路未使用 | 接线缺口 |

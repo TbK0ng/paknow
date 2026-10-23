@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -25,9 +26,14 @@ class Settings(BaseSettings):
     # Empty = embedded Qdrant (local mode); server URL e.g. http://localhost:6333
     qdrant_url: str = ""
 
-    # Paths. Original source files stay in place (project root); derived
-    # objects and model weights live under data/.
+    # Paths. Original source files may live outside the repo; set
+    # PAKNOW_CORPUS_DIR to point at them. Derived objects and model weights
+    # live under data/.
     project_root: Path = Path(__file__).resolve().parent.parent
+    corpus_dir: Path = Field(
+        default=Path(__file__).resolve().parent.parent,
+        validation_alias="PAKNOW_CORPUS_DIR",
+    )
     objects_dir: Path = project_root / "data" / "objects"
     models_dir: Path = project_root / "data" / "models"
     hf_home: str = r"E:\use_model"

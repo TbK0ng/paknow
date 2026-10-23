@@ -75,7 +75,7 @@
 .venv/Scripts/python.exe -m mkdocs gh-deploy
 ```
 
-文档目录为 `doc/`，站点配置在仓库根 `mkdocs.yml`。
+文档目录为 `book/`，站点配置在仓库根 `mkdocs.yml`。
 
 ## 7. 本章小结
 

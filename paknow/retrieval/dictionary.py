@@ -22,6 +22,8 @@ class Term:
     aliases: list[str] = field(default_factory=list)
     ambiguity: str | None = None
     context: str | None = None
+    # optional concept classification: term | pattern | regime | setup
+    kind: str | None = None
 
 
 @lru_cache(maxsize=1)
@@ -44,6 +46,7 @@ def load_terms() -> list[Term]:
                 aliases=aliases,
                 ambiguity=t.get("ambiguity"),
                 context=t.get("context"),
+                kind=t.get("kind"),
             )
     return list(out.values())
 

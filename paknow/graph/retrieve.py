@@ -1,5 +1,6 @@
-"""Evidence-graph retrieval: concept lookup, cycle chains, and bounded BFS from
-hit evidence to related claims (plan §6.3)."""
+"""Evidence-graph retrieval: concept lookup, cycle chains, and claim joins from
+hit evidence (plan §6.3). Claims live in their own table; edges reference them
+by id, so lookups join through ``claims`` rather than walking ``graph_nodes``."""
 from __future__ import annotations
 
 import re
@@ -74,9 +75,13 @@ def concept_lookup(terms: list[str], limit: int = 12) -> list[dict[str, Any]]:
             if any(_term_alias_match(f, target) for f in forms):
                 matched_nodes.append(n)
         labels = {n.label for n in matched_nodes} | {n.concept_id for n in matched_nodes}
+        canonicals = {n.concept_id for n in matched_nodes if n.concept_id}
         # claims ranked by: subject match > predicate match > condition-only match
         scored_claims: list[tuple[int, ClaimRow]] = []
         for c in s.query(ClaimRow).all():
+            if c.subject_concept_id and c.subject_concept_id in canonicals:
+                scored_claims.append((3, c))
+                continue
             if c.subject in labels:
                 scored_claims.append((3, c))
                 continue
@@ -108,6 +113,7 @@ def concept_lookup(terms: list[str], limit: int = 12) -> list[dict[str, Any]]:
                 "type": "claim",
                 "id": c.claim_id,
                 "subject": c.subject,
+                "subject_concept_id": c.subject_concept_id,
                 "predicate": c.predicate,
                 "qualifiers": c.qualifiers or {},
                 "supporting_evidence": c.supporting_evidence or [],

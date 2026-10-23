@@ -17,17 +17,21 @@ from paknow.evidence.contracts import ReviewStatus
 
 
 class NodeType(str, Enum):
+    """Entities that live in ``graph_nodes``.
+
+    Claims, evidence units, documents, sections and bar references keep their
+    own tables; ``GraphEdge`` endpoints may point at them (see below).
+    """
     concept = "concept"
-    setup = "setup"                 # 第二次入场、突破回调等具体形态
-    regime = "regime"               # 强趋势、交易区间、高潮后、开盘阶段
-    claim = "claim"
-    action = "action"
-    invalidation = "invalidation"
-    document = "document"
-    section = "section"
-    evidence_unit = "evidence_unit"
     figure = "figure"
-    bar_ref = "bar_ref"
+
+
+class ConceptKind(str, Enum):
+    """What kind of concept a node is; an attribute, not a node type."""
+    term = "term"          # 通用术语（趋势、价格）
+    pattern = "pattern"    # 可识别形态（双底多头旗形）
+    regime = "regime"      # 市场环境（强趋势、交易区间日）
+    setup = "setup"        # 具体入场结构（高二、突破回调）
 
 
 class Relation(str, Enum):
@@ -47,8 +51,9 @@ class GraphNode(BaseModel):
     node_id: str
     node_type: NodeType
     label: str
-    # canonical concept id when node_type is concept/setup/regime
+    # canonical concept id when node_type is concept
     concept_id: str | None = None
+    concept_kind: ConceptKind | None = None
     meta: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -64,7 +69,8 @@ class ConceptAlias(BaseModel):
 class Claim(BaseModel):
     """带条件的记录：不是 "高二 -> 买入"，而是 背景+触发+失效 下的主张."""
     claim_id: str
-    subject: str
+    subject: str                     # surface phrasing as extracted
+    subject_concept_id: str | None = None  # canonical concept when the subject resolves
     predicate: str
     polarity: str = "positive"       # positive | negative | neutral
     qualifiers: dict[str, Any] = Field(default_factory=dict)  # context, modality, ...
@@ -77,6 +83,13 @@ class Claim(BaseModel):
 
 
 class GraphEdge(BaseModel):
+    """Directed semantic edge between entity references.
+
+    ``from_node`` and ``to_node`` hold one of: a ``graph_nodes.node_id``
+    (concept or figure), a ``claim_id``, or an ``evidence_id``. Claim and
+    evidence endpoints are legitimate and have no node row — resolve them via
+    their own tables.
+    """
     edge_id: str
     from_node: str
     to_node: str

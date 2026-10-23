@@ -59,7 +59,7 @@ def parse_pdf(
         for pno in range(lo, hi):
             page = doc[pno]
             units, figures = _parse_page(page, pno, doc_id, chapter_paths[pno], doc)
-            # quality: page with little native text -> OCR candidate
+            # OCR candidate: page with little native text
             native_text = sum(1 for u in units if u.block_type == "paragraph")
             if native_text < 3 and page.get_text().strip() == "":
                 result.ocr_pages.append(pno)

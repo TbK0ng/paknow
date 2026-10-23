@@ -34,13 +34,15 @@
 
 ```mermaid
 stateDiagram-v2
-    [*] --> observed
-    observed --> candidate: 蒸馏出候选
+    [*] --> candidate: 蒸馏/人工产出候选
     candidate --> replay_validated: 对照回放通过
     replay_validated --> shadow: 上线观察
+    replay_validated --> candidate: 回放未通过
     shadow --> active: 回放+人工确认
     active --> superseded: 被新版本替代
     active --> retired: 失效
+    candidate --> retired: 废弃
+    shadow --> retired: 失效
 ```
 
 SOP 字段：

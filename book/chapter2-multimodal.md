@@ -40,7 +40,7 @@
 
 这是第 2 章最重要的设计。927 条观察单元：
 
-- `block_type=caption`，但 `quality=derived_observation`；
+- `block_type=caption`，但 `provenance=derived_observation`；
 - 生成时**移出可引用证据列表**，进入独立"图读辅助"块（无 `[n]` 编号、明确标注不可引用、最多 6 条）；
 - 提示词禁止模型引用或罗列"图 X 具备该特征"。
 

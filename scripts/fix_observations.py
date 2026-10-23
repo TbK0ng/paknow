@@ -84,7 +84,7 @@ with SessionLocal() as s:
         new_text = strip(u.text)
         u.text = new_text
         u.text_hash = content_hash(new_text.encode("utf-8"))
-        u.quality = "derived_observation"
+        u.provenance = "derived_observation"
         cleaned.append(u)
     obs_clean = (
         s.query(EvidenceUnitRow)
@@ -92,8 +92,8 @@ with SessionLocal() as s:
         .all()
     )
     for u in obs_clean:
-        if u.quality != "derived_observation":
-            u.quality = "derived_observation"
+        if u.provenance != "derived_observation":
+            u.provenance = "derived_observation"
     s.commit()
     n_obs = len(obs_clean)
 

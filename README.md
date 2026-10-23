@@ -3,7 +3,7 @@
 多模态检索、证据图谱与可验证 SOP 记忆系统。对本地 PDF/EPUB 价格行为资料做
 **可追溯出处**的知识问答、上传图表分析，并保留程序性记忆（SOP）的生命周期。
 
-> 技术文档站：按 RAG 设计流程讲清每个环节的技术选型与实际结果（`doc/`，MkDocs）。
+> 技术文档站：按 RAG 设计流程讲清每个环节的技术选型与实际结果（`book/`，MkDocs）。
 > 回测/行情数据与人工金标准评测按实施决策暂缓。
 
 ## 能力
@@ -46,7 +46,7 @@
 > 还是“权衡后替代”，为什么**。
 >
 > 方法级审计（含代码位置、数据库计数、未接线清单）见
-> [`doc/chapter12-allinrag-comparison.md`](doc/chapter12-allinrag-comparison.md)。
+> [`book/chapter12-allinrag-comparison.md`](book/chapter12-allinrag-comparison.md)。
 
 ### 结论先行
 
@@ -105,7 +105,7 @@ SOP 记忆**上做了加法定制，在**评估、索引调优、上下文压缩
 
 ## 技术文档站
 
-仓库内含一套按 RAG 设计流程组织的技术文档（`doc/`，MkDocs Material），
+仓库内含一套按 RAG 设计流程组织的技术文档（`book/`，MkDocs Material），
 讲清楚每个环节的技术选型、为什么选/不选、已完成与待补充、运行示例与 AI 评价：
 
 ```bash

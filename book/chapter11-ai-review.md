@@ -19,9 +19,9 @@
 |---|---|
 | **引用可追溯** | 每个 `[n]` 绑定 `evidence_id`，最终渲染到书/章/图/页；越界索引被丢弃 |
 | **数据审计扎实** | 实测计数据暴露了多项"看起来有、实际没有"：父块悬空 743/743、邻接 0 条、图注链接 0 条、观察污染 725 条 |
-| **派生材料边界清晰** | `quality=derived_observation` + 生成端独立"图读辅助"块，引用体系不被污染 |
+| **派生材料边界清晰** | `provenance=derived_observation` + 生成端独立"图读辅助"块，引用体系不被污染 |
 | **条件化知识** | 主张带 `qualifiers.context/modality`，检索按条件排序 |
-| **记忆有生命周期** | `observed → … → active`，git 每次变更可 diff；自动闭环只到 `shadow` |
+| **记忆有生命周期** | `candidate → … → active`，git 每次变更可 diff；自动闭环只到 `shadow` |
 | **失败隔离与降级** | 每条召回路径独立 `try/except`；核验器失败 fail-open；重排失败回退 RRF |
 | **分析优先** | `wants_examples` 分流；理解类问题不罗列图例；图例目录禁止编造 |
 

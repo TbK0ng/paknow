@@ -28,7 +28,7 @@
 | `locator.bbox` | 图文绑定（图注在图的上下方）、页内定位 |
 | `figure_ids` / `figure_label` | 回答"这个形态的图在哪" |
 | `block_type`（paragraph/heading/caption/footer） | 决定是否索引、是否可作为证据、是否参与邻接 |
-| `quality`（native_text/ocr/derived_observation/low_quality） | 防止派生材料冒充原文 |
+| `provenance`（native_text/ocr/derived_observation） | 记录文本来源；派生观察不得冒充原文 |
 | `adjacent_ids` | 阅读顺序上下文（替代失败的父块检索） |
 | `text_hash` | 去重与幂等摄入 |
 

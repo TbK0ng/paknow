@@ -49,7 +49,6 @@ class RunTrace(BaseModel):
 
 
 class SOPStatus(str, Enum):
-    observed = "observed"
     candidate = "candidate"
     replay_validated = "replay_validated"
     shadow = "shadow"

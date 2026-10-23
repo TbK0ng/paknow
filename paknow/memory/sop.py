@@ -1,8 +1,9 @@
 """SOP (procedural memory) registry: lifecycle + persistence (plan §9.3, §9.4).
 
-States: observed -> candidate -> replay_validated -> shadow -> active ->
+States: candidate -> replay_validated -> shadow -> active ->
 superseded/retired. Promotion to ``active`` requires an offline replay against
-a validation dataset; without one the SOP stays ``candidate``.
+a validation dataset; without one the SOP stays ``candidate``. Any state can
+be retired; superseded/retired are terminal.
 """
 from __future__ import annotations
 
@@ -12,6 +13,29 @@ from paknow.db import SessionLocal
 from paknow.db.models import SOPRow
 from paknow.memory import gitstore
 from paknow.memory.contracts import SOPStatus, SOPValidation
+
+# Legal moves. ``observed`` does not exist until a RunTrace -> SOP capture path
+# does; hand-authored SOPs start at ``candidate``.
+_TRANSITIONS: dict[SOPStatus, frozenset[SOPStatus]] = {
+    SOPStatus.candidate: frozenset({SOPStatus.replay_validated, SOPStatus.retired}),
+    SOPStatus.replay_validated: frozenset(
+        {SOPStatus.shadow, SOPStatus.candidate, SOPStatus.retired}
+    ),
+    SOPStatus.shadow: frozenset({SOPStatus.active, SOPStatus.retired}),
+    SOPStatus.active: frozenset({SOPStatus.superseded, SOPStatus.retired}),
+    SOPStatus.superseded: frozenset(),
+    SOPStatus.retired: frozenset(),
+}
+
+
+def check_transition(current: str, target: SOPStatus) -> None:
+    """Raise ``ValueError`` unless ``current -> target`` is a legal move."""
+    try:
+        allowed = _TRANSITIONS[SOPStatus(current)]
+    except ValueError as exc:
+        raise ValueError(f"unknown SOP status: {current!r}") from exc
+    if target not in allowed:
+        raise ValueError(f"illegal SOP transition: {current} -> {target.value}")
 
 
 def _snapshot(row: SOPRow, action: str) -> None:
@@ -85,6 +109,7 @@ def record_replay(sop_id: str, *, wins: int, losses: int, ties: int, dataset: st
         )
         row.validation = val
         if wins > losses and wins >= 3:
+            check_transition(row.status, SOPStatus.replay_validated)
             row.status = SOPStatus.replay_validated.value
         s.commit()
         _snapshot(row, "replay")
@@ -95,6 +120,7 @@ def promote(sop_id: str, status: SOPStatus) -> None:
         row = s.get(SOPRow, sop_id)
         if row is None:
             return
+        check_transition(row.status, status)
         row.status = status.value
         s.commit()
         _snapshot(row, "promote")
@@ -118,6 +144,8 @@ def list_sops(status: str | None = None) -> list[dict[str, Any]]:
         ]
 
 
+# Selectable states only. ``replay_validated`` has passed an offline replay but
+# never shadow traffic, so it stays out of answering until promoted to shadow.
 _STATUS_RANK = {"active": 3, "shadow": 2, "candidate": 1}
 
 

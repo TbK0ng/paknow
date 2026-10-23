@@ -48,7 +48,7 @@ class EvidenceUnitRow(Base):
     parent_id: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
     child_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
     token_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    quality: Mapped[str] = mapped_column(String(16), default="native_text")
+    provenance: Mapped[str] = mapped_column(String(16), default="native_text")
     adjacent_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
     figure_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
     parsed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
@@ -106,6 +106,7 @@ class GraphNodeRow(Base):
     node_type: Mapped[str] = mapped_column(String(32), index=True)
     label: Mapped[str] = mapped_column(Text)
     concept_id: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    concept_kind: Mapped[str | None] = mapped_column(String(16), nullable=True)
     meta: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
 
 
@@ -124,6 +125,7 @@ class ClaimRow(Base):
 
     claim_id: Mapped[str] = mapped_column(String(64), primary_key=True)
     subject: Mapped[str] = mapped_column(Text, index=True)
+    subject_concept_id: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
     predicate: Mapped[str] = mapped_column(Text)
     polarity: Mapped[str] = mapped_column(String(16), default="positive")
     qualifiers: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)

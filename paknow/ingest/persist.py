@@ -52,7 +52,7 @@ def _unit_row(u: EvidenceUnit) -> EvidenceUnitRow:
         parent_id=u.parent_id,
         child_ids=u.child_ids,
         token_count=u.token_count,
-        quality=u.quality.value,
+        provenance=u.provenance.value,
         adjacent_ids=u.adjacent_ids,
         figure_ids=u.figure_ids,
         parsed_at=u.parsed_at,

@@ -195,7 +195,7 @@ def expand_evidence(
             "figure_label": r.figure_label,
             "epub_href": r.epub_href,
             "figure_ids": r.figure_ids or [],
-            "quality": r.quality,
+            "provenance": r.provenance,
             "is_parent": r.evidence_id in parents,
             "is_adjacent": r.evidence_id in adjacents,
         }

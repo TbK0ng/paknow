@@ -2,13 +2,16 @@
 from paknow.config import settings
 from paknow.db import SessionLocal, init_db
 from paknow.db.models import EvidenceUnitRow, FigureAssetRow
+from paknow.ingest.manifest import resolve_source
 from paknow.ingest.pipeline import ingest_epub
 
 settings.ensure_dirs()
 init_db()
 
-path = "Trading Price Action Trends_ Technical Analysis of Price Charts Bar by Bar for the Serious Trader.epub"
-row, result = ingest_epub(path)
+path = resolve_source(
+    "Trading Price Action Trends_ Technical Analysis of Price Charts Bar by Bar for the Serious Trader.epub"
+)
+row, result = ingest_epub(str(path))
 
 with SessionLocal() as s:
     n_units = (

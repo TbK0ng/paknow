@@ -1,8 +1,7 @@
 """Full ingest + index over all source files (plan P1 L0)."""
-import os
-
 from paknow.config import settings
 from paknow.db import init_db
+from paknow.ingest.manifest import resolve_source
 from paknow.ingest.pipeline import ingest_epub, ingest_pdf
 from paknow.retrieval.index import index_all
 
@@ -26,16 +25,17 @@ SOURCES = [
     ),
 ]
 
-for path, kind in SOURCES:
-    if not os.path.exists(path):
-        print(f"SKIP (missing): {path}", flush=True)
+for name, kind in SOURCES:
+    path = resolve_source(name)
+    if not path.exists():
+        print(f"SKIP (missing): {name} -> {path}", flush=True)
         continue
     if kind == "epub":
-        row, res = ingest_epub(path)
-        print(f"EPUB {path[:40]}: {len(res.evidence_units)} units, {len(res.figures)} figs", flush=True)
+        row, res = ingest_epub(str(path))
+        print(f"EPUB {name[:40]}: {len(res.evidence_units)} units, {len(res.figures)} figs", flush=True)
     else:
-        row, res = ingest_pdf(path)
-        print(f"PDF  {path[:40]}: {len(res.evidence_units)} units, {len(res.figures)} figs, {len(res.ocr_pages)} ocr-pages", flush=True)
+        row, res = ingest_pdf(str(path))
+        print(f"PDF  {name[:40]}: {len(res.evidence_units)} units, {len(res.figures)} figs, {len(res.ocr_pages)} ocr-pages", flush=True)
 
 print("indexing (dense+sparse)...", flush=True)
 n = index_all()

@@ -6,13 +6,14 @@ from PIL import Image
 
 from paknow.config import settings
 from paknow.db import init_db
+from paknow.ingest.manifest import resolve_source
 from paknow.workflows.graph import run_query
 
 settings.ensure_dirs()
 init_db()
 
 # render 逐根 K 线 图 4.5 (physical page 93) as the "uploaded chart"
-doc = fitz.open("Reading Price Charts Bar by Bar.pdf")
+doc = fitz.open(str(resolve_source("Reading Price Charts Bar by Bar.pdf")))
 pix = doc[92].get_pixmap(matrix=fitz.Matrix(1.5, 1.5))
 img = Image.frombytes("RGB", (pix.width, pix.height), pix.samples)
 

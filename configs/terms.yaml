@@ -25,7 +25,7 @@
 - canonical: strong_trend
   aliases: ["强趋势", "strong trend"]
 - canonical: trading_range
-  aliases: ["交易区间", "交易区间日", "trading range", "TR"]
+  aliases: ["交易区间", "trading range", "TR"]
 - canonical: second_entry
   aliases: ["第二次入场", "二次入场", "second entry", "second signal", "二次信号"]
 - canonical: climax
@@ -85,7 +85,7 @@
 
 # ---- 新增：趋势生命周期 / 市场周期（pabook.pdf 第5章 + 全书） ----
 - canonical: market_cycle
-  aliases: ["市场周期", "market cycle", "周期转换", "趋势生命周期", "life cycle of a trend", "趋势的诞生运行衰亡", "四个阶段", "four phases", "趋势如何演变", "周期如何转换"]
+  aliases: ["市场周期", "market cycle", "周期转换", "趋势生命周期", "life cycle of a trend", "趋势的诞生运行衰亡", "四个阶段", "four phases", "趋势如何演变", "周期如何转换", "trend_lifecycle"]
   ambiguity: "市场周期 ≈ 趋势生命周期，指趋势在 脉冲/通道/区间 之间的循环，非宏观经济的市场周期"
 - canonical: spike
   aliases: ["脉冲", "spike", "尖峰", "spike and channel", "脉冲和通道"]

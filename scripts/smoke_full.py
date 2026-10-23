@@ -5,6 +5,7 @@ import time
 
 from paknow.config import settings
 from paknow.db import init_db
+from paknow.ingest.manifest import resolve_source
 from paknow.ingest.pipeline import ingest_epub
 from paknow.retrieval.index import index_all
 from paknow.retrieval.search import hybrid_search, point_to_doc
@@ -20,7 +21,11 @@ init_db()
 
 t0 = time.time()
 row, res = ingest_epub(
-    "Trading Price Action Trends_ Technical Analysis of Price Charts Bar by Bar for the Serious Trader.epub"
+    str(
+        resolve_source(
+            "Trading Price Action Trends_ Technical Analysis of Price Charts Bar by Bar for the Serious Trader.epub"
+        )
+    )
 )
 print(f"ingest: {len(res.evidence_units)} units in {time.time()-t0:.1f}s", flush=True)
 

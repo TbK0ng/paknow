@@ -8,7 +8,7 @@ from qdrant_client.models import PointStruct, SparseVector
 from paknow.config import settings
 from paknow.db import SessionLocal, init_db
 from paknow.db.models import FigureAssetRow
-from paknow.evidence.contracts import DocFormat, EvidenceUnit, SourceLocator
+from paknow.evidence.contracts import DocFormat, EvidenceUnit, Provenance, SourceLocator
 from paknow.ids import content_hash, stable_id
 from paknow.ingest.persist import persist_units
 from paknow.ingest.store import object_path
@@ -67,6 +67,7 @@ for i, f in enumerate(figs):
             text=obs,
             text_hash=content_hash(obs.encode("utf-8")),
             block_type="caption",
+            provenance=Provenance.derived_observation,
             figure_ids=[f.figure_id],
         )
     )

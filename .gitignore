@@ -1,5 +1,8 @@
 .venv/
 .omp/
+# omp 会话从用户级 skillshare 同步到仓库根的产物（重跑 omp 即重建）
+.agents/
+skills-lock.json
 .env
 __pycache__/
 integrations/paknow-mcp/dist/

@@ -25,11 +25,15 @@ class DocFormat(str, Enum):
     epub = "epub"
 
 
-class QualityStatus(str, Enum):
-    native_text = "native_text"   # text layer extracted directly
-    ocr = "ocr"                    # OCR'd because text layer absent/degraded
-    low_quality = "low_quality"    # flagged: garbled, sparse, dense, etc.
-    pending = "pending"
+class Provenance(str, Enum):
+    """How an evidence unit's text came to exist (not how trustworthy it is).
+
+    ``derived_observation`` is index material only: it never enters the
+    citable evidence set (ADR-0002).
+    """
+    native_text = "native_text"              # text layer extracted directly
+    ocr = "ocr"                              # produced by OCR fallback
+    derived_observation = "derived_observation"  # VLM reading of a page/figure
 
 
 class ReviewStatus(str, Enum):
@@ -100,7 +104,7 @@ class EvidenceUnit(BaseModel):
     child_ids: list[str] = Field(default_factory=list)
     # token estimate (recorded tokenizer-dependent, updated on chunking)
     token_count: int | None = None
-    quality: QualityStatus = QualityStatus.native_text
+    provenance: Provenance = Provenance.native_text
     # neighboring cross-page / cross-region links
     adjacent_ids: list[str] = Field(default_factory=list)
     figure_ids: list[str] = Field(default_factory=list)
