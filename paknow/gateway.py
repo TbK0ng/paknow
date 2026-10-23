@@ -26,16 +26,23 @@ class ModelGateway:
         self.model = settings.deepseek_model
         self.effort = settings.deepseek_effort
         self.vision = settings.deepseek_vision
-        self._client = OpenAI(
-            api_key=settings.deepseek_api_key, base_url=settings.deepseek_base_url
-        )
+        self._client: OpenAI | None = None
+
+    @property
+    def client(self) -> OpenAI:
+        """Lazily construct the SDK client so importing without a key is safe."""
+        if self._client is None:
+            self._client = OpenAI(
+                api_key=settings.deepseek_api_key, base_url=settings.deepseek_base_url
+            )
+        return self._client
 
     def _create(self, **kwargs: Any) -> Any:
         """Completion call with one retry for transient failures."""
         last: Exception | None = None
         for attempt in range(2):
             try:
-                return self._client.chat.completions.create(**kwargs)
+                return self.client.chat.completions.create(**kwargs)
             except Exception as e:  # noqa: BLE001
                 last = e
                 if attempt == 0:
