@@ -101,6 +101,7 @@ def retrieve_evidence(
     expanded_concepts: Sequence[str] = (),
     prior_graph_evidence: Sequence[Mapping[str, Any]] = (),
     expand_graph: bool = True,
+    text_width: int = 14,
 ) -> RetrievalResult:
     """Run one retrieval round over ``queries`` (max 6) and return partitions.
 
@@ -114,7 +115,14 @@ def retrieve_evidence(
     query is submitted, nothing is expanded, ``graph_evidence`` stays empty,
     and ``graph_stats["enabled"]`` is false. The text path is unchanged, so the
     production-parity evaluation can subtract the two arms.
+
+    ``text_width`` is the recall width passed to the diversity step (the
+    per-document cap stays at 5). It defaults to the production width 14, so
+    callers that do not set it keep the online behaviour; the ablation varies it
+    to measure the width's effect on the same frozen questions.
     """
+    if text_width < 1:
+        raise ValueError(f"text_width must be >= 1, got {text_width!r}")
     failures: list[str] = []
     seen: dict[str, dict[str, Any]] = dict(acc or {})
 
@@ -164,7 +172,7 @@ def retrieve_evidence(
                 h["reranked"] = True
         except Exception as e:  # noqa: BLE001
             failures.append(f"rerank: {e}")
-    hits = diversify(hits, top_k=14, max_per_doc=5)
+    hits = diversify(hits, top_k=text_width, max_per_doc=5)
 
     ev_ids = [h["evidence_id"] for h in hits if h.get("evidence_id")]
     figures: list[dict[str, Any]] = []

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from types import SimpleNamespace
 
 import pytest
 
@@ -123,13 +124,38 @@ def test_evaluate_text_item_runs_the_seam_with_graph_off(monkeypatch):
 
     row = eval_gold.evaluate_text_item(item)
 
-    assert seen == {"query": "q", "queries": ["q", "q2"], "kwargs": {"expand_graph": False}}
+    assert seen == {
+        "query": "q",
+        "queries": ["q", "q2"],
+        "kwargs": {"expand_graph": False, "text_width": 14},
+    }
     assert row["found"] == ["a"]
     assert row["missing"] == ["b"]
     assert row["hit"] is True
     assert row["hits"] == ["a"]
     assert row["graph_stats"]["enabled"] is False
     assert row["failures"] == []
+
+
+def test_evaluate_text_item_passes_the_requested_width(monkeypatch):
+    seen = {}
+
+    def fake_retrieve(query, queries, **kwargs):
+        seen.update(kwargs)
+        return _FakeResult(["a"], [], {"enabled": False, "selected": 0})
+
+    monkeypatch.setattr(eval_gold, "retrieve_evidence", fake_retrieve)
+    item = {
+        "id": "enc-01",
+        "category": "encyclopedia",
+        "question": "q",
+        "expanded_queries": ["q"],
+        "expected_evidence": ["a"],
+    }
+
+    eval_gold.evaluate_text_item(item, text_width=20)
+
+    assert seen == {"expand_graph": False, "text_width": 20}
 
 
 # ---------------------------------------------------------------------------
@@ -283,6 +309,7 @@ def test_regression_payload_has_a_stable_key_order_and_is_serializable():
         rows=[_row("mech-01")],
         text_summary=text_summary,
         top_k=20,
+        text_width=20,
     )
 
     assert list(payload) == [
@@ -290,6 +317,7 @@ def test_regression_payload_has_a_stable_key_order_and_is_serializable():
         "frozen_at",
         "protocol",
         "top_k",
+        "text_width",
         "mode",
         "baseline_reused",
         "baseline_summary",
@@ -298,6 +326,7 @@ def test_regression_payload_has_a_stable_key_order_and_is_serializable():
         "items",
     ]
     assert payload["mode"] == "graph"
+    assert payload["text_width"] == 20
     assert payload["baseline_reused"] is False
     assert payload["text_arm_summary"] == text_summary
     assert payload["items"][0]["id"] == "mech-01"
@@ -310,6 +339,7 @@ def test_regression_payload_has_a_stable_key_order_and_is_serializable():
             rows=[_row("mech-01")],
             text_summary=text_summary,
             top_k=20,
+            text_width=20,
         ),
         ensure_ascii=False,
         indent=2,
@@ -337,6 +367,7 @@ def test_text_payload_identifies_the_production_parity_mode():
         dataset=dataset,
         rows=rows,
         top_k=20,
+        text_width=20,
     )
 
     assert list(payload) == [
@@ -344,6 +375,7 @@ def test_text_payload_identifies_the_production_parity_mode():
         "frozen_at",
         "protocol",
         "top_k",
+        "text_width",
         "mode",
         "expand_graph",
         "summary",
@@ -351,6 +383,7 @@ def test_text_payload_identifies_the_production_parity_mode():
     ]
     assert payload["mode"] == "text"
     assert payload["expand_graph"] is False
+    assert payload["text_width"] == 20
     assert payload["summary"]["expected_found"] == 1
 
 
@@ -400,6 +433,32 @@ def test_evaluate_graph_item_reuses_the_frozen_queries(monkeypatch):
     assert row["still_missing"] == ["c"]
     assert row["graph_unique"] is True
     assert row["truncation"]["truncated"] is False
+
+
+def test_evaluate_graph_item_passes_the_requested_width(monkeypatch):
+    seen = {}
+
+    def fake_retrieve(query, queries, **kwargs):
+        seen.update(kwargs)
+        return _FakeResult(
+            ["a"],
+            ["b"],
+            {"selected": 1, "tokens": 10, "truncated_edges": False,
+             "truncated_evidence": False, "truncated_tokens": False},
+        )
+
+    monkeypatch.setattr(eval_gold, "retrieve_evidence", fake_retrieve)
+    item = {
+        "id": "enc-01",
+        "category": "encyclopedia",
+        "question": "q",
+        "expanded_queries": ["q"],
+        "expected_evidence": ["a", "b"],
+    }
+
+    eval_gold.evaluate_graph_item(item, baseline_union={"a"}, text_width=20)
+
+    assert seen == {"text_width": 20}
 
 
 # ---------------------------------------------------------------------------
@@ -583,6 +642,7 @@ def test_reuse_baseline_writes_verified_provenance_without_touching_baseline(
 
     payload = json.loads(out.read_text(encoding="utf-8"))
     assert payload["baseline_reused"] is True
+    assert payload["text_width"] == 14
     assert payload["summary"]["newly_recalled"] == 1
     assert payload["summary"]["graph_only"] == 1
     assert payload["summary"]["union_found"] == 2  # text found a, graph found b
@@ -623,11 +683,120 @@ def test_text_mode_writes_its_own_artifact_with_graph_off(tmp_path, monkeypatch)
     eval_gold.main()
 
     payload = json.loads(out.read_text(encoding="utf-8"))
-    assert calls == [{"expand_graph": False}]
+    assert calls == [{"expand_graph": False, "text_width": 14}]
     assert payload["mode"] == "text"
     assert payload["expand_graph"] is False
+    assert payload["text_width"] == 14
     assert payload["summary"]["expected_found"] == 1
     assert payload["items"][0]["graph_stats"]["enabled"] is False
     assert payload["items"][0]["failures"] == []
     assert baseline.read_bytes() == before
+
+
+def test_text_mode_records_the_requested_width(tmp_path, monkeypatch):
+    dataset, _sidecar, baseline = _reuse_fixture(tmp_path)
+    out = tmp_path / "text.json"
+    calls = []
+
+    def fake_retrieve(query, queries, **kwargs):
+        calls.append(dict(kwargs))
+        return _FakeResult(
+            ["a"],
+            [],
+            {"enabled": False, "selected": 0, "accumulated": 0, "candidates": 0,
+             "truncated_edges": False, "truncated_evidence": False,
+             "truncated_tokens": False, "tokens": 0},
+        )
+
+    monkeypatch.setattr(eval_gold, "retrieve_evidence", fake_retrieve)
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "eval_gold.py",
+            "--mode", "text",
+            "--dataset", str(dataset),
+            "--baseline", str(baseline),
+            "--text-width", "20",
+            "--out", str(out),
+        ],
+    )
+
+    eval_gold.main()
+
+    payload = json.loads(out.read_text(encoding="utf-8"))
+    assert calls == [{"expand_graph": False, "text_width": 20}]
+    assert payload["text_width"] == 20
+
+
+def test_graph_mode_applies_the_width_to_both_arms(tmp_path, monkeypatch):
+    dataset, sidecar, baseline = _reuse_fixture(tmp_path)
+    out = tmp_path / "regression.json"
+    calls = []
+
+    def fake_retrieve(query, queries, **kwargs):
+        calls.append(dict(kwargs))
+        return _FakeResult(
+            ["a"],
+            ["b"],
+            {"selected": 1, "tokens": 10, "truncated_edges": False,
+             "truncated_evidence": False, "truncated_tokens": False},
+        )
+
+    monkeypatch.setattr(eval_gold, "retrieve_evidence", fake_retrieve)
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "eval_gold.py",
+            "--mode", "graph",
+            "--dataset", str(dataset),
+            "--dataset-hash", str(sidecar),
+            "--baseline", str(baseline),
+            "--text-width", "20",
+            "--out", str(out),
+            "--reuse-baseline",
+        ],
+    )
+
+    eval_gold.main()
+
+    payload = json.loads(out.read_text(encoding="utf-8"))
+    assert [call["text_width"] for call in calls] == [20, 20]
+    assert calls[0]["expand_graph"] is False  # production-parity text arm
+    assert "expand_graph" not in calls[1]  # shipped graph arm
+    assert payload["text_width"] == 20
+
+
+def test_invalid_text_width_is_rejected(monkeypatch):
+    monkeypatch.setattr(
+        "sys.argv", ["eval_gold.py", "--mode", "text", "--text-width", "0"]
+    )
+
+    with pytest.raises(SystemExit):
+        eval_gold.main()
+
+
+def test_baseline_payload_records_the_width(tmp_path, monkeypatch):
+    dataset, _sidecar, _baseline = _reuse_fixture(tmp_path)
+    out = tmp_path / "baseline.json"
+
+    def fake_search(query, *, top_k=20):
+        return [SimpleNamespace(payload={"evidence_id": "a"})]
+
+    monkeypatch.setattr(eval_gold, "hybrid_search", fake_search)
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "eval_gold.py",
+            "--mode", "baseline",
+            "--dataset", str(dataset),
+            "--text-width", "20",
+            "--out", str(out),
+        ],
+    )
+
+    eval_gold.main()
+
+    payload = json.loads(out.read_text(encoding="utf-8"))
+    assert payload["text_width"] == 20
+    assert payload["summary"]["expected_found"] == 1
 
