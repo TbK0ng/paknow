@@ -179,7 +179,10 @@ serialized window as the recall eval: embedded Qdrant is single-process.
 The 40 new v2 items carry authored `expected_points` bound to evidence ids; the
 20 original items ship unchanged and have none, so for those the
 expected-evidence text is the correctness anchor and the record says
-`points_source: "evidence_excerpt"`.
+`points_source: "evidence_excerpt"`. Those anchors are terse heading/summary
+fragments ("失败，构成楔形底"), so their correctness scores are a lower bound: an
+answer that paraphrases the idea without reproducing the fragment can still
+score 0. Compare strata with that in mind.
 
 Artifacts go to `.scratch/retrieval-eval-parity/judgements/<UTC-timestamp>/`:
 `records.jsonl` (per-record verdict: hard reasons, the three scores, unsupported
