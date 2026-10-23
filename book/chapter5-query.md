@@ -14,7 +14,7 @@
 | `sub_queries` | 2~4 个不同角度的检索子问题 |
 | `hyde` | 假设性答案（150~300 字），用于召回而非最终答案 |
 | `evidence_needs` | definition/context/figure/counterexample/comparison/toc/cycle |
-| `routes` | hybrid_text/toc/graph_local/visual_page/numeric |
+| `routes` | hybrid_text/toc/visual_page/numeric（只列有独立打分的召回通道；图谱扩展不在 `routes` 中） |
 | `wants_examples` | 是否明确要求举例/图例 |
 | `metadata` / `data_state` | 过滤提示与数据可用性 |
 
