@@ -157,6 +157,52 @@ def test_graph_off_is_an_empty_partition_with_identical_text_hits(monkeypatch):
     assert on.citation_index == off.citation_index
 
 
+def test_text_width_reaches_the_diversity_step(monkeypatch):
+    _patched(
+        monkeypatch,
+        hits_by_query={
+            "q": [{"evidence_id": "e1", "text": "a", "doc_id": "d1", "score": 0.9}]
+        },
+    )
+    seen = {}
+
+    def fake_diversify(hits, *, top_k=14, max_per_doc=5):
+        seen["top_k"] = top_k
+        seen["max_per_doc"] = max_per_doc
+        return hits
+
+    monkeypatch.setattr(pipeline, "diversify", fake_diversify)
+
+    pipeline.retrieve_evidence("q", ["q"], text_width=20)
+
+    assert seen == {"top_k": 20, "max_per_doc": 5}
+
+
+def test_text_width_defaults_to_the_production_fourteen(monkeypatch):
+    _patched(
+        monkeypatch,
+        hits_by_query={
+            "q": [{"evidence_id": "e1", "text": "a", "doc_id": "d1", "score": 0.9}]
+        },
+    )
+    seen = {}
+
+    def fake_diversify(hits, *, top_k=14, max_per_doc=5):
+        seen["top_k"] = top_k
+        return hits
+
+    monkeypatch.setattr(pipeline, "diversify", fake_diversify)
+
+    pipeline.retrieve_evidence("q", ["q"], expand_graph=False)
+
+    assert seen["top_k"] == 14
+
+
+def test_text_width_must_be_positive():
+    with pytest.raises(ValueError, match="text_width"):
+        pipeline.retrieve_evidence("q", ["q"], text_width=0)
+
+
 def test_graph_off_does_not_report_seed_failures(monkeypatch):
     _patched(monkeypatch, hits_by_query={"q": [{"evidence_id": "e1", "text": "a", "doc_id": "d1", "score": 0.9}]})
 
