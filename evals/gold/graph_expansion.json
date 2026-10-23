@@ -1,0 +1,508 @@
+{
+  "version": 1,
+  "frozen_at": "2026-10-23",
+  "retrieval_protocol": "hybrid_search(top_k=20) per frozen query; top-20 union; no routing, no rerank",
+  "queries_per_item": 6,
+  "items": [
+    {
+      "id": "enc-01",
+      "category": "encyclopedia",
+      "question": "高开后出现三角形，突破失败之后通常怎么走？",
+      "expanded_queries": [
+        "高开后出现三角形，突破失败之后通常怎么走？",
+        "开盘跳空高开 三角形 突破失败 随后",
+        "开盘即空头趋势 三角形下方突破失败",
+        "gap up triangle failed breakout what follows",
+        "开盘跳空高开 形态 突破失败 后续走势",
+        "三角形 假突破 之后 向上突破"
+      ],
+      "expected_evidence": [
+        "887ee7c246cdbf4a193ae7e4a2591bbd"
+      ],
+      "expected_relations": [
+        {
+          "kind": "taxonomy",
+          "relation": "TRANSITIONS_TO",
+          "from": "open_of_day",
+          "to": "breakout"
+        }
+      ]
+    },
+    {
+      "id": "enc-02",
+      "category": "encyclopedia",
+      "question": "开盘就是多头趋势，但昨日最低点下方的突破失败，说明什么？",
+      "expanded_queries": [
+        "开盘就是多头趋势，但昨日最低点下方的突破失败，说明什么？",
+        "开盘即多头趋势 昨日最低点下方的突破失败",
+        "开盘多头趋势 下方突破失败 含义",
+        "open bull trend failed breakout below yesterday low",
+        "卖出高潮后空头突破失败",
+        "开盘即突破模式 突破失败"
+      ],
+      "expected_evidence": [
+        "eb0060c008738555e2583eccc08759a2",
+        "7e71a9e4c42b86d41d0e6dd8a72b6747",
+        "1d83a0a9080240344c9177e5ab2cc4b4"
+      ],
+      "expected_relations": [
+        {
+          "kind": "taxonomy",
+          "relation": "INVALIDATED_BY",
+          "from": "open_of_day",
+          "to": "breakout"
+        }
+      ]
+    },
+    {
+      "id": "enc-03",
+      "category": "encyclopedia",
+      "question": "双顶上方突破失败，属于哪种形态的变体？",
+      "expanded_queries": [
+        "双顶上方突破失败，属于哪种形态的变体？",
+        "双顶上方突破失败 楔形顶 变体",
+        "failed breakout above double top wedge variant",
+        "双顶 假突破 楔形顶 一种变体",
+        "突破失败 形态归类 变体",
+        "双顶上方突破失败 属于什么"
+      ],
+      "expected_evidence": [
+        "94bbeb00f09f549082761927fcf7b968"
+      ],
+      "expected_relations": [
+        {
+          "kind": "taxonomy",
+          "relation": "PART_OF",
+          "from": "double_top",
+          "to": "wedge"
+        }
+      ]
+    },
+    {
+      "id": "enc-04",
+      "category": "encyclopedia",
+      "question": "18根K线区间下方的突破失败之后，随后会发生什么？",
+      "expanded_queries": [
+        "18根K线区间下方的突破失败之后，随后会发生什么？",
+        "18根K线区间 下方突破失败 随后向上突破",
+        "18 bar range failed breakout then breakout",
+        "区间下破失败 反转向上的例子",
+        "突破失败 随后向上突破区间",
+        "18根K线区间 先向下突破 随后向上突破"
+      ],
+      "expected_evidence": [
+        "ece546c3b83ba9ff8baa6c49bbba8733",
+        "4b6ee5d889e220cb45c01c17a6b1bdcd",
+        "8a0d524251b9729ee1a76ae2f568932d"
+      ],
+      "expected_relations": [
+        {
+          "kind": "taxonomy",
+          "relation": "TRANSITIONS_TO",
+          "from": "failed_breakout",
+          "to": "breakout"
+        }
+      ]
+    },
+    {
+      "id": "enc-05",
+      "category": "encyclopedia",
+      "question": "18根K线区间下方的突破失败，可能出现哪些结果？",
+      "expanded_queries": [
+        "18根K线区间下方的突破失败，可能出现哪些结果？",
+        "18根K线区间下方的突破失败 结果",
+        "failed breakout below 18 bar range outcomes",
+        "区间下破失败 交易区间日 新低",
+        "18根K线区间 突破失败 随后向上或向下",
+        "突破失败 上方突破也失败"
+      ],
+      "expected_evidence": [
+        "3546dcad106552ec66fea23d4e70c856",
+        "074854a6b27a2b41c66b31879399177f",
+        "d819d7ff2ca0c4e4967e326371aca21e"
+      ],
+      "expected_relations": [
+        {
+          "kind": "taxonomy",
+          "relation": "TRANSITIONS_TO",
+          "from": "failed_breakout",
+          "to": "breakout"
+        }
+      ]
+    },
+    {
+      "id": "enc-06",
+      "category": "encyclopedia",
+      "question": "空头通道下方的突破失败，为什么会变成竭尽性卖出高潮？",
+      "expanded_queries": [
+        "空头通道下方的突破失败，为什么会变成竭尽性卖出高潮？",
+        "空头通道下方突破失败 竭尽性卖出高潮",
+        "failed breakout below bear channel exhaustive sell climax",
+        "通道型空头趋势下方突破失败 卖出高潮",
+        "空头通道 下破失败 反转",
+        "突破失败 卖出高潮 竭尽"
+      ],
+      "expected_evidence": [
+        "0e2c249d3b76bd8d87e9a41e8f60304d",
+        "01a8d5e972736f9a93ec96631a270e90"
+      ],
+      "expected_relations": [
+        {
+          "kind": "taxonomy",
+          "relation": "INVALIDATED_BY",
+          "from": "failed_breakout",
+          "to": "climax"
+        }
+      ]
+    },
+    {
+      "id": "enc-07",
+      "category": "encyclopedia",
+      "question": "楔形底失败之后会形成什么？",
+      "expanded_queries": [
+        "楔形底失败之后会形成什么？",
+        "楔形底失败 随后形成连续楔形底",
+        "failed wedge bottom becomes consecutive wedge bottoms",
+        "18根K线区间下方突破失败 构成楔形底",
+        "楔形底 破位失败 形态演变",
+        "楔形底失败 强势楔形底"
+      ],
+      "expected_evidence": [
+        "c4259e41e8a1ff68f38a6a45146ea84f",
+        "e7f8295f98ab4f50c283fbf61cffcba9"
+      ],
+      "expected_relations": [
+        {
+          "kind": "taxonomy",
+          "relation": "INVALIDATED_BY",
+          "from": "failed_breakout",
+          "to": "wedge"
+        }
+      ]
+    },
+    {
+      "id": "enc-08",
+      "category": "encyclopedia",
+      "question": "买入高潮失败之后，市场通常接着形成什么形态？",
+      "expanded_queries": [
+        "买入高潮失败之后，市场通常接着形成什么形态？",
+        "买入高潮失败 随后形成楔形牛旗 主要趋势反转",
+        "failed buy climax wedge bull flag major trend reversal",
+        "买入高潮 失败 后续形态",
+        "高潮反转 楔形牛旗",
+        "买入高潮失败 后续走势"
+      ],
+      "expected_evidence": [
+        "133fafbcf874c332ff9c1a15299b7543"
+      ],
+      "expected_relations": [
+        {
+          "kind": "taxonomy",
+          "relation": "TRANSITIONS_TO",
+          "from": "climax",
+          "to": "auto_major_trend_reversal_mtr"
+        }
+      ]
+    },
+    {
+      "id": "enc-09",
+      "category": "encyclopedia",
+      "question": "向下跳空后出现卖出高潮，但向上反转失败，市场会怎么走？",
+      "expanded_queries": [
+        "向下跳空后出现卖出高潮，但向上反转失败，市场会怎么走？",
+        "向下跳空 卖出高潮 向上反转失败",
+        "gap down sell climax failed reversal bear flag",
+        "向下跳空 卖出高潮 但失败 走出熊旗",
+        "跳空低开 卖出高潮 不是趋势反转",
+        "向下跳空 连续卖出高潮 继续走低"
+      ],
+      "expected_evidence": [
+        "e8a4845ca3960812aa92332c6c34c13d",
+        "825b57972094d7f0b375f5a5a990f18b"
+      ],
+      "expected_relations": [
+        {
+          "kind": "taxonomy",
+          "relation": "INVALIDATED_BY",
+          "from": "gap",
+          "to": "reversal"
+        }
+      ]
+    },
+    {
+      "id": "enc-10",
+      "category": "encyclopedia",
+      "question": "卖出高潮、向下跳空之后形成H2底部，但失败，说明什么？",
+      "expanded_queries": [
+        "卖出高潮、向下跳空之后形成H2底部，但失败，说明什么？",
+        "卖出高潮 向下跳空 H2底部 但失败",
+        "sell climax gap down H2 bottom failed",
+        "H2底部 失败 卖出高潮 跳空",
+        "向下跳空 H2 底部 失败 后续",
+        "卖出高潮 跳空 H2 形态"
+      ],
+      "expected_evidence": [
+        "70074b9992cb9216f018d26b3c659a25"
+      ],
+      "expected_relations": [
+        {
+          "kind": "taxonomy",
+          "relation": "INVALIDATED_BY",
+          "from": "climax",
+          "to": "high_2"
+        }
+      ]
+    },
+    {
+      "id": "mech-01",
+      "category": "mechanism",
+      "question": "双底多头旗形在三本书里分别怎么定义、在什么条件下有效？",
+      "expanded_queries": [
+        "双底多头旗形在三本书里分别怎么定义、在什么条件下有效？",
+        "双底多头旗形 定义 条件",
+        "double bottom bull flag definition conditions",
+        "双底 牛旗 后续趋势",
+        "双底多头旗形 第二低点后快速上涨",
+        "DBBF continuation pattern"
+      ],
+      "expected_evidence": [
+        "38de0072aaf37b666ca771d380096a96",
+        "cef8b481f6df7299941c4b676c15c999",
+        "bca2e3898d49a9a6149a1cb2668cb883"
+      ],
+      "expected_relations": [
+        {
+          "kind": "claim",
+          "relation": "SUPPORTED_BY",
+          "concept": "double_bottom_bull_flag"
+        }
+      ]
+    },
+    {
+      "id": "mech-02",
+      "category": "mechanism",
+      "question": "大趋势之后出现交易区间，通常意味着什么？",
+      "expanded_queries": [
+        "大趋势之后出现交易区间，通常意味着什么？",
+        "趋势之后出现交易区间 含义",
+        "trend then trading range what does it mean",
+        "交易区间 比反转更常见",
+        "趋势末端的突破 竭尽性高潮 交易区间",
+        "trading range formation trapped traders"
+      ],
+      "expected_evidence": [
+        "e755693118a08f01cde502901d0a2963",
+        "6bf656e645a27e4f907333ea588dcb7c",
+        "c60dded0e13239457aefff8ed49432db",
+        "89392667981e012caed61cfb1179e3fc"
+      ],
+      "expected_relations": [
+        {
+          "kind": "claim",
+          "relation": "SUPPORTED_BY",
+          "concept": "trading_range"
+        }
+      ]
+    },
+    {
+      "id": "mech-03",
+      "category": "mechanism",
+      "question": "跳空开盘在日内图上是突破还是回调？",
+      "expanded_queries": [
+        "跳空开盘在日内图上是突破还是回调？",
+        "跳空开盘 突破 回调 日内图",
+        "gap opening is breakout and pullback intraday",
+        "大幅跳空低开 两腿回调 均线",
+        "big gap opening trend day odds",
+        "traditional gaps intraday 5 minute charts"
+      ],
+      "expected_evidence": [
+        "b05f7402a6f80706f4512bed2c5997d8",
+        "1b3c4a17ac8c689e2a0ecde9027df8fe",
+        "2f84c72607665ba007e01aadcb393aee",
+        "dded563fceb3227616b981d604da3203"
+      ],
+      "expected_relations": [
+        {
+          "kind": "claim",
+          "relation": "SUPPORTED_BY",
+          "concept": "gap"
+        }
+      ]
+    },
+    {
+      "id": "mech-04",
+      "category": "mechanism",
+      "question": "趋势什么时候会恢复，什么时候转成交易区间？",
+      "expanded_queries": [
+        "趋势什么时候会恢复，什么时候转成交易区间？",
+        "趋势恢复 交易区间 如何转换",
+        "when does a trend resume or become trading range",
+        "趋势变化 标准价格行为原则",
+        "bull trend pullback on the open",
+        "趋势恢复后移动止损"
+      ],
+      "expected_evidence": [
+        "9117c447e1fdb66bc1cdef15c58d3845",
+        "7647d8b10d55959dc8868e16f5f0b234",
+        "1c216bfdaa9eafae8eeb7a473038b45a",
+        "dded563fceb3227616b981d604da3203"
+      ],
+      "expected_relations": [
+        {
+          "kind": "claim",
+          "relation": "SUPPORTED_BY",
+          "concept": "trend"
+        }
+      ]
+    },
+    {
+      "id": "mech-05",
+      "category": "mechanism",
+      "question": "反转形态为什么大多数会失败？",
+      "expanded_queries": [
+        "反转形态为什么大多数会失败？",
+        "反转形态 失败率 80%",
+        "why do most reversal patterns fail",
+        "反转入场 需要先有强突破",
+        "climactic reversal trend bar opposite",
+        "reversal down high of the day"
+      ],
+      "expected_evidence": [
+        "dad1f6d51d393a7d023e82f26ca3fccd",
+        "a22445b3f64e9601378b8da782fc637a",
+        "ad5df18d8b827d41cc3a4bd64e5edb33",
+        "e7a6eb6e4f76e06f333cfb83901a5ff3"
+      ],
+      "expected_relations": [
+        {
+          "kind": "claim",
+          "relation": "SUPPORTED_BY",
+          "concept": "reversal"
+        }
+      ]
+    },
+    {
+      "id": "mech-06",
+      "category": "mechanism",
+      "question": "陡峭通道中的测试低点，该不该逆势买入？",
+      "expanded_queries": [
+        "陡峭通道中的测试低点，该不该逆势买入？",
+        "陡峭牛通道 测试低点 抛售 不应该买入",
+        "steep channel test of low countertrend buy",
+        "熊通道 聪明交易者只在K线下方买入",
+        "bear channel smart traders buy below bars",
+        "通道 逆势 买入 条件"
+      ],
+      "expected_evidence": [
+        "3b07a477c10e307acbe189e2424a1c82",
+        "0bcafd210d34306f5fd0fcd15e0a195c"
+      ],
+      "expected_relations": [
+        {
+          "kind": "claim",
+          "relation": "SUPPORTED_BY",
+          "concept": "channel"
+        }
+      ]
+    },
+    {
+      "id": "mech-07",
+      "category": "mechanism",
+      "question": "突破在5分钟图上常见吗，什么样的突破才算强？",
+      "expanded_queries": [
+        "突破在5分钟图上常见吗，什么样的突破才算强？",
+        "5分钟图 突破 常见 强突破",
+        "breakouts common 5 minute emini strong breakout",
+        "一个tick的突破 是否重要",
+        "强且成功的突破 每天发生几次",
+        "upside breakout one tick"
+      ],
+      "expected_evidence": [
+        "964597e441c0de153d9ef2105d842285",
+        "ce2b62d6e9578e6d2dd755f048409d5f",
+        "53d1ed976584910b48c36aa23580d936"
+      ],
+      "expected_relations": [
+        {
+          "kind": "claim",
+          "relation": "SUPPORTED_BY",
+          "concept": "breakout"
+        }
+      ]
+    },
+    {
+      "id": "mech-08",
+      "category": "mechanism",
+      "question": "开盘第一小时的双顶或双底旗形可以交易吗？",
+      "expanded_queries": [
+        "开盘第一小时的双顶或双底旗形可以交易吗？",
+        "开盘第一小时 双顶双底旗形 可交易",
+        "double top or bottom flags first hour tradable",
+        "双顶双底旗形 部分止盈 移动止损",
+        "double top or bottom flags scalp out",
+        "开盘 旗形 交易机会"
+      ],
+      "expected_evidence": [
+        "8eac6759d8b55a0ba5aa9e8be4cadda1"
+      ],
+      "expected_relations": [
+        {
+          "kind": "claim",
+          "relation": "SUPPORTED_BY",
+          "concept": "double_top"
+        }
+      ]
+    },
+    {
+      "id": "mech-09",
+      "category": "mechanism",
+      "question": "楔形反转需要满足什么条件？",
+      "expanded_queries": [
+        "楔形反转需要满足什么条件？",
+        "楔形反转 条件 三次推动",
+        "wedge reversal conditions three pushes",
+        "楔形买入 耐心交易者 更高低点",
+        "小型楔形形态 回调至起点",
+        "micro wedge failed to reverse"
+      ],
+      "expected_evidence": [
+        "8ef770a0d81c76cec759ad9a593f5834",
+        "9fa2638af2f5465db6c88764842e9e44",
+        "964597e441c0de153d9ef2105d842285"
+      ],
+      "expected_relations": [
+        {
+          "kind": "claim",
+          "relation": "SUPPORTED_BY",
+          "concept": "wedge"
+        }
+      ]
+    },
+    {
+      "id": "mech-10",
+      "category": "mechanism",
+      "question": "趋势中的回调会随着趋势持续而越来越大吗？",
+      "expanded_queries": [
+        "趋势中的回调会随着趋势持续而越来越大吗？",
+        "趋势中的回调 越来越大",
+        "do pullbacks get larger as trend continues",
+        "趋势中总有回调 测试前高",
+        "three swing pullback high 2",
+        "pullback risk few cents breakout test"
+      ],
+      "expected_evidence": [
+        "54c4bd4a184d6f709936370de1095174",
+        "4c652ffaee935db256aac204fb806ef2",
+        "3b08ac8b255117e428f6e08f5aafa308"
+      ],
+      "expected_relations": [
+        {
+          "kind": "claim",
+          "relation": "SUPPORTED_BY",
+          "concept": "pullback"
+        }
+      ]
+    }
+  ]
+}

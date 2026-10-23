@@ -12,22 +12,12 @@ from typing import Any, TypedDict
 
 from langgraph.graph import END, START, StateGraph
 
-from paknow.db import SessionLocal
-from paknow.db.models import FigureAssetRow
 from paknow.graph.retrieve import concept_lookup, expand_evidence_ids, transition_chains
 from paknow.memory.sop import select_sop
 from paknow.memory.trace import save_trace
-from paknow.retrieval.barref import barref_lookup
 from paknow.retrieval.dictionary import expand_query
-from paknow.retrieval.search import (
-    caption_search,
-    diversify,
-    expand_evidence,
-    hybrid_search,
-    point_to_doc,
-    rerank,
-)
-from paknow.retrieval.toc import toc_recall
+from paknow.retrieval.pipeline import retrieve_evidence
+from paknow.retrieval.search import expand_evidence
 from paknow.workflows.evidence import check_sufficiency
 from paknow.workflows.generate import generate
 from paknow.workflows.router import QueryPlan, retrieval_queries, route
@@ -105,46 +95,28 @@ def _retrieve_node(state: QState) -> QState:
         if q and q not in seen_q:
             seen_q.add(q)
             queries.append(q)
-    seen: dict[str, dict[str, Any]] = dict(state.get("acc", {}))
-    for q in queries[:6]:
-        try:
-            for p in hybrid_search(q, top_k=40):
-                d = point_to_doc(p)
-                eid = d.get("evidence_id")
-                if eid and eid not in seen:
-                    seen[eid] = d
-        except Exception as e:  # noqa: BLE001
-            state.setdefault("failures", []).append(f"retrieve: {e}")
-    state["acc"] = seen  # accumulate across retrieval rounds
 
-    hits = sorted(seen.values(), key=lambda x: x.get("score") or 0.0, reverse=True)
-    # cross-encoder rerank over the top candidates (falls back to RRF order)
-    if len(hits) >= 2:
-        try:
-            hits = rerank(state["query"], hits[:20], top_k=20)
-            for h in hits:
-                h["reranked"] = True
-        except Exception as e:  # noqa: BLE001
-            state.setdefault("failures", []).append(f"rerank: {e}")
-    hits = diversify(hits, top_k=14, max_per_doc=5)
-
-    state["hits"] = hits
+    result = retrieve_evidence(
+        state["query"],
+        queries,
+        needs=state.get("evidence_needs", []),
+        routes=state.get("routes", []),
+        wants_examples=state.get("wants_examples", False),
+        acc=state.get("acc", {}),
+    )
+    state["acc"] = result.acc
+    state["hits"] = result.text_hits
+    state["figures"] = result.figures
+    state["context_units"] = result.context_units
+    state["toc_context"] = result.toc_context
+    state["barrefs"] = result.barrefs
+    state.setdefault("failures", []).extend(result.failures)
     state["round"] = state.get("round", 0) + 1
-    ev_ids = [h["evidence_id"] for h in hits if h.get("evidence_id")]
-    expanded = expand_evidence(ev_ids)
-    state["figures"] = expanded.get("figures", [])
-    by_id = {u["evidence_id"]: u for u in expanded.get("units", [])}
-    for h in hits:
-        full = by_id.get(h.get("evidence_id"))
-        if full:
-            h.update(full)
-    state["context_units"] = [
-        u
-        for u in expanded.get("units", [])
-        if u.get("is_parent") or u.get("is_adjacent")
-    ]
 
-    # graph recall: concepts/claims + transition cycles + claim-linked evidence
+    # graph recall: concepts/claims + transition cycles + claim-linked evidence.
+    # This legacy path is replaced by graph expansion in the next increment; keep
+    # it out of the seam so the seam's graph partition starts empty.
+    ev_ids = [h["evidence_id"] for h in result.text_hits if h.get("evidence_id")]
     routes = state.get("routes", [])
     needs = state.get("evidence_needs", [])
     if "graph_local" in routes or "cycle" in needs or state.get("is_framework"):
@@ -161,80 +133,7 @@ def _retrieve_node(state: QState) -> QState:
         if rel_ids:
             rel_exp = expand_evidence(rel_ids[:6], parent_limit=0, adjacent_limit=0)
             state["graph_evidence"] = rel_exp.get("units", [])
-
-    # toc recall: chapter framework for structural questions
-    if "toc" in routes or "toc" in needs:
-        state["toc_context"] = toc_recall(state["query"])
-
-    # bar-number references inside figures ("K线2/3构成双底")
-    state["barrefs"] = barref_lookup(state["query"])
-    if state["barrefs"]:
-        _merge_barref_figures(state)
-
-    # "show me examples": recall caption units so the answer can pick real
-    # figures by id (their figure_ids feed the catalog)
-    if state.get("wants_examples"):
-        try:
-            cap_fig_ids: set[str] = set()
-            for p in caption_search(state["query"], top_k=10):
-                d = point_to_doc(p)
-                cap_fig_ids.update(d.get("figure_ids") or [])
-            if cap_fig_ids:
-                _merge_figures_by_ids(state, cap_fig_ids)
-        except Exception as e:  # noqa: BLE001
-            state.setdefault("failures", []).append(f"caption_search: {e}")
     return state
-
-
-def _merge_figures_by_ids(state: QState, fig_ids: set[str]) -> None:
-    """Attach figure rows (for the catalog / viewer) by id."""
-    have = {f.get("figure_id") for f in state.get("figures", [])}
-    missing = fig_ids - have
-    if not missing:
-        return
-    with SessionLocal() as s:
-        figs = (
-            s.query(FigureAssetRow)
-            .filter(FigureAssetRow.figure_id.in_(missing))
-            .all()
-        )
-    for f in figs:
-        state.setdefault("figures", []).append(
-            {
-                "figure_id": f.figure_id,
-                "rel_path": f.rel_path,
-                "width_px": f.width_px,
-                "height_px": f.height_px,
-                "figure_label": f.figure_label,
-            }
-        )
-
-
-def _merge_barref_figures(state: QState) -> None:
-    """Attach figures referenced by bar-refs to the figure list (viewer)."""
-    fig_ids = {b["figure_id"] for b in state.get("barrefs", []) if b.get("figure_id")}
-    if not fig_ids:
-        return
-    have = {f.get("figure_id") for f in state.get("figures", [])}
-    missing = fig_ids - have
-    if not missing:
-        return
-    with SessionLocal() as s:
-        figs = (
-            s.query(FigureAssetRow)
-            .filter(FigureAssetRow.figure_id.in_(missing))
-            .all()
-        )
-    for f in figs:
-        state.setdefault("figures", []).append(
-            {
-                "figure_id": f.figure_id,
-                "rel_path": f.rel_path,
-                "width_px": f.width_px,
-                "height_px": f.height_px,
-                "figure_label": f.figure_label,
-            }
-        )
 
 
 def _check_node(state: QState) -> QState:
