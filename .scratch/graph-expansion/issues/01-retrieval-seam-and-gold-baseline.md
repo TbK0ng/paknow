@@ -4,11 +4,21 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] 检索阶段抽成一个可独立调用的入口，返回文本命中、图谱证据（本票为空）、分区信息与失败列表；LangGraph 的检索节点退化为薄适配层，对外行为不变。
-- [ ] 20 条金标准落盘：百科分类导航 10 条、跨书机制 10 条；每题记录期望证据单元、期望关系（概念分类边或主张边）、以及该题的 6 条扩展查询。
-- [ ] 金标准中的 6 条扩展查询在标注时一次冻结，基线脚本不调用路由模型，可离线重复运行。
-- [ ] 基线脚本输出逐题命中表：期望证据是否出现在 6 条扩展查询的 top-20 并集内。
-- [ ] 基线结果作为数字记录下来，供 05 号票做前后对比。
-- [ ] 断言只打在检索入口的返回值上（召回到哪些证据、哪些标记为不可引用、失败原因），不测内部调用次数。
+- [x] 检索阶段抽成一个可独立调用的入口，返回文本命中、图谱证据（本票为空）、分区信息与失败列表；LangGraph 的检索节点退化为薄适配层，对外行为不变。
+- [x] 20 条金标准落盘：百科分类导航 10 条、跨书机制 10 条；每题记录期望证据单元、期望关系（概念分类边或主张边）、以及该题的 6 条扩展查询。
+- [x] 金标准中的 6 条扩展查询在标注时一次冻结，基线脚本不调用路由模型，可离线重复运行。
+- [x] 基线脚本输出逐题命中表：期望证据是否出现在 6 条扩展查询的 top-20 并集内。
+- [x] 基线结果作为数字记录下来，供 05 号票做前后对比。
+- [x] 断言只打在检索入口的返回值上（召回到哪些证据、哪些标记为不可引用、失败原因），不测内部调用次数。
+
+## Comments
+
+Resolved on `feat/graph-expansion` (commit `b453df3`).
+
+- Seam: `paknow/retrieval/pipeline.py::retrieve_evidence` returns text hits, graph slots, context units, figures/toc/barrefs, failures and accumulated hits. `_retrieve_node` is a thin adapter.
+- Gold dataset: `evals/gold/graph_expansion.json` (20 questions x 6 frozen queries).
+- Baseline: `scripts/eval_gold.py`; results in `.scratch/graph-expansion/gold-baseline.md` / `.json`.
+- Numbers: 24/50 expected evidence units in the 6-query top-20 union; 10/20 questions fully hit; 10/20 have graph-unique candidates.
+- Tests: `tests/test_retrieval_pipeline.py` (partitions, query dedupe, failures, fail-open).
