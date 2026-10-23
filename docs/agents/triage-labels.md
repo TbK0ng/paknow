@@ -16,4 +16,24 @@ Edit the "Label in our tracker" column to match whatever vocabulary you actually
 
 ## In this repo
 
-The tracker is local markdown, so these strings are written as the value of a `Status:` line at the top of each ticket file rather than applied as tracker labels.
+The tracker is local markdown, so these strings are written as the value of a `**Status:**` line at the top of each ticket file rather than applied as tracker labels.
+
+The canonical form is exactly one bold line per file:
+
+```markdown
+**Status:** ready-for-agent
+```
+
+The checker (`scripts/check_scratch.py`) accepts these values:
+
+| Status | When |
+| --- | --- |
+| `needs-triage` | Maintainer needs to evaluate this issue |
+| `needs-info` | Waiting on reporter for more information |
+| `ready-for-agent` | Fully specified, ready for an AFK agent (all blockers resolved) |
+| `ready-for-human` | Requires human implementation (all blockers resolved) |
+| `wontfix` | Will not be actioned |
+| `claimed` | In progress; all blockers must already be `resolved` |
+| `resolved` | Done |
+
+A plain `Status:` line is still read for older files, but new tickets and specs use the bold form.

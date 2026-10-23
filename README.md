@@ -121,6 +121,7 @@ SOP 记忆**上做了加法定制，在**评估、索引调优、上下文压缩
 uv venv .venv
 uv pip install --python .venv --index-url https://download.pytorch.org/whl/cu128 "torch==2.9.1" "torchvision==0.24.1"
 uv pip install --python .venv -e ".[dev]"
+.venv/Scripts/pre-commit.exe install          # 启用 git hooks（提交前跑 pytest + scratch 校验）
 
 # 2. 配置 .env（复制 .env.example，填入 DEEPSEEK_API_KEY）
 cp .env.example .env   # HF_HOME 默认 E:\use_model（模型缓存迁出 C 盘）

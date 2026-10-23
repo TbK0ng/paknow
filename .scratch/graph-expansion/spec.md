@@ -1,4 +1,5 @@
-Status: resolved
+**Status:** resolved
+**Review base:** e06b7a4
 
 # 图谱扩展：把概念分类与主张边接进召回
 

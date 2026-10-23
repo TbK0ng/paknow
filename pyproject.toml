@@ -48,6 +48,7 @@ dependencies = [
 dev = [
     "pytest>=8.3",
     "pytest-asyncio>=0.24",
+    "pre-commit>=4.0",
     "mkdocs-material>=9.5",
 ]
 
