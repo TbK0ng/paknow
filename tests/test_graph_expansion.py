@@ -461,6 +461,21 @@ def test_default_graph_block_budget_is_1200_estimated_tokens():
     assert all(e["source"] == "mechanism" for e in plan.entries)
 
 
+def test_seam_exposes_graph_budget_stats_for_evaluation(monkeypatch):
+    _patched(
+        monkeypatch,
+        hits_by_query={},
+        mechanism=[_candidate(f"g{i}") for i in range(10)],
+    )
+
+    result = pipeline.retrieve_evidence("突破", ["突破"])
+
+    assert result.graph_stats["selected"] == expansion.MAX_EVIDENCE
+    assert result.graph_stats["truncated_evidence"] is True
+    assert result.graph_stats["seeds"] == 1
+    assert len(result.graph_context) == result.graph_stats["selected"]
+
+
 def test_gap_query_terms_seed_expansion_too(monkeypatch):
     _patched(monkeypatch, hits_by_query={}, mechanism=[_candidate("g9")])
 

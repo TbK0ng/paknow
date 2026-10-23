@@ -5,11 +5,22 @@ whether each expected evidence unit appears in the union of the six frozen
 queries' top-K results. Queries are read from the dataset and never regenerated,
 so baseline and regression runs are comparable.
 
+Two modes:
+
+- ``baseline`` (text only): per frozen query ``hybrid_search(top_k=20)`` and the
+  union of their hits. This is the recorded baseline.
+- ``graph`` (shipped chain): one ``retrieve_evidence`` round per question over
+  the same frozen queries, then a per-question diff against the baseline union:
+  expected units newly recalled by graph expansion, baseline units lost by the
+  new text path, budget truncations, and the fixed graph-unique verdict (at
+  least one expected unit outside the six-query top-20 union).
+
 This is an offline evaluation, not a CI gate: it needs the text index and the
 embedding model. It does not call the routing model.
 
 Usage:
     python scripts/eval_gold.py
+    python scripts/eval_gold.py --mode graph
     python scripts/eval_gold.py --limit 4 --out .scratch/graph-expansion/baseline.json
 """
 from __future__ import annotations
@@ -18,18 +29,39 @@ import argparse
 import json
 import sys
 from pathlib import Path
+from typing import Any, Iterable, Mapping, Sequence
 
 ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from paknow.retrieval.pipeline import retrieve_evidence  # noqa: E402
 from paknow.retrieval.search import hybrid_search  # noqa: E402
 
 DEFAULT_DATASET = ROOT / "evals" / "gold" / "graph_expansion.json"
+DEFAULT_BASELINE = ROOT / ".scratch" / "graph-expansion" / "gold-baseline.json"
+DEFAULT_BASELINE_OUT = ROOT / ".scratch" / "graph-expansion" / "gold-baseline.json"
+DEFAULT_GRAPH_OUT = ROOT / ".scratch" / "graph-expansion" / "gold-regression.json"
+
+_TRUNCATION_REASONS = (
+    ("edges", "truncated_edges"),
+    ("evidence", "truncated_evidence"),
+    ("tokens", "truncated_tokens"),
+)
 
 
 def load_dataset(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _evidence_ids(units: Iterable[Mapping[str, Any]]) -> list[str]:
+    """Evidence ids in first-seen order, deduped; units without ids are skipped."""
+    out: dict[str, None] = {}
+    for unit in units:
+        eid = unit.get("evidence_id")
+        if eid:
+            out.setdefault(str(eid), None)
+    return list(out)
 
 
 def union_for_queries(queries: list[str], *, top_k: int) -> list[str]:
@@ -41,6 +73,115 @@ def union_for_queries(queries: list[str], *, top_k: int) -> list[str]:
             if eid:
                 seen.setdefault(eid, None)
     return list(seen)
+
+
+# ---------------------------------------------------------------------------
+# graph-mode classification (pure)
+# ---------------------------------------------------------------------------
+
+
+def graph_unique(expected: Sequence[str], baseline_union: Iterable[str]) -> bool:
+    """Fixed metric: at least one expected unit outside the baseline union."""
+    base = set(baseline_union)
+    return any(eid not in base for eid in expected)
+
+
+def classify_diff(
+    expected: Sequence[str],
+    *,
+    baseline_union: Iterable[str],
+    text_ids: Iterable[str],
+    graph_ids: Iterable[str],
+) -> dict[str, Any]:
+    """Per-question diff between the baseline union and the shipped chain.
+
+    ``newly_recalled`` is graph-attributable: the unit is in graph evidence,
+    was not in the baseline union, and was not already reached by the new text
+    path. ``recovered_expected`` is the broader "the graph surfaced a unit the
+    baseline missed" set, whether or not the text path also found it.
+    """
+    base = set(baseline_union)
+    text = set(text_ids)
+    graph = set(graph_ids)
+
+    baseline_found = [eid for eid in expected if eid in base]
+    baseline_missing = [eid for eid in expected if eid not in base]
+    graph_found = [eid for eid in expected if eid in graph]
+    recovered = [eid for eid in baseline_missing if eid in graph]
+    newly = [eid for eid in recovered if eid not in text]
+    text_path_lost = [eid for eid in baseline_found if eid not in text]
+    lost = [eid for eid in baseline_found if eid not in text and eid not in graph]
+    still_missing = [eid for eid in expected if eid not in base and eid not in text and eid not in graph]
+
+    return {
+        "baseline_found": baseline_found,
+        "baseline_missing": baseline_missing,
+        "regression_text_found": [eid for eid in expected if eid in text],
+        "graph_found": graph_found,
+        "recovered_expected": recovered,
+        "newly_recalled": newly,
+        "lost": lost,
+        "text_path_lost": text_path_lost,
+        "still_missing": still_missing,
+        "graph_unique": graph_unique(expected, base),
+        "graph_unique_recovered": bool(recovered),
+    }
+
+
+def truncation_report(
+    stats: Mapping[str, Any], *, entries: Sequence[Mapping[str, Any]]
+) -> dict[str, Any]:
+    """Which graph budget stopped selection, if any, and what was kept."""
+    hit_limits = [name for name, key in _TRUNCATION_REASONS if stats.get(key)]
+    return {
+        "truncated": bool(hit_limits),
+        "hit_limits": hit_limits,
+        "selected": int(stats.get("selected", len(entries))),
+        "tokens": int(stats.get("tokens", 0)),
+    }
+
+
+def summarize(rows: list[dict]) -> dict:
+    expected_total = sum(len(r["expected"]) for r in rows)
+    found_total = sum(len(r["found"]) for r in rows)
+    return {
+        "items": len(rows),
+        "expected_total": expected_total,
+        "expected_found": found_total,
+        "expected_missing": expected_total - found_total,
+        "items_with_any_hit": sum(1 for r in rows if r["hit"]),
+        "items_with_all_hits": sum(1 for r in rows if not r["missing"]),
+        "items_graph_unique": sum(1 for r in rows if r["graph_unique"]),
+    }
+
+
+def summarize_graph(rows: list[dict]) -> dict:
+    truncations = [r["truncation"] for r in rows]
+    return {
+        "items": len(rows),
+        "expected_total": sum(len(r["expected"]) for r in rows),
+        "baseline_found": sum(len(r["baseline_found"]) for r in rows),
+        "regression_text_found": sum(len(r["regression_text_found"]) for r in rows),
+        "graph_found": sum(len(r["graph_found"]) for r in rows),
+        "recovered_expected": sum(len(r["recovered_expected"]) for r in rows),
+        "newly_recalled": sum(len(r["newly_recalled"]) for r in rows),
+        "lost": sum(len(r["lost"]) for r in rows),
+        "text_path_lost": sum(len(r["text_path_lost"]) for r in rows),
+        "still_missing": sum(len(r["still_missing"]) for r in rows),
+        "graph_entries": sum(r["graph_entries"] for r in rows),
+        "items_graph_unique": sum(1 for r in rows if r["graph_unique"]),
+        "items_graph_unique_recovered": sum(1 for r in rows if r["graph_unique_recovered"]),
+        "items_truncated": sum(1 for t in truncations if t["truncated"]),
+        "truncated_edges": sum(1 for t in truncations if "edges" in t["hit_limits"]),
+        "truncated_evidence": sum(1 for t in truncations if "evidence" in t["hit_limits"]),
+        "truncated_tokens": sum(1 for t in truncations if "tokens" in t["hit_limits"]),
+        "failures": sum(len(r["failures"]) for r in rows),
+    }
+
+
+# ---------------------------------------------------------------------------
+# per-item evaluation
+# ---------------------------------------------------------------------------
 
 
 def evaluate_item(item: dict, *, top_k: int) -> dict:
@@ -63,17 +204,56 @@ def evaluate_item(item: dict, *, top_k: int) -> dict:
     }
 
 
-def summarize(rows: list[dict]) -> dict:
-    expected_total = sum(len(r["expected"]) for r in rows)
-    found_total = sum(len(r["found"]) for r in rows)
+def evaluate_graph_item(item: dict, *, baseline_union: Iterable[str]) -> dict:
+    """Run one frozen question through the shipped retrieval seam."""
+    result = retrieve_evidence(item["question"], list(item["expanded_queries"]))
+    text_ids = _evidence_ids(result.text_hits)
+    graph_ids = _evidence_ids(result.graph_evidence)
+    expected = item["expected_evidence"]
+    diff = classify_diff(
+        expected,
+        baseline_union=baseline_union,
+        text_ids=text_ids,
+        graph_ids=graph_ids,
+    )
     return {
-        "items": len(rows),
-        "expected_total": expected_total,
-        "expected_found": found_total,
-        "expected_missing": expected_total - found_total,
-        "items_with_any_hit": sum(1 for r in rows if r["hit"]),
-        "items_with_all_hits": sum(1 for r in rows if not r["missing"]),
-        "items_graph_unique": sum(1 for r in rows if r["graph_unique"]),
+        "id": item["id"],
+        "category": item["category"],
+        "question": item["question"],
+        "expected": expected,
+        **diff,
+        "graph_entries": len(graph_ids),
+        "graph_stats": dict(result.graph_stats),
+        "truncation": truncation_report(
+            result.graph_stats or {}, entries=result.graph_evidence
+        ),
+        "failures": list(result.failures),
+        "query_count": result.query_count,
+    }
+
+
+# ---------------------------------------------------------------------------
+# reporting
+# ---------------------------------------------------------------------------
+
+
+def build_regression_payload(
+    *,
+    dataset_path: str,
+    dataset: Mapping[str, Any],
+    baseline: Mapping[str, Any],
+    rows: list[dict],
+    top_k: int,
+) -> dict:
+    return {
+        "dataset": dataset_path,
+        "frozen_at": dataset.get("frozen_at"),
+        "protocol": dataset.get("retrieval_protocol"),
+        "top_k": top_k,
+        "mode": "graph",
+        "baseline_summary": baseline.get("summary"),
+        "summary": summarize_graph(rows),
+        "items": rows,
     }
 
 
@@ -91,10 +271,44 @@ def print_table(rows: list[dict], summary: dict) -> None:
     )
 
 
+def print_graph_table(rows: list[dict], summary: dict) -> None:
+    print(
+        f"{'id':8} {'cat':12} {'base':>4} {'text':>4} {'graph':>5} "
+        f"{'new':>3} {'lost':>4} {'trunc':>5}  verdict"
+    )
+    for r in rows:
+        trunc = ",".join(r["truncation"]["hit_limits"]) or "-"
+        verdict = "graph-unique" if r["graph_unique"] else "text-covered"
+        if r["graph_unique_recovered"]:
+            verdict += "+recovered"
+        print(
+            f"{r['id']:8} {r['category']:12} {len(r['baseline_found']):4} "
+            f"{len(r['regression_text_found']):4} {len(r['graph_found']):5} "
+            f"{len(r['newly_recalled']):3} {len(r['lost']):4} {trunc:>5}  {verdict}"
+        )
+    net = summary["newly_recalled"] - summary["lost"]
+    print(
+        "\nsummary: "
+        f"baseline {summary['baseline_found']}/{summary['expected_total']} expected units; "
+        f"new text path {summary['regression_text_found']}; "
+        f"graph evidence {summary['graph_found']}; "
+        f"newly recalled by graph {summary['newly_recalled']}, "
+        f"lost {summary['lost']} (new text path dropped {summary['text_path_lost']}), "
+        f"net {net:+d}; "
+        f"graph-unique questions {summary['items_graph_unique']}, "
+        f"recovered by this run {summary['items_graph_unique_recovered']}; "
+        f"truncations {summary['items_truncated']} "
+        f"(edges {summary['truncated_edges']}, evidence {summary['truncated_evidence']}, "
+        f"tokens {summary['truncated_tokens']})"
+    )
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--dataset", type=Path, default=DEFAULT_DATASET)
-    ap.add_argument("--out", type=Path, default=ROOT / ".scratch" / "graph-expansion" / "gold-baseline.json")
+    ap.add_argument("--mode", choices=("baseline", "graph"), default="baseline")
+    ap.add_argument("--baseline", type=Path, default=DEFAULT_BASELINE)
+    ap.add_argument("--out", type=Path, default=None)
     ap.add_argument("--top-k", type=int, default=20, help="per-query top-K; 20 matches online recall width")
     ap.add_argument("--limit", type=int, default=0)
     args = ap.parse_args()
@@ -104,21 +318,48 @@ def main() -> None:
     if args.limit:
         items = items[: args.limit]
 
-    rows = [evaluate_item(item, top_k=args.top_k) for item in items]
-    summary = summarize(rows)
-    print_table(rows, summary)
+    out = args.out or (DEFAULT_BASELINE_OUT if args.mode == "baseline" else DEFAULT_GRAPH_OUT)
+    out = out if out.is_absolute() else (Path.cwd() / out)
 
-    payload = {
-        "dataset": str(args.dataset.relative_to(ROOT)),
-        "frozen_at": dataset.get("frozen_at"),
-        "protocol": dataset.get("retrieval_protocol"),
-        "top_k": args.top_k,
-        "summary": summary,
-        "items": rows,
-    }
-    args.out.parent.mkdir(parents=True, exist_ok=True)
-    args.out.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
-    print(f"\nwrote {args.out.relative_to(ROOT)}")
+    if args.mode == "baseline":
+        rows = [evaluate_item(item, top_k=args.top_k) for item in items]
+        summary = summarize(rows)
+        print_table(rows, summary)
+        payload = {
+            "dataset": str(args.dataset.relative_to(ROOT)),
+            "frozen_at": dataset.get("frozen_at"),
+            "protocol": dataset.get("retrieval_protocol"),
+            "top_k": args.top_k,
+            "summary": summary,
+            "items": rows,
+        }
+    else:
+        baseline = json.loads(args.baseline.read_text(encoding="utf-8"))
+        baseline_rows = {row["id"]: row for row in baseline.get("items", [])}
+        rows = []
+        for item in items:
+            base_row = baseline_rows.get(item["id"])
+            if base_row is None:
+                raise SystemExit(
+                    f"baseline has no row for {item['id']}; rerun with --mode baseline first"
+                )
+            rows.append(evaluate_graph_item(item, baseline_union=base_row["hits"]))
+        payload = build_regression_payload(
+            dataset_path=str(args.dataset.relative_to(ROOT)),
+            dataset=dataset,
+            baseline=baseline,
+            rows=rows,
+            top_k=args.top_k,
+        )
+        print_graph_table(rows, payload["summary"])
+
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    try:
+        shown = out.resolve().relative_to(ROOT)
+    except ValueError:
+        shown = out
+    print(f"\nwrote {shown}")
 
 
 if __name__ == "__main__":
