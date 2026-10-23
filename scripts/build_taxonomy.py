@@ -22,8 +22,8 @@ from sqlalchemy import func
 from paknow.config import settings
 from paknow.db import SessionLocal
 from paknow.db.models import DocumentRow, GraphEdgeRow
+from paknow.graph.contracts import EdgeOrigin
 from paknow.graph.taxonomy import (
-    ORIGIN_HEADING,
     TaxonomyEdge,
     build_taxonomy_edges,
     load_heading_units,
@@ -68,7 +68,11 @@ def print_stats(build, *, scope: str) -> None:
     print(f"database:   {settings.paknow_db_url}")
     print(f"scope:      {scope}")
     print(
-        f"headings:   {stats['headings_in']} -> {stats['headings_after_dedupe']} "
+        f"headings:   {stats['headings_loaded']} loaded, {stats['excluded_toc']} TOC titles excluded, "
+        f"{stats['headings_in']} parsed input"
+    )
+    print(
+        f"            -> {stats['headings_after_dedupe']} "
         f"(dropped {dropped}: header {stats['dropped_header']}, duplicate {stats['dropped_duplicate']})"
     )
     print(
@@ -113,7 +117,7 @@ def main() -> None:
     before = origin_counts()
     if not args.apply:
         print(
-            f"heading_parse edges currently in DB: {before.get(ORIGIN_HEADING, 0)} (would be replaced)"
+            f"heading_parse edges currently in DB: {before.get(EdgeOrigin.heading_parse.value, 0)} (would be replaced)"
         )
         print("dry run; re-run with --apply")
         return
@@ -122,15 +126,15 @@ def main() -> None:
     rebuild_taxonomy(doc_ids=doc_ids, header_threshold=args.header_threshold)
     after = origin_counts()
 
-    print(f"inserted heading edges: {after.get(ORIGIN_HEADING, 0)}")
+    print(f"inserted heading edges: {after.get(EdgeOrigin.heading_parse.value, 0)}")
     print_edges(build)
     print("origins after:  " + " ".join(f"{k}={v}" for k, v in sorted(after.items())))
     for origin, count in sorted(before.items()):
-        if origin == ORIGIN_HEADING:
+        if origin == EdgeOrigin.heading_parse.value:
             continue
         if after.get(origin, 0) != count:
             raise SystemExit(f"ERROR: {origin} edges changed {count} -> {after.get(origin, 0)}")
-    print(f"preserved:      {', '.join(f'{k}={v}' for k, v in sorted(before.items()) if k != ORIGIN_HEADING) or 'none'}")
+    print(f"preserved:      {', '.join(f'{k}={v}' for k, v in sorted(before.items()) if k != EdgeOrigin.heading_parse.value) or 'none'}")
     print(f"applied at:     {datetime.now().isoformat(timespec='seconds')}")
 
 

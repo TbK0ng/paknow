@@ -28,19 +28,16 @@ from sqlalchemy import or_
 
 from paknow.db import SessionLocal
 from paknow.db.models import EvidenceUnitRow, GraphEdgeRow, GraphNodeRow
-from paknow.graph.contracts import Relation
+from paknow.graph.contracts import EdgeOrigin, Relation
 from paknow.graph.identity import (
     canonical_for,
     concept_kind_for,
     concept_node_id,
     label_for,
+    resolved_canonical,
 )
 from paknow.ids import stable_id
 from paknow.retrieval.dictionary import TermMatch, find_terms
-
-ORIGIN_HEADING = "heading_parse"
-ORIGIN_CLAIM = "claim_extract"
-ORIGIN_SEED = "seed"
 
 TAXONOMY_RELATIONS: tuple[Relation, ...] = (
     Relation.PART_OF,
@@ -53,6 +50,11 @@ _HEADER_THRESHOLD = 5
 _WS = re.compile(r"\s+")
 _CONNECTORS = re.compile(r"[\s，,。；;：:、/\\（）()\[\]【】“”\"'·\-—]+")
 _CONTEXT_WORDS = re.compile(r"中的|之中的|的|中|里|下方|上方|之后|之前|或|和|与|及|属于|一种|变体|是|为")
+# table-of-contents titles (the opening ~10-page table); TOC *rows* never load
+# because they are paragraph blocks, not headings
+_TOC_TITLE = re.compile(
+    r"^(?:(?:未?分类)?目录|(?:table of )?contents)(?:\s.*)?$", re.IGNORECASE
+)
 
 
 @dataclass(frozen=True)
@@ -75,7 +77,7 @@ class TaxonomyEdge:
     relation: Relation
     to_concept: str
     source: str
-    origin: str = ORIGIN_HEADING
+    origin: str = EdgeOrigin.heading_parse.value
 
 
 @dataclass
@@ -93,6 +95,18 @@ class TaxonomyBuild:
 def normalize_heading(text: str) -> str:
     """Collapse whitespace/NBSP so repeated page furniture normalizes equal."""
     return _WS.sub(" ", (text or "").replace("\xa0", " ")).strip()
+
+
+def is_toc_title(text: str) -> bool:
+    """True for the front-matter table-of-contents heading itself.
+
+    The TOC's *rows* are paragraph blocks and never reach the heading load;
+    this guard covers the TOC title, which must not be parsed into an edge or
+    counted as body coverage. Body headings (with a ``：`` situation/outcome
+    split) never match.
+    """
+    first_line = normalize_heading(text).split("\n", 1)[0].strip()
+    return bool(_TOC_TITLE.fullmatch(first_line))
 
 
 def dedupe_headings(
@@ -145,7 +159,7 @@ def _match_concept(match: TermMatch) -> str:
     pins a title mentioning ``交易区间`` on ``trading_range`` instead of minting a
     second concept node with the same label.
     """
-    return canonical_for(match.alias) or match.canonical
+    return resolved_canonical(match.alias, match.canonical)
 
 
 def _failed_variant(canonical: str) -> str:
@@ -220,8 +234,16 @@ def parse_heading(text: str) -> ParsedHeading | None:
 def build_taxonomy_edges(
     units: Iterable[HeadingUnit], *, header_threshold: int = _HEADER_THRESHOLD
 ) -> TaxonomyBuild:
-    """Dedupe, parse, and deduplicate edges. Same input -> same edge set."""
-    deduped = dedupe_headings(units, header_threshold=header_threshold)
+    """Dedupe, exclude TOC titles, parse, and deduplicate edges.
+
+    Same input -> same edge set. ``excluded_toc`` counts front-matter TOC
+    headings that never participated in parsing; it is the coverage
+    cross-check for the spec's "TOC is not extracted" rule.
+    """
+    ordered = list(units)
+    body = [u for u in ordered if not is_toc_title(u.text)]
+    excluded_toc = len(ordered) - len(body)
+    deduped = dedupe_headings(body, header_threshold=header_threshold)
     # key -> lexicographically smallest locator, so input order cannot matter
     by_key: dict[tuple[str, str, str], str] = {}
     parsed = 0
@@ -242,6 +264,8 @@ def build_taxonomy_edges(
     after = len(deduped.kept)
     stats: dict[str, Any] = {
         **deduped.stats,
+        "headings_loaded": len(ordered),
+        "excluded_toc": excluded_toc,
         "parsed": parsed,
         "dropped_unparsed": after - parsed,
         "edges": len(edges),
@@ -257,7 +281,12 @@ def _concepts_in(edges: Iterable[TaxonomyEdge]) -> set[str]:
 def load_heading_units(
     *, doc_ids: Iterable[str] | None = None, session_factory=None
 ) -> list[HeadingUnit]:
-    """Heading evidence units in deterministic order, optionally scoped to docs."""
+    """Heading evidence units in deterministic order, optionally scoped to docs.
+
+    Only ``block_type == "heading"`` loads, so table-of-contents *rows* (stored
+    as paragraph blocks) can never enter parsing; :func:`build_taxonomy_edges`
+    then drops the TOC title itself and reports the count.
+    """
     factory = session_factory or SessionLocal
     with factory() as s:
         query = s.query(EvidenceUnitRow).filter(EvidenceUnitRow.block_type == "heading")
@@ -316,7 +345,7 @@ def rebuild_taxonomy(
         # edge even if the parser's relation set changed
         (
             s.query(GraphEdgeRow)
-            .filter(GraphEdgeRow.origin == ORIGIN_HEADING)
+            .filter(GraphEdgeRow.origin == EdgeOrigin.heading_parse.value)
             .delete(synchronize_session=False)
         )
         for e in build.edges:

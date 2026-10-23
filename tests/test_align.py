@@ -184,3 +184,46 @@ def test_deterministic_run_never_overwrites_and_keeps_claim_edges_and_evidence(m
         assert all(e.origin == "claim_extract" for e in s.query(GraphEdgeRow).all())
         assert s.query(EvidenceUnitRow).count() == 1
     assert [r["subject"] for r in first.residual_subjects] == ["K线2的双顶空头旗形"]
+
+
+def test_alignment_resolves_shared_aliases_to_the_expansion_identity():
+    # configs/terms.yaml has both auto_trading_range_tr and trading_range for
+    # 「交易区间」; expansion seeds resolve the base id, so alignment must too
+    alignment = align.align_subject("交易区间中的限价单")
+
+    from paknow.graph import expansion
+
+    assert expansion.seed_concepts("交易区间中的限价单") == ["trading_range"]
+    assert alignment is not None
+    assert alignment.concept_id == "trading_range"
+
+
+def test_dry_run_and_apply_agree_on_an_nbsp_subject(monkeypatch):
+    Session = _temp_session(monkeypatch)
+    # NBSP inside the subject normalizes to a plain space before planning
+    _seed(Session, {"c1": ("20\xa0EMA（动态磁铁）", None)})
+
+    dry = align.align_claims(apply=False)
+    applied = align.align_claims(apply=True)
+
+    assert (dry.newly_aligned, applied.newly_aligned) == (1, 1)
+    with Session() as s:
+        assert s.get(ClaimRow, "c1").subject_concept_id == "ema"
+
+
+def test_aligned_claim_is_retrievable_through_the_mechanism_loader(monkeypatch):
+    Session = _temp_session(monkeypatch)
+    _seed(Session, {"c1": ("交易区间中的限价单", None)})
+    monkeypatch.setattr(align, "SessionLocal", Session)
+
+    report = align.align_claims(apply=True)
+    assert report.newly_aligned == 1
+
+    from paknow.graph import expansion
+
+    candidates = expansion.load_mechanism_candidates(
+        ["trading_range"], session_factory=Session
+    )
+
+    assert [c["evidence_id"] for c in candidates] == ["e1"]
+    assert candidates[0]["concept"] == "trading_range"

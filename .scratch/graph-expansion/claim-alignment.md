@@ -34,31 +34,38 @@ the deterministic gain came from single-concept substring matches.
 - No claim with an existing `subject_concept_id` was overwritten; a second
   `--apply` writes zero new alignments.
 - Model-created concept nodes: 39 (139 → 178), so model-aligned ids are reachable
-  by `concept_lookup`.
+  by expansion seeding and taxonomy identity resolution (not every `auto_*` id is
+  seed-reachable; see the review fix below).
+
+## Identity resolution (review fix)
+
+`align_subject` now resolves every dictionary match through
+`identity.resolved_canonical` (the same helper taxonomy and expansion use) instead of
+`find_terms(...).canonical`. A subject like `交易区间中的限价单` therefore aligns to
+`trading_range` — the id expansion seeds actually query — instead of the
+chapter-derived alias twin `auto_trading_range_tr`; and `--apply` updates the claim
+rows that were planned (matched by `claim_id`), including NBSP/whitespace variants
+that the old raw `subject` filter silently skipped. The model catalog only offers
+identity-reachable ids for the same reason.
+
+The historical run table above is unchanged (it records the applied runs); a fresh
+dry run simply plans the remaining residual subjects through the corrected path.
 
 ## Mechanism query sample
 
 ```bash
 PAKNOW_DB_URL=sqlite:///E:/PAknow/data/paknow.db PYTHONPATH=. \
   .venv/Scripts/python.exe -c "
-from paknow.graph.retrieve import concept_lookup
-rows = concept_lookup(['扩大三角形'], limit=40)
-print([c['concept_id'] for c in rows if c['type']=='concept'])
-for c in rows:
-    if c['type']=='claim' and c['subject_concept_id']=='auto_expanding_triangle':
-        print(c['subject'], '|', c['predicate'], '|', c['qualifiers'], '|', c['supporting_evidence'])
+from paknow.graph.expansion import load_mechanism_candidates, seed_concepts
+seeds = seed_concepts('扩大三角形')
+for c in load_mechanism_candidates(seeds, limit=5):
+    print(seeds, '|', c['from_label'], '->', c['to_label'], '|', c['claim']['qualifiers'], '|', c['evidence_id'])
 "
 ```
 
-Sample output (model-aligned claims, conditions + supporting evidence):
-
-```text
-concept hits: ['auto_expanding_triangle']
-扩张三角形底部 | 随后出现反向形态 | {'context': ['扩张三角形底部'], 'modality': 'is'} | ['e2d9f0c0f494b201300badd2f25dd2ce']
-扩张三角形 | 在K线5高点完成 | {'context': ['图10.10的Globex美国线图', '缩图是日盘，编号相同'], 'modality': 'is'} | ['17a5241afb0176e2eb21c3a57a368e8f']
-扩张三角形 | 提前识别后应留意跌破K线 | {'context': ['若提前识别'], 'modality': 'should'} | ['b99588a2e2a5c3a44f15715f1d0d43e8']
-EVIDENCE e2d9f0c0f494b201300badd2f25dd2ce | 图8.30｜扩张三角形底部与随后反向形态。
-```
+Each row carries the claim's `qualifiers` and the `evidence_id`/page locator that
+proves it; `render_graph_context` prints those conditions inline so a conditioned
+claim is never shown as an unconditional rule.
 
 The residual subject list is in `claim-residuals.json` (721 entries, with claim
 counts, match reason, and dictionary candidates).

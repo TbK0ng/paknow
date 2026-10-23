@@ -13,16 +13,22 @@ PAKNOW_DB_URL=sqlite:///E:/PAknow/data/paknow.db E:/PAknow/.venv/Scripts/python.
 
 ```
 scope:      encyclopedia (doc_id=c46ebbbadd36d0d6584ad3330e89bf6d)
-headings:   16644 -> 6246 (dropped 10398: header 8890, duplicate 1508)
-parsed:     994  dropped_unparsed: 5252  coverage: 15.91%
+headings:   16644 loaded, 12 TOC titles excluded, 16632 parsed input
+            -> 6245 (dropped 10387: header 8880, duplicate 1507)
+parsed:     994  dropped_unparsed: 5251  coverage: 15.92%
 relations:  EXCEPTION_TO=2  INVALIDATED_BY=181  PART_OF=3  TRANSITIONS_TO=142
 edges:      328
 fingerprint:b0a9aff4036c7c18
 ```
 
-- 去重前 16,644 条标题，去重后 6,246 条；丢弃 10,398 条（页眉式重复 8,890 条，同文档重复 1,508 条）。
+- 去重前 16,644 条标题，去重后 6,245 条；丢弃 10,387 条（页眉式重复 8,880 条，同文档重复 1,507 条）。
   页面噪声主体是 8,047 次出现的 `@喻无为`。
-- 解析成功 994 条，解析不出关系而丢弃 5,252 条（覆盖率 15.91%），没有兜底 `PART_OF`。
+- **目录不参与主抽取**：开头约 10 页的目录表格行是 `paragraph` 块，`load_heading_units`
+  只读 `block_type='heading'`，所以目录行从不进入解析；目录标题本身（`分类目录\nBPA
+  ENCYCLOPEDIA` ×10、`未分类目录\nBPA ENCYCLOPEDIA` ×2）由 `is_toc_title` 显式剔除并
+  计为 `excluded_toc=12`，只用于覆盖率核对。解析器/边集与剔除前逐字节相同
+  （fingerprint 仍为 `b0a9aff4036c7c18`，328 条边），正文标题未被误删。
+- 解析成功 994 条，解析不出关系而丢弃 5,251 条（覆盖率 15.92%），没有兜底 `PART_OF`。
 - 994 条解析结果合并为 328 条唯一边（同一 `(from, relation, to)` 只保留字典序最小的 locator）。
 - 328 条边全部来自 `origin='heading_parse'`；`origin='seed'` 的 8 条人工边、`claim_extract` 1,888 条、`figure_extract` 1,529 条在两次重建后数量不变。
 

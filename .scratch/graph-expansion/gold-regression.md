@@ -79,4 +79,6 @@ PAKNOW_DB_URL=sqlite:///E:/PAknow/data/paknow.db OBJECTS_DIR=E:/PAknow/data/obje
 
 **预算观察**：20 道题全部触到「回取证据 ≤8」上限（`truncated_evidence`），160 条图谱条目全部被选中即停；边 ≤32 与图块 ≤1,200 tokens 均未触顶。也就是说当前约束召回量的是证据条数，不是 token 预算；若要扩大扩展，先评估「证据 ≤8」是否过紧，而不是放宽 token。
 
+边预算的实现口径在 review 修复后改为「每遍历一条候选边计数」，因此当 32 条以上候选边指向重复证据时它确实会先截断（`tests/test_graph_expansion.py::test_edge_budget_binds_on_traversed_candidates`）；本批 20 题的候选边为 9–14 条、证据上限先触发，所以 `truncated_edges` 仍为 0。本次重跑的各项指标与 05 号票逐字段一致（24/50、16、9/6/6、20 题 evidence 截断）。
+
 **副作用说明**：本次回归同时暴露了文本侧宽度问题（top-40 → 重排 20 → 取 14）。这与图谱扩展无关，但会淹没图谱的增量；后续若要单独衡量图谱，应保持文本侧协议不变，或把文本宽度作为独立变量消融。

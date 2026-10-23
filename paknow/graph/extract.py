@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field
 from paknow.db import SessionLocal
 from paknow.db.models import ClaimRow, ConceptAliasRow, GraphEdgeRow, GraphNodeRow
 from paknow.gateway import gateway
+from paknow.graph.contracts import EdgeOrigin
 from paknow.graph.identity import (
     candidate_key,
     canonical_for,
@@ -104,7 +105,7 @@ def persist_extraction(doc_id: str, evidence_id: str, result: ExtractionResult) 
                         to_node=evidence_id,
                         relation="SUPPORTED_BY",
                         source=evidence_id,
-                        origin="claim_extract",
+                        origin=EdgeOrigin.claim_extract.value,
                     )
                 )
         s.commit()

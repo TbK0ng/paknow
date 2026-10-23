@@ -34,6 +34,14 @@ class ConceptKind(str, Enum):
     setup = "setup"        # 具体入场结构（高二、突破回调）
 
 
+class EdgeOrigin(str, Enum):
+    """Which producer wrote a graph edge; rebuilds replace one origin only."""
+    heading_parse = "heading_parse"    # concept taxonomy parsed from heading grammar
+    claim_extract = "claim_extract"    # claim -> evidence SUPPORTED_BY
+    figure_extract = "figure_extract"  # figure -> evidence ILLUSTRATED_BY
+    seed = "seed"                      # manually seeded edges
+
+
 class Relation(str, Enum):
     DEFINED_BY = "DEFINED_BY"
     REQUIRES_CONTEXT = "REQUIRES_CONTEXT"
@@ -96,6 +104,6 @@ class GraphEdge(BaseModel):
     relation: Relation
     source: str                      # evidence_id / doc_id proving the relation
     # how the edge came to exist; keeps rebuilds from touching manual seeds
-    origin: str = "claim_extract"    # heading_parse | claim_extract | figure_extract | seed
+    origin: EdgeOrigin = EdgeOrigin.claim_extract
     extraction_status: ReviewStatus = ReviewStatus.pending
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

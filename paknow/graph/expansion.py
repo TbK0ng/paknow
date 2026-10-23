@@ -26,7 +26,9 @@ from sqlalchemy import or_
 
 from paknow.db import SessionLocal
 from paknow.db.models import ClaimRow, EvidenceUnitRow, GraphEdgeRow, GraphNodeRow
-from paknow.graph.identity import canonical_for, concept_node_id, label_for
+from paknow.graph.contracts import EdgeOrigin
+from paknow.graph.identity import concept_node_id, label_for, resolved_canonical
+from paknow.graph.taxonomy import TAXONOMY_RELATIONS
 from paknow.retrieval.dictionary import find_terms
 
 MAX_SEED_CONCEPTS = 8
@@ -34,19 +36,7 @@ MAX_EDGES = 32
 MAX_EVIDENCE = 8
 MAX_CONTEXT_TOKENS = 1200
 
-TAXONOMY_RELATIONS = ("PART_OF", "EXCEPTION_TO", "INVALIDATED_BY", "TRANSITIONS_TO")
-
 _WORD = re.compile(r"[A-Za-z0-9_]+")
-
-
-def _resolved(match_alias: str, canonical: str) -> str:
-    """Pin a surface alias on the dictionary's primary canonical concept.
-
-    Chapter-derived ``auto_*`` entries repeat aliases of the base vocabulary;
-    ``canonical_for`` keeps the first registered canonical, matching taxonomy
-    identity resolution.
-    """
-    return canonical_for(match_alias) or canonical
 
 
 def seed_concepts(text: str, *, limit: int = MAX_SEED_CONCEPTS) -> list[str]:
@@ -55,7 +45,7 @@ def seed_concepts(text: str, *, limit: int = MAX_SEED_CONCEPTS) -> list[str]:
         return []
     out: list[str] = []
     for match in find_terms(text):
-        canonical = _resolved(match.alias, match.canonical)
+        canonical = resolved_canonical(match.alias, match.canonical)
         if canonical and canonical not in out:
             out.append(canonical)
         if len(out) >= limit:
@@ -152,7 +142,6 @@ def _entry(candidate: Mapping[str, Any], *, seen_index: int | None) -> dict[str,
 
 
 def plan_context(
-    seeds: Sequence[str],
     *,
     mechanism: Sequence[Mapping[str, Any]],
     taxonomy: Sequence[Mapping[str, Any]],
@@ -163,9 +152,11 @@ def plan_context(
 ) -> PlannedContext:
     """Select graph entries under the edge/evidence/token budgets.
 
-    Mechanism candidates are considered before taxonomy ones. Evidence already
-    present in the citable text is kept as a ``seen_index`` marker with no body
-    text, preserving the citation binding without duplicating content.
+    Mechanism candidates are considered before taxonomy ones. Every candidate
+    is one traversed edge, so the edge budget binds on candidates examined,
+    not on entries selected. Evidence already present in the citable text is
+    kept as a ``seen_index`` marker with no body text, preserving the citation
+    binding without duplicating content.
     """
     seen = dict(seen_index or {})
     plan = PlannedContext()
@@ -174,19 +165,19 @@ def plan_context(
     tokens = 0
     stop = False
 
-    groups = (("mechanism", mechanism), ("taxonomy", taxonomy))
-    for _name, candidates in groups:
+    for candidates in (mechanism, taxonomy):
         if stop:
             break
         for candidate in candidates:
             plan.stats["candidates"] += 1
-            evidence_id = candidate.get("evidence_id")
-            if not evidence_id or evidence_id in chosen:
-                continue
             if edges >= max_edges:
                 plan.stats["truncated_edges"] = True
                 stop = True
                 break
+            edges += 1  # this candidate is an edge traversal, selected or not
+            evidence_id = candidate.get("evidence_id")
+            if not evidence_id or str(evidence_id) in chosen:
+                continue
             if len(plan.entries) >= max_evidence:
                 plan.stats["truncated_evidence"] = True
                 stop = True
@@ -198,7 +189,6 @@ def plan_context(
                 plan.stats["truncated_tokens"] = True
                 stop = True
                 break
-            edges += 1
             tokens += cost
             chosen.add(str(evidence_id))
             plan.entries.append(_entry(candidate, seen_index=index))
@@ -286,8 +276,10 @@ def load_mechanism_candidates(
                     "subject": claim.subject,
                     "predicate": claim.predicate,
                     "qualifiers": claim.qualifiers or {},
+                    "conditions": (claim.qualifiers or {}).get("conditions") or [],
+                    "exceptions": (claim.qualifiers or {}).get("exceptions") or [],
                 },
-                "origin": "claim_extract",
+                "origin": EdgeOrigin.claim_extract.value,
                 "concept": concept,
                 **loc,
             }
@@ -405,5 +397,5 @@ def expand(
         taxonomy = load_taxonomy_candidates(seeds, session_factory=session_factory)
     except Exception as exc:  # noqa: BLE001 - expansion is fail-open
         failures.append(f"graph_expansion.taxonomy: {type(exc).__name__}: {exc}")
-    plan = plan_context(seeds, mechanism=mechanism, taxonomy=taxonomy, seen_index=seen_index)
+    plan = plan_context(mechanism=mechanism, taxonomy=taxonomy, seen_index=seen_index)
     return plan, failures

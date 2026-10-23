@@ -66,7 +66,8 @@
         "truncated_evidence": true,
         "truncated_tokens": false,
         "tokens": 387,
-        "seeds": 8
+        "seeds": 8,
+        "accumulated": 8
       },
       "truncation": {
         "truncated": true,
@@ -117,7 +118,8 @@
         "truncated_evidence": true,
         "truncated_tokens": false,
         "tokens": 442,
-        "seeds": 8
+        "seeds": 8,
+        "accumulated": 8
       },
       "truncation": {
         "truncated": true,
@@ -160,7 +162,8 @@
         "truncated_evidence": true,
         "truncated_tokens": false,
         "tokens": 386,
-        "seeds": 8
+        "seeds": 8,
+        "accumulated": 8
       },
       "truncation": {
         "truncated": true,
@@ -212,7 +215,8 @@
         "truncated_evidence": true,
         "truncated_tokens": false,
         "tokens": 387,
-        "seeds": 8
+        "seeds": 8,
+        "accumulated": 8
       },
       "truncation": {
         "truncated": true,
@@ -264,7 +268,8 @@
         "truncated_evidence": true,
         "truncated_tokens": false,
         "tokens": 387,
-        "seeds": 8
+        "seeds": 8,
+        "accumulated": 8
       },
       "truncation": {
         "truncated": true,
@@ -313,7 +318,8 @@
         "truncated_evidence": true,
         "truncated_tokens": false,
         "tokens": 597,
-        "seeds": 8
+        "seeds": 8,
+        "accumulated": 8
       },
       "truncation": {
         "truncated": true,
@@ -359,7 +365,8 @@
         "truncated_evidence": true,
         "truncated_tokens": false,
         "tokens": 453,
-        "seeds": 8
+        "seeds": 8,
+        "accumulated": 8
       },
       "truncation": {
         "truncated": true,
@@ -402,7 +409,8 @@
         "truncated_evidence": true,
         "truncated_tokens": false,
         "tokens": 465,
-        "seeds": 8
+        "seeds": 8,
+        "accumulated": 8
       },
       "truncation": {
         "truncated": true,
@@ -451,7 +459,8 @@
         "truncated_evidence": true,
         "truncated_tokens": false,
         "tokens": 441,
-        "seeds": 8
+        "seeds": 8,
+        "accumulated": 8
       },
       "truncation": {
         "truncated": true,
@@ -494,7 +503,8 @@
         "truncated_evidence": true,
         "truncated_tokens": false,
         "tokens": 461,
-        "seeds": 8
+        "seeds": 8,
+        "accumulated": 8
       },
       "truncation": {
         "truncated": true,
@@ -552,7 +562,8 @@
         "truncated_evidence": true,
         "truncated_tokens": false,
         "tokens": 522,
-        "seeds": 8
+        "seeds": 8,
+        "accumulated": 8
       },
       "truncation": {
         "truncated": true,
@@ -604,7 +615,8 @@
         "truncated_evidence": true,
         "truncated_tokens": false,
         "tokens": 602,
-        "seeds": 8
+        "seeds": 8,
+        "accumulated": 8
       },
       "truncation": {
         "truncated": true,
@@ -661,7 +673,8 @@
         "truncated_evidence": true,
         "truncated_tokens": false,
         "tokens": 378,
-        "seeds": 8
+        "seeds": 8,
+        "accumulated": 8
       },
       "truncation": {
         "truncated": true,
@@ -718,7 +731,8 @@
         "truncated_evidence": true,
         "truncated_tokens": false,
         "tokens": 602,
-        "seeds": 8
+        "seeds": 8,
+        "accumulated": 8
       },
       "truncation": {
         "truncated": true,
@@ -770,7 +784,8 @@
         "truncated_evidence": true,
         "truncated_tokens": false,
         "tokens": 483,
-        "seeds": 8
+        "seeds": 8,
+        "accumulated": 8
       },
       "truncation": {
         "truncated": true,
@@ -823,7 +838,8 @@
         "truncated_evidence": true,
         "truncated_tokens": false,
         "tokens": 597,
-        "seeds": 8
+        "seeds": 8,
+        "accumulated": 8
       },
       "truncation": {
         "truncated": true,
@@ -880,7 +896,8 @@
         "truncated_evidence": true,
         "truncated_tokens": false,
         "tokens": 347,
-        "seeds": 8
+        "seeds": 8,
+        "accumulated": 8
       },
       "truncation": {
         "truncated": true,
@@ -923,7 +940,8 @@
         "truncated_evidence": true,
         "truncated_tokens": false,
         "tokens": 442,
-        "seeds": 8
+        "seeds": 8,
+        "accumulated": 8
       },
       "truncation": {
         "truncated": true,
@@ -977,7 +995,8 @@
         "truncated_evidence": true,
         "truncated_tokens": false,
         "tokens": 456,
-        "seeds": 8
+        "seeds": 8,
+        "accumulated": 8
       },
       "truncation": {
         "truncated": true,
@@ -1026,7 +1045,8 @@
         "truncated_evidence": true,
         "truncated_tokens": false,
         "tokens": 602,
-        "seeds": 8
+        "seeds": 8,
+        "accumulated": 8
       },
       "truncation": {
         "truncated": true,
