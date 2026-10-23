@@ -1,0 +1,4857 @@
+[
+  {
+    "subject": "K线1",
+    "claims": 28,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "价格",
+    "claims": 18,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "K线3",
+    "claims": 17,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "市场",
+    "claims": 13,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "交易者",
+    "claims": 11,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "K线5",
+    "claims": 9,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "K线2",
+    "claims": 8,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "market",
+    "claims": 7,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "交易",
+    "claims": 7,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "Brooks",
+    "claims": 5,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "GS",
+    "claims": 5,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "K线4",
+    "claims": 5,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "多头",
+    "claims": 5,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "开盘缺口",
+    "claims": 5,
+    "reason": "multi_match",
+    "candidates": [
+      "gap",
+      "open_of_day"
+    ]
+  },
+  {
+    "subject": "旗形",
+    "claims": 5,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "胜率与盈亏比",
+    "claims": 5,
+    "reason": "multi_match",
+    "candidates": [
+      "auto_risk_reward_ratio",
+      "auto_win_rate"
+    ]
+  },
+  {
+    "subject": "铁丝网",
+    "claims": 5,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "5 Tick 失败（5TF）",
+    "claims": 4,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "soybean 5-minute chart",
+    "claims": 4,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "traders",
+    "claims": 4,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "图8.3中下跌至K线4",
+    "claims": 4,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "铁丝网（Barb Wire, BW）",
+    "claims": 4,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "GOOG",
+    "claims": 3,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "K线3与K线4",
+    "claims": 3,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "K线5与K线6",
+    "claims": 3,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "K线6",
+    "claims": 3,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "QQQQ",
+    "claims": 3,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "SDS",
+    "claims": 3,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "yesterday",
+    "claims": 3,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "分析瘫痪",
+    "claims": 3,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "反转（逆势入场）",
+    "claims": 3,
+    "reason": "multi_match",
+    "candidates": [
+      "countertrend",
+      "reversal"
+    ]
+  },
+  {
+    "subject": "复盘",
+    "claims": 3,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "收缩阶梯",
+    "claims": 3,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "日内崩盘",
+    "claims": 3,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "晚期入场（如H3/H4）",
+    "claims": 3,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "楔形旗形与楔形反转",
+    "claims": 3,
+    "reason": "multi_match",
+    "candidates": [
+      "auto_wedge_reversal",
+      "wedge_flag"
+    ]
+  },
+  {
+    "subject": "死交易",
+    "claims": 3,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "盘感",
+    "claims": 3,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "离开屏幕",
+    "claims": 3,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "选择不入场",
+    "claims": 3,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "长时间横盘",
+    "claims": 3,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "100笔逐笔图",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "5 Tick 失败后的反向入场",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "5-minute SPY",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "50/50 禁区",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "AAPL日线",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "Apple (AAPL)",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "B线",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "D标记",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "E-mini",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "E-mini 5分钟走势",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "FOMC消息",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "GS日线",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "Price action fingerprint",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "Scratch Trade",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "TY美国10年期国债期货图表",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "bar 10 two-legged lower high major trend reversal",
+    "claims": 2,
+    "reason": "multi_match",
+    "candidates": [
+      "bar",
+      "lower_high",
+      "reversal",
+      "trend",
+      "two_legged"
+    ]
+  },
+  {
+    "subject": "bar 2 的双顶熊旗失败",
+    "claims": 2,
+    "reason": "multi_match",
+    "candidates": [
+      "auto_double_top_bear_flag_dtbf",
+      "bar"
+    ]
+  },
+  {
+    "subject": "bears",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "breakout at the end of a trend",
+    "claims": 2,
+    "reason": "multi_match",
+    "candidates": [
+      "breakout",
+      "trend"
+    ]
+  },
+  {
+    "subject": "final flag reversal",
+    "claims": 2,
+    "reason": "multi_match",
+    "candidates": [
+      "auto_final_flag",
+      "reversal"
+    ]
+  },
+  {
+    "subject": "first push up",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "lower low major trend reversal up from bar 15",
+    "claims": 2,
+    "reason": "multi_match",
+    "candidates": [
+      "bar",
+      "reversal",
+      "trend"
+    ]
+  },
+  {
+    "subject": "many traders",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "price action",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "scalp",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "smart traders",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "wheat daily chart rally",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "一系列LH和LL",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "三张图",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "三步检查",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "两段下跌",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "买压与卖压",
+    "claims": 2,
+    "reason": "multi_match",
+    "candidates": [
+      "auto_buying_pressure",
+      "auto_selling_pressure"
+    ]
+  },
+  {
+    "subject": "交易决策",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "交易结果",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "交易者的困惑",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "人类大脑",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "从K线2开始的区间",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "你",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "内外内（IOI）形态",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "前日高点（PDH）、前日低点（PDL）、前日收盘价（PDC）",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "双内包（ii）",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "双底回调",
+    "claims": 2,
+    "reason": "multi_match",
+    "candidates": [
+      "double_bottom",
+      "pullback"
+    ]
+  },
+  {
+    "subject": "只交易一个品种、只看一个时间周期、只用一张图表",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "图1.4",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "图3.12",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "大涨、大跌",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "大阳线",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "完美交易设置",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "小K线",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "尾盘",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "崩盘一词",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "开盘反转",
+    "claims": 2,
+    "reason": "multi_match",
+    "candidates": [
+      "open_of_day",
+      "reversal"
+    ]
+  },
+  {
+    "subject": "强趋势回调",
+    "claims": 2,
+    "reason": "multi_match",
+    "candidates": [
+      "pullback",
+      "strong_trend"
+    ]
+  },
+  {
+    "subject": "意外棒",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "扩张三角形底部的五段",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "无法明确判断应该做多还是做空",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "早期入场（如H1）",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "昨日走势",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "最佳的表现",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "测量移动目标（MM）",
+    "claims": 2,
+    "reason": "multi_match",
+    "candidates": [
+      "measured_move",
+      "target"
+    ]
+  },
+  {
+    "subject": "盘前确定重点寻找的入场类型",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "空仓（Flat）",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "突破中点的测量目标",
+    "claims": 2,
+    "reason": "multi_match",
+    "candidates": [
+      "breakout",
+      "target"
+    ]
+  },
+  {
+    "subject": "突破回测（Breakout Pullback, BP）",
+    "claims": 2,
+    "reason": "multi_match",
+    "candidates": [
+      "breakout",
+      "breakout_pullback"
+    ]
+  },
+  {
+    "subject": "突破缺口",
+    "claims": 2,
+    "reason": "multi_match",
+    "candidates": [
+      "breakout",
+      "gap"
+    ]
+  },
+  {
+    "subject": "第一段下跌",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "第一波上涨",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "苹果",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "该内心独白流程",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "趋势中的反转",
+    "claims": 2,
+    "reason": "multi_match",
+    "candidates": [
+      "reversal",
+      "trend"
+    ]
+  },
+  {
+    "subject": "连续5笔甚至8笔亏损",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "连续出现多根小十字星和区间棒且价格几乎不动",
+    "claims": 2,
+    "reason": "multi_match",
+    "candidates": [
+      "auto_doji",
+      "auto_trading_range_bar"
+    ]
+  },
+  {
+    "subject": "连续阳线",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "逆势反转尝试",
+    "claims": 2,
+    "reason": "multi_match",
+    "candidates": [
+      "auto_reversal_attempt",
+      "countertrend"
+    ]
+  },
+  {
+    "subject": "逆势反转棒出现频率",
+    "claims": 2,
+    "reason": "multi_match",
+    "candidates": [
+      "auto_reversal_bar",
+      "countertrend"
+    ]
+  },
+  {
+    "subject": "道指日线（图8.28）",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "锁仓",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "错失入场",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "错误管理",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "长期盈利",
+    "claims": 2,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "高潮式开盘反转",
+    "claims": 2,
+    "reason": "multi_match",
+    "candidates": [
+      "climax",
+      "open_of_day",
+      "reversal"
+    ]
+  },
+  {
+    "subject": "高潮式开盘反转（SKF K线2）",
+    "claims": 2,
+    "reason": "multi_match",
+    "candidates": [
+      "climax",
+      "open_of_day",
+      "reversal"
+    ]
+  },
+  {
+    "subject": "11:30 a.m. PST trap",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "1分钟图",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "1分钟图交易",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "20 EMA走平",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "20 gap bar short at bar 1",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "bar",
+      "gap"
+    ]
+  },
+  {
+    "subject": "3分钟图",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "3根",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "3秒预演",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "5分钟E-mini",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "5分钟K线",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "5分钟周期图表中的K线",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "5分钟图",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "5分钟图信号不完全确定",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "60 minute Emini",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "6根以上",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "6根以上极强走势",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "90周期EMA附近的空单",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "AAPL",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "AAPL 5分钟走势",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "AAPL on the 5 minute chart in Figure 4.5",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "AAPL（图10.12的K线1）",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "AI方向",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "ANR价格",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "ANR日线",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "A线",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "BLSHS",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "Bar 1 as first moving average gap bar in bear trend",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "bar",
+      "gap",
+      "trend"
+    ]
+  },
+  {
+    "subject": "Bar 2 as first moving average gap bar in strong trend",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "bar",
+      "gap",
+      "strong_trend"
+    ]
+  },
+  {
+    "subject": "Bar 2 bull reversal bar",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "auto_reversal_bar",
+      "bar"
+    ]
+  },
+  {
+    "subject": "Brooks体系",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "Brooks的内心独白流程",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "C",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "Dow Futures contract",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "Dow Jones Industrial Average daily chart in 1932 and 1933",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "E-mini赚四跳",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "EMA 顺势一侧的信号棒",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "auto_signal_bar",
+      "ema",
+      "with_trend"
+    ]
+  },
+  {
+    "subject": "EMA限价入场",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "EURUSD在K线2",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "Emini",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "FOMC report release",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "Figure 21.1",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "Figure 21.6",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "Figure 21.6 numbering",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "Flags",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "GS日线图",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "Google (GOOG)",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "HL DB MTR 形态",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "double_bottom",
+      "higher_low"
+    ]
+  },
+  {
+    "subject": "K12",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "K1–K10的价格走势",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "K30–K34",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "K线13",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "K线17",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "K线1、3、6的向下急冲",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "K线1与2",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "K线1和K线9",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "K线1急跌低点",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "K线1的编号",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "K线2、3",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "K线2与K线3",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "K线2的双顶空头旗形",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "bear_flag",
+      "double_top"
+    ]
+  },
+  {
+    "subject": "K线2的双顶空头旗形失败",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "bear_flag",
+      "double_top"
+    ]
+  },
+  {
+    "subject": "K线2的双顶空头旗形失败情形",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "bear_flag",
+      "double_top"
+    ]
+  },
+  {
+    "subject": "K线2的第二次做空",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "K线2越过小通道线且此前无逆势力量、信号实体很小",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "auto_channel_line_cl",
+      "countertrend"
+    ]
+  },
+  {
+    "subject": "K线3、4",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "K线3与K线4的形态",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "K线3低点后的反弹",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "K线3后",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "K线3向上突破陡峭微趋势线",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "breakout",
+      "micro_trendline"
+    ]
+  },
+  {
+    "subject": "K线4、6、8",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "K线4、8的向上急冲",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "K线4形成一阶后的反弹",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "K线4的双底回调买入形态",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "double_bottom",
+      "pullback"
+    ]
+  },
+  {
+    "subject": "K线4突破主要趋势线",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "auto_trend_line_tl",
+      "breakout"
+    ]
+  },
+  {
+    "subject": "K线5、6、8",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "K线5与K线7",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "K线5与K线7之间",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "K线6、7",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "K线6之后的走势",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "K线7",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "K线8与K线2",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "K线形成过程",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "K线解读",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "LEH",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "LEH窄幅区间",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "MM处的行动",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "MM测量",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "MTR 失败",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "Microsoft",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "Microsoft takeover bid for Yahoo",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "OIH（图11.26）",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "OTM put bought before an earnings catalyst",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "POT",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "Price action",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "QQQQ 5分钟图中的交易",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "RIMM",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "RIMM的开盘反转",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "open_of_day",
+      "reversal"
+    ]
+  },
+  {
+    "subject": "SPY market",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "SPY monthly chart",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "SPY 日线图",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "SPY日线",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "SPY日线反弹",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "SPY月线强上涨",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "Truncated Wedge + HH + LH + DT 形态",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "double_top",
+      "lower_high",
+      "wedge"
+    ]
+  },
+  {
+    "subject": "USO日线",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "XOM",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "YHOO",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "Yahoo CEO",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "aggressive bulls",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "aggressive traders",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "areas where traders were confident of the direction over at least the next several bars",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "bar 1 lower low major trend reversal",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "bar",
+      "reversal",
+      "trend"
+    ]
+  },
+  {
+    "subject": "bar 1 two-bar reversal after the gap spike and channel bottom",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "bar",
+      "gap",
+      "reversal",
+      "spike"
+    ]
+  },
+  {
+    "subject": "bar 16 doji with a large tail on top",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "auto_doji",
+      "bar"
+    ]
+  },
+  {
+    "subject": "bar 2 first pullback in a trend from the open bull",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "bar",
+      "pullback",
+      "trend"
+    ]
+  },
+  {
+    "subject": "bar 2 reversal at a new high of the day and spike and channel top",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "bar",
+      "reversal",
+      "spike"
+    ]
+  },
+  {
+    "subject": "bar 22 high 2 setup",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "bar",
+      "high_2"
+    ]
+  },
+  {
+    "subject": "bar 3 final flag and wedge top",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "auto_final_flag",
+      "bar",
+      "wedge"
+    ]
+  },
+  {
+    "subject": "bar 3 low 2 short",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "bar",
+      "low_2"
+    ]
+  },
+  {
+    "subject": "bar 3 micro channel failed breakout (a low 1)",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "auto_micro_channel",
+      "bar",
+      "failed_breakout"
+    ]
+  },
+  {
+    "subject": "bar 3入场K线",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "bar",
+      "entry_bar"
+    ]
+  },
+  {
+    "subject": "bar 4 breaking above a major trend line",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "bar",
+      "trend"
+    ]
+  },
+  {
+    "subject": "bar 4 two-legged higher high major trend reversal and small wedge top",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "bar",
+      "reversal",
+      "trend",
+      "two_legged",
+      "wedge"
+    ]
+  },
+  {
+    "subject": "bar 5 High 2",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "bar",
+      "high_2"
+    ]
+  },
+  {
+    "subject": "bar 5 third push down on the day, lower low, and final flag breakout and reversal up at the bottom of a trading range",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "auto_final_flag",
+      "bar",
+      "breakout",
+      "reversal",
+      "trading_range"
+    ]
+  },
+  {
+    "subject": "bar 6 double top, spike and channel top, low 4, and top of a trading range",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "bar",
+      "double_top",
+      "spike",
+      "trading_range"
+    ]
+  },
+  {
+    "subject": "bar 6 higher low",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "bar",
+      "higher_low"
+    ]
+  },
+  {
+    "subject": "bar 6 wedge bull flag or triangle second entry at the moving average",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "bar",
+      "bull_flag",
+      "second_entry",
+      "wedge"
+    ]
+  },
+  {
+    "subject": "bar 8突破",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "bar",
+      "breakout"
+    ]
+  },
+  {
+    "subject": "bar 9 small final flag and reversal up",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "auto_final_flag",
+      "bar",
+      "reversal"
+    ]
+  },
+  {
+    "subject": "bars",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "bars 3 and 4",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "bear trend down to bar 6",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "bar",
+      "trend"
+    ]
+  },
+  {
+    "subject": "best trade",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "best trade setups",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "best trade setups on the daily chart of Tata Motors Ltd (TTM)",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "breakout above a bear channel on the open",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "breakout",
+      "channel"
+    ]
+  },
+  {
+    "subject": "breakout from the final bear flag",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "bear_flag",
+      "breakout"
+    ]
+  },
+  {
+    "subject": "bull and bear flags",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "bulls",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "buying at the top of a range",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "buying every reversal from a trend channel line overshoot",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "auto_overshoot",
+      "channel",
+      "reversal",
+      "trend"
+    ]
+  },
+  {
+    "subject": "buying every two-legged pullback mechanically",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "pullback",
+      "two_legged"
+    ]
+  },
+  {
+    "subject": "buying options when volatility is too high",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "channel following a climactic reversal",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "channel",
+      "reversal"
+    ]
+  },
+  {
+    "subject": "completed second leg",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "current move",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "daily Emini",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "dollar, Swiss franc, and Japanese yen",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "double bottom at bar 7",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "bar",
+      "double_bottom"
+    ]
+  },
+  {
+    "subject": "double bottom bull flag at bar 2",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "bar",
+      "double_bottom_bull_flag"
+    ]
+  },
+  {
+    "subject": "double bottom bull flags and double top bear flags",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "double_bottom",
+      "double_top"
+    ]
+  },
+  {
+    "subject": "double top at bar 3",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "bar",
+      "double_top"
+    ]
+  },
+  {
+    "subject": "double top bear flag",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "bear_flag",
+      "double_top"
+    ]
+  },
+  {
+    "subject": "failed breakouts on the open",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "failed wedge bear flag",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "bear_flag",
+      "wedge"
+    ]
+  },
+  {
+    "subject": "first couple of hours of the Emini on the 1-minute chart",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "first moving average gap bar",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "bar",
+      "gap"
+    ]
+  },
+  {
+    "subject": "first moving average gap bar in strong trend",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "bar",
+      "gap",
+      "strong_trend"
+    ]
+  },
+  {
+    "subject": "flag",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "gaps on the RKH chart",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "gray rectangle in Figure 15.5",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "high 1",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "highlighted areas",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "ii买入形态",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "ii或ioi形态",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "ii或ioi形态的入场",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "institutions selling aggressively",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "limit order",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "line B",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "looking for High 1s and High 2s",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "lower low test",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "market after spending a couple of hours in upper half of day's range",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "measuring gap between the high of the bar 7 breakout point and the bar 10 breakout test",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "bar",
+      "breakout",
+      "gap"
+    ]
+  },
+  {
+    "subject": "micro channel failed breakout",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "auto_micro_channel",
+      "failed_breakout"
+    ]
+  },
+  {
+    "subject": "monthly dollar futures",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "monthly gold chart",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "most bars",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "most traders",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "moving average gap bar",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "bar",
+      "gap"
+    ]
+  },
+  {
+    "subject": "mutual and hedge fund purchases",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "news release",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "numbered bars when selling based on the 1 minute chart",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "one- or two-bar final flag",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "auto_final_flag",
+      "bar"
+    ]
+  },
+  {
+    "subject": "one-tick trap",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "option premium before a catalyst",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "other bars",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "others",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "patterns from the prior day",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "paying attention to news",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "postmarket moves after an earnings report",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "premarket",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "premarket entries",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "price action analysis",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "reading setups on a chart printed at the end of the day",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "reconciling news with the chart",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "reports at 5:30 a.m.",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "resistance",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "scalping the first couple of hours of the Emini on the 1-minute chart in actual practice",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "second leg of the bear trend down to bar 6",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "bar",
+      "trend"
+    ]
+  },
+  {
+    "subject": "second-entry long",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "setup with problems",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "short entry when limit order is not filled",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "shorting below bar 7 reversal bar",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "auto_reversal_bar",
+      "bar"
+    ]
+  },
+  {
+    "subject": "small horizontal line within each box",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "smaller wedge pullback",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "pullback",
+      "wedge"
+    ]
+  },
+  {
+    "subject": "software alert",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "some bars",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "stocks",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "strong breakout of the channel",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "breakout",
+      "channel"
+    ]
+  },
+  {
+    "subject": "strong bulls",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "strong trend from the open bull trend day",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "strong_trend",
+      "trend_day"
+    ]
+  },
+  {
+    "subject": "support",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "the chart",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "the market",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "the move",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "the setup",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "the takeover deal",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "these traders",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "thin area",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "three-swing pullback",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "pullback",
+      "swing"
+    ]
+  },
+  {
+    "subject": "tick图和成交量图",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "trader aware of market tendencies",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "trader specializing in major reversals",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "traders buying options before a catalyst",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "traders confident of the direction over the next several bars",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "traditional gaps on intraday charts",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "trending trading range day closing at the top of the upper trading range",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "trading_range",
+      "trading_range_day"
+    ]
+  },
+  {
+    "subject": "two successive one-tick breakouts",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "two-bar pullback after a huge and possibly climactic bull trend bar",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "bar",
+      "pullback",
+      "trend_bar"
+    ]
+  },
+  {
+    "subject": "two-bar reversal at bar 4",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "bar",
+      "reversal"
+    ]
+  },
+  {
+    "subject": "two-bar reversal below bar 2",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "bar",
+      "reversal"
+    ]
+  },
+  {
+    "subject": "two-bar reversal up from the low of the prior day that formed three bars after bar 1",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "bar",
+      "reversal"
+    ]
+  },
+  {
+    "subject": "two-legged pullbacks in a bull trend or trading range",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "trading_range",
+      "trend",
+      "two_legged"
+    ]
+  },
+  {
+    "subject": "two-legged test of the prior high after a sell-off breaks a major trend line",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "trend",
+      "two_legged"
+    ]
+  },
+  {
+    "subject": "volatility being too high",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "wedge bear flag at bar 7",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "bar",
+      "bear_flag",
+      "wedge"
+    ]
+  },
+  {
+    "subject": "wedge bear flag second entry",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "bear_flag",
+      "second_entry",
+      "wedge"
+    ]
+  },
+  {
+    "subject": "wedge bull flag",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "bull_flag",
+      "wedge"
+    ]
+  },
+  {
+    "subject": "weekly Dow Jones Industrial Average charts from the Depression era and World War II",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "三内包（iii）",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "三次推动的每一波",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "上一个时段建立的支撑/阻力",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "上一个时段的低点",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "上一个时段的高点",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "上涨突破或窄通道上涨趋势",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "breakout",
+      "tight_channel",
+      "trend"
+    ]
+  },
+  {
+    "subject": "上涨至K线1",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "上涨至K线2",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "上涨至K线6的走势",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "下一根K线",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "下单",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "下测昨日低点后",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "下跌",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "下跌突破或窄通道下跌趋势",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "breakout",
+      "tight_channel",
+      "trend"
+    ]
+  },
+  {
+    "subject": "下跌至bar 13和bar 14",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "下跌趋势中的回调K线（K线1、2、4、6）",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "pullback",
+      "trend"
+    ]
+  },
+  {
+    "subject": "不同周期上的崩盘",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "两个2HM交易日",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "两个入场依据",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "两根K线形态",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "两根K线的信号强度",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "两段反弹",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "中等幅度低开",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "中等概率情形(40-55%)",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "书籍、课程、指标或系统",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "买入看涨期权或看涨期权价差",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "买入触发",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "买方",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "亏损估算",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "五种日线形态",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "交易决策顺序",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "交易判断",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "交易区间上下沿附近出现反向信号棒时的回归区间方向交易",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "auto_signal_bar",
+      "auto_trading_range_tr"
+    ]
+  },
+  {
+    "subject": "交易区间中的突破",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "auto_trading_range_tr",
+      "breakout"
+    ]
+  },
+  {
+    "subject": "交易区间（TR）高度",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "auto_trading_range_tr",
+      "trading_range"
+    ]
+  },
+  {
+    "subject": "交易方向",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "交易日",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "交易日利润来源",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "仅凭形状",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "从bar 13开始的反弹",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "仓位规模",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "仓位计算",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "价格紧贴EMA来回晃",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "价格行为",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "价格行为原则",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "价格行为的基本结构",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "价格行为的底层逻辑",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "价格走势",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "低位铁丝网",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "低点买入",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "保持空仓",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "信号",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "信号叠加（4-5个同类信号）",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "信号实体",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "信号棒、入场棒、止损设置、目标计算",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "auto_entry_bar",
+      "auto_signal_bar",
+      "stop",
+      "target"
+    ]
+  },
+  {
+    "subject": "信号棒与20 EMA 的相对位置",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "auto_location",
+      "auto_signal_bar",
+      "ema"
+    ]
+  },
+  {
+    "subject": "倾斜震荡区间",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "做多交易与做空交易",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "做多交易者",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "做多决策",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "做空交易",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "做空交易者",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "做空赚四跳",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "入场",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "入场决策",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "六次做空",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "关键价格水平",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "内外内（IOI）",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "切萨皮克能源（CHK）",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "前一天日线K线形态（趋势日、反转日、十字星日、内包日、外包日）",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "auto_doji",
+      "reversal",
+      "trend_day"
+    ]
+  },
+  {
+    "subject": "前几根K线的价格行为",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "前几次测试EMA",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "剥头皮失败",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "剩余批次",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "动能与位置矛盾",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "auto_location",
+      "auto_momentum"
+    ]
+  },
+  {
+    "subject": "区分高潮棒是趋势加速还是衰竭",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "auto_climax_bar",
+      "trend"
+    ]
+  },
+  {
+    "subject": "参与上涨但限制风险",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "参考位",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "双底、双顶回调",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "double_bottom",
+      "double_top",
+      "pullback"
+    ]
+  },
+  {
+    "subject": "双底回调买入",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "double_bottom",
+      "pullback"
+    ]
+  },
+  {
+    "subject": "双底回调反转",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "double_bottom",
+      "pullback",
+      "reversal"
+    ]
+  },
+  {
+    "subject": "双底多头旗形的最小目标",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "double_bottom_bull_flag",
+      "target"
+    ]
+  },
+  {
+    "subject": "双顶/双底形态",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "double_bottom",
+      "double_top"
+    ]
+  },
+  {
+    "subject": "双顶和双底形态",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "double_bottom",
+      "double_top"
+    ]
+  },
+  {
+    "subject": "双顶空头旗形",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "bear_flag",
+      "double_top"
+    ]
+  },
+  {
+    "subject": "反向交易突破的第二次入场",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "breakout",
+      "second_entry"
+    ]
+  },
+  {
+    "subject": "反向图表",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "反复画通道线寻找反转",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "auto_channel_line_cl",
+      "reversal"
+    ]
+  },
+  {
+    "subject": "反弹",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "反弹至C",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "反弹至K线2",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "只做多",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "只做完美设置",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "可见的每一条线",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "各次新低的增量减小",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "同一价格水平",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "同底双K",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "同时看日盘与Globex",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "后续K线",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "向上推进的区间日",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "四根连续的空头K线且最后一根体积很大",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "回调至移动平均线",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "ema",
+      "pullback"
+    ]
+  },
+  {
+    "subject": "回调计数到达H3/L3",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "auto_high_low_counting_system",
+      "pullback"
+    ]
+  },
+  {
+    "subject": "回调计数到达H4/L4",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "auto_high_low_counting_system",
+      "pullback"
+    ]
+  },
+  {
+    "subject": "固定合约数",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "固定风险金额",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "图11.10中的三天K线",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "图11.25",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "图2.11的两天",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "图2.14",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "图3.10",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "图3.12的交易特性",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "图4.17这一天",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "图4.2的最低点",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "图5.10的价格行为",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "图5.8的两个区间",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "图8.17中太平洋时间10:30的急跌",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "图9.1",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "图9.26",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "图表",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "图表数据",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "在K线上方买入",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "在K线下方买入",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "在下跌中买入mTR",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "在下跌中买入mTR进行短线交易",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "在交易区间上下沿附近出现反向信号棒时",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "auto_signal_bar",
+      "auto_trading_range_tr"
+    ]
+  },
+  {
+    "subject": "在大阴线收盘时买入",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "在测试K线外一tick再次入场",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "均线附近的双底",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "double_bottom",
+      "ema"
+    ]
+  },
+  {
+    "subject": "坏交易",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "多头强势",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "多头形态",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "多头收盘",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "多数K线位于上升EMA之上",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "多根阳线走势",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "多空理由权衡（天平法）",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "大多数交易",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "大多数交易者",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "大实体阴线",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "大幅下跌",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "大行情段与其内部的小行情段",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "大趋势K线外的止损",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "stop",
+      "trend_bar"
+    ]
+  },
+  {
+    "subject": "完全掌握 Brooks 体系的交易者",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "完全掌握体系且连续盈利几年的交易者",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "实时盘中判定表",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "实时读图",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "小K线（当日第一根K线）",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "小上涨段",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "尾盘强涨",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "崩盘",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "崩盘形态",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "嵌套交易区间（Nested TR）",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "auto_trading_range_tr",
+      "trading_range"
+    ]
+  },
+  {
+    "subject": "嵌套集群",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "已完成K线",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "市场成交量",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "平衡态",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "平衡态（Equilibrium）",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "开盘即上涨的趋势日",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "open_of_day",
+      "trend_day"
+    ]
+  },
+  {
+    "subject": "开盘反转之后的区间",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "open_of_day",
+      "reversal"
+    ]
+  },
+  {
+    "subject": "强K线（当日第三根K线）",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "强下跌",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "强力突破空头趋势线",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "auto_trend_line_tl",
+      "breakout"
+    ]
+  },
+  {
+    "subject": "强动能反转的极值",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "auto_momentum",
+      "reversal"
+    ]
+  },
+  {
+    "subject": "强势突破后的初期回调",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "breakout",
+      "pullback"
+    ]
+  },
+  {
+    "subject": "强多头M2B",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "强多头趋势中价格下刺移动平均线",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "ema",
+      "trend"
+    ]
+  },
+  {
+    "subject": "强空头中的抄底尝试",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "强趋势中在均线下方刺穿时买入看涨期权",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "ema",
+      "strong_trend"
+    ]
+  },
+  {
+    "subject": "强趋势中的回调或暂停",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "pullback",
+      "strong_trend"
+    ]
+  },
+  {
+    "subject": "强趋势中的首次逆势急冲",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "countertrend",
+      "strong_trend"
+    ]
+  },
+  {
+    "subject": "当前市场",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "当日K线",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "形态",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "形态对齐",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "形态延伸过久",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "形态标注（H2/MTR/楔形旗形）",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "high_2",
+      "wedge_flag"
+    ]
+  },
+  {
+    "subject": "形态标签",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "微型头肩底",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "急跌与交易区间反转的尝试",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "auto_trading_range_tr",
+      "reversal"
+    ]
+  },
+  {
+    "subject": "急跌后横盘",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "急速行情后的逆向交易",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "惊喜K线",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "成交量",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "成交量巨大",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "戴尔盘后公布业绩",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "执行难度",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "技术分析能力",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "把 Brooks 体系从书本知识变成可在实时盘中使用的直觉",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "抛售",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "持仓时的情绪",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "持续行情",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "掌握价格行为交易",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "提前买入者",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "支撑与阻力",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "支撑位",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "收盘价方向",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "收盘低于高点且带有长上影线的K线",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "散户",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "散户交易者",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "新低",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "新方向第一笔入场",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "新极值处的逆向机会",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "新闻解读",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "旗形（Flag）高度",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "无上影或无下影",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "无法解读的K线",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "日内走势",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "日线图中的当天K线",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "日线小图的K线1",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "日线形态",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "旧低点测试",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "旧高点测试",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "早盘下跌",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "时间与价格都处于中部",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "昨日",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "昨日低点K线5",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "昨日后半天形成的大区间",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "昨日尾盘",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "昨日形态",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "昨日高点测试失败",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "普通美国线图",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "更低低点测试",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "更高高点（HH）的力度",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "最初一小时区间",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "最后几小时",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "最后旗形",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "最后旗形失败后再次测试",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "最好的信号",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "最高质量的交易信号",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "有些市场",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "未越过通道线的楔形",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "auto_channel_line_cl",
+      "wedge"
+    ]
+  },
+  {
+    "subject": "末端旗形",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "本节",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "机会成本",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "机构",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "机构调仓",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "极少数交易",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "楔形三推反转",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "auto_three_push_wedge",
+      "reversal"
+    ]
+  },
+  {
+    "subject": "楔形回调",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "pullback",
+      "wedge"
+    ]
+  },
+  {
+    "subject": "楔形多头旗形",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "bull_flag",
+      "wedge"
+    ]
+  },
+  {
+    "subject": "概率倾向",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "概率扭曲",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "正确的决策流程",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "此前17根K线",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "此前三根阴线",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "此前连续八根没有阴线",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "每一次方向翻转",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "每个维度",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "每次回测EMA",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "测试EMA",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "测试低点",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "测距方法",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "消息公布后即使剧烈波动",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "消息引发的波动",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "涨至K线4的七根K线",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "混淆TBTL的两种使用场景",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "清楚后",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "熊市趋势中的紧密多头通道",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "channel",
+      "trend"
+    ]
+  },
+  {
+    "subject": "熟练者",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "特殊日历事件",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "理论上完美的交易",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "用“可能”而非“一定”判断",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "盈利估算",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "盘前",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "相同崩盘形态",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "真空效应",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "真逆势（逆所有周期趋势）",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "countertrend",
+      "trend"
+    ]
+  },
+  {
+    "subject": "空",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "空头回调中的低二失败",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "low_2",
+      "pullback"
+    ]
+  },
+  {
+    "subject": "空头形态",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "空头收盘",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "突破一两跳后的反转",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "breakout",
+      "reversal"
+    ]
+  },
+  {
+    "subject": "突破前后的回调",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "breakout",
+      "pullback"
+    ]
+  },
+  {
+    "subject": "突破后回撤与突破点有轻微重叠的情况",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "breakout",
+      "pullback"
+    ]
+  },
+  {
+    "subject": "突破后横盘而非回调的形态",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "breakout",
+      "pullback"
+    ]
+  },
+  {
+    "subject": "突破回测（BP）",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "breakout",
+      "breakout_pullback"
+    ]
+  },
+  {
+    "subject": "突破空头趋势线",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "auto_trend_line_tl",
+      "breakout"
+    ]
+  },
+  {
+    "subject": "窄幅区间",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "窄通道中的反转",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "reversal",
+      "tight_channel"
+    ]
+  },
+  {
+    "subject": "第2章§2.2",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "第一个信号",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "第一批",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "第一根K线",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "第一根获利K线退出法",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "第一次强劲上冲",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "第一次突破下跌趋势线（同时为第一次尝试突破EMA）",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "auto_trend_line_tl",
+      "breakout"
+    ]
+  },
+  {
+    "subject": "第一段",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "第一段区间",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "第一波反方向运动",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "第三根5分钟K线",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "第三次推动",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "第三次推动未能创新低",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "第二个信号",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "第二个结构",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "第二段下跌",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "等待停止单信号",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "精确回调测试突破位",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "breakout",
+      "pullback"
+    ]
+  },
+  {
+    "subject": "纽约证券交易所",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "终结旗形中的顺势突破",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "auto_final_flag",
+      "breakout",
+      "with_trend"
+    ]
+  },
+  {
+    "subject": "缺口位置",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "auto_location",
+      "gap"
+    ]
+  },
+  {
+    "subject": "美国股市交易日",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "股票",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "蓝色区域（多次反弹的低点）",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "虚值行权价",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "虚线",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "表面逆势（短期逆势但长期顺势）",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "countertrend",
+      "with_trend"
+    ]
+  },
+  {
+    "subject": "被跌破的支撑位",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "观察范围",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "计划持有超过一两周的看涨期权交易者",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "训练阶段的交易者",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "该价格走势",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "该做多交易",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "该入场信号",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "该大阳线",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "该形态",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "读不懂图表",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "调整",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "贴标签的过程",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "超高级别结构位",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "趋势中价格第一次回调到EMA附近",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "pullback",
+      "trend"
+    ]
+  },
+  {
+    "subject": "趋势中的回调",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "pullback",
+      "trend"
+    ]
+  },
+  {
+    "subject": "趋势中的回调(Pullback, PB)",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "pullback",
+      "trend"
+    ]
+  },
+  {
+    "subject": "趋势动能强",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "auto_momentum",
+      "trend"
+    ]
+  },
+  {
+    "subject": "趋势恢复后移动止损",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "stop",
+      "trend"
+    ]
+  },
+  {
+    "subject": "趋势方向动能",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "auto_momentum",
+      "trend"
+    ]
+  },
+  {
+    "subject": "趋势线的一两根K线假突破",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "auto_trend_line_tl",
+      "failed_breakout"
+    ]
+  },
+  {
+    "subject": "跌至K线2、6时突破主要趋势线",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "auto_trend_line_tl",
+      "breakout"
+    ]
+  },
+  {
+    "subject": "跳空低开后的首根多头趋势K线",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "gap",
+      "trend_bar"
+    ]
+  },
+  {
+    "subject": "跳空突破空头趋势线",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "auto_trend_line_tl",
+      "breakout",
+      "gap"
+    ]
+  },
+  {
+    "subject": "较大结构",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "近期日均振幅",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "这根5min K线的收盘",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "连续七根阳线",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "连续多头K线在高点不停形成阻力",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "连续阴线",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "逆向交易",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "通道反向突破",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "breakout",
+      "channel"
+    ]
+  },
+  {
+    "subject": "通道线与潜在反转",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "auto_channel_line_cl",
+      "reversal"
+    ]
+  },
+  {
+    "subject": "通道线突破失败",
+    "claims": 1,
+    "reason": "multi_match",
+    "candidates": [
+      "auto_channel_line_cl",
+      "breakout"
+    ]
+  },
+  {
+    "subject": "锚点K线1",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "长影线内的波动",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "阴线内包K线",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "限价入场",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "限价入场做多",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "限价入场做空",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "随后出现的K线",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "隔夜高点与隔夜低点",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "零错误的交易日",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "需要反复放大、画辅助线、犹豫半天才能勉强识别的形态",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "非高概率机会时间",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "面对图表感到不知所措时的分析者",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "顶部1/3",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "风险",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "首根K线起涨后的走势",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "首根阴线",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "高一（H1）",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "高概率机会窗口",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  },
+  {
+    "subject": "高点上一跳",
+    "claims": 1,
+    "reason": "no_match",
+    "candidates": []
+  }
+]
