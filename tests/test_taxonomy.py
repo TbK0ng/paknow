@@ -13,7 +13,13 @@ from paknow.db.models import DocumentRow, EvidenceUnitRow, GraphEdgeRow, GraphNo
 from paknow.graph import taxonomy
 from paknow.graph.contracts import Relation
 from paknow.graph.identity import concept_node_id
-from paknow.graph.taxonomy import HeadingUnit, build_taxonomy_edges, dedupe_headings, parse_heading
+from paknow.graph.taxonomy import (
+    HeadingUnit,
+    build_taxonomy_edges,
+    dedupe_headings,
+    is_toc_title,
+    parse_heading,
+)
 
 
 def _unit(eid: str, text: str, doc: str = "d1") -> HeadingUnit:
@@ -196,6 +202,62 @@ def _add_doc(Session, doc_id: str, headings: list[tuple[str, str]]) -> None:
                 )
             )
         s.commit()
+
+
+def test_toc_titles_are_excluded_from_parsing_and_counted():
+    units = [
+        _unit("t1", "分类目录\nBPA ENCYCLOPEDIA"),
+        _unit("t2", "未分类目录\nBPA ENCYCLOPEDIA"),
+        _unit("t3", "目录"),
+        _unit("a", "18根K线区间下方的突破失败：随后向上突破"),
+        _unit("b", "无法识别的标题"),
+    ]
+
+    build = build_taxonomy_edges(units)
+
+    assert build.stats["excluded_toc"] == 3
+    assert build.stats["headings_loaded"] == 5
+    assert build.stats["headings_in"] == 2
+    assert build.stats["headings_after_dedupe"] == 2
+    assert [(e.from_concept, e.to_concept) for e in build.edges] == [
+        ("failed_breakout", "breakout")
+    ]
+
+
+def test_toc_rows_and_bodys_heading_with_colon_are_not_confused():
+    # TOC rows are paragraph blocks in the real corpus and never load as
+    # headings; a body heading that merely starts with a concept is parsed.
+    body = parse_heading("分类目录下的突破失败：随后向上突破")
+
+    assert is_toc_title("分类目录\nBPA ENCYCLOPEDIA") is True
+    assert is_toc_title("分类目录下的突破失败：随后向上突破") is False
+    assert body is not None and body.relation is Relation.TRANSITIONS_TO
+
+
+def test_toc_paragraph_rows_never_enter_the_heading_scan(monkeypatch):
+    Session = _memory_session(monkeypatch)
+    _add_doc(Session, "enc", [("h1", "分类目录\nBPA ENCYCLOPEDIA")])
+    with Session() as s:
+        s.add(
+            EvidenceUnitRow(
+                evidence_id="row1",
+                doc_id="enc",
+                locator={"doc_id": "enc", "format": "pdf"},
+                text="B18区间：向上突破",
+                text_hash="row1",
+                block_type="paragraph",
+            )
+        )
+        s.commit()
+
+    assert [u.evidence_id for u in taxonomy.load_heading_units(doc_ids=["enc"])] == ["h1"]
+    stats = taxonomy.rebuild_taxonomy(doc_ids=["enc"])
+
+    assert stats["excluded_toc"] == 1
+    assert stats["headings_after_dedupe"] == 0
+    assert stats["edges"] == 0
+    with Session() as s:
+        assert s.query(GraphEdgeRow).count() == 0
 
 
 def test_rebuild_scopes_parsing_to_requested_documents(monkeypatch):

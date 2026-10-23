@@ -106,7 +106,6 @@ def test_seed_concepts_follow_text_order_dedupe_and_cap():
 
 def test_mechanism_before_taxonomy_and_seen_evidence_is_marked():
     plan = expansion.plan_context(
-        ["breakout"],
         mechanism=[_candidate("e1"), _candidate("e2")],
         taxonomy=[_candidate("e1", source="taxonomy"), _candidate("e3", source="taxonomy")],
         seen_index={"e1": 2},
@@ -123,7 +122,6 @@ def test_mechanism_before_taxonomy_and_seen_evidence_is_marked():
 
 def test_edge_budget_truncates_after_priority_order():
     plan = expansion.plan_context(
-        ["breakout"],
         mechanism=[_candidate(f"m{i}") for i in range(5)],
         taxonomy=[_candidate(f"t{i}", source="taxonomy") for i in range(5)],
         max_edges=3,
@@ -137,7 +135,6 @@ def test_edge_budget_truncates_after_priority_order():
 def test_token_budget_drops_lower_priority_taxonomy_not_mechanism():
     long_text = "走" * 200  # ~200 estimated tokens
     plan = expansion.plan_context(
-        ["breakout"],
         mechanism=[_candidate("m0", text="short")],
         taxonomy=[_candidate("t0", text=long_text, source="taxonomy")],
         max_tokens=60,
@@ -162,8 +159,8 @@ def test_query_seed_expands_when_text_recall_returns_nothing(monkeypatch):
     result = pipeline.retrieve_evidence("突破 后面会怎样", ["突破 后面会怎样"])
 
     assert result.text_hits == []
-    assert [e["evidence_id"] for e in result.graph_context] == ["g1"]
-    assert result.graph_context[0]["non_citable"] is True
+    assert [e["evidence_id"] for e in result.graph_evidence] == ["g1"]
+    assert result.graph_evidence[0]["non_citable"] is True
     assert result.expanded_concepts == ["breakout"]
 
 
@@ -177,7 +174,7 @@ def test_graph_evidence_already_in_text_is_referenced_not_duplicated(monkeypatch
     result = pipeline.retrieve_evidence("突破", ["突破"])
 
     assert [h["evidence_id"] for h in result.text_hits] == ["e1"]
-    entries = {e["evidence_id"]: e for e in result.graph_context}
+    entries = {e["evidence_id"]: e for e in result.graph_evidence}
     assert entries["e1"]["text"] == "" and entries["e1"]["seen_index"] == 0
     assert entries["g2"]["text"]
     # graph units never join the citable text partition
@@ -194,7 +191,7 @@ def test_graph_evidence_never_enters_citation_indices(monkeypatch):
     answer = generate.generate(
         "问题",
         [_unit("text-1", text="原文")],
-        graph_context=[
+        graph_evidence=[
             {"evidence_id": "graph-only", "source": "mechanism", "text": "图谱", "seen_index": None}
         ],
     )
@@ -215,7 +212,7 @@ def test_expansion_failure_is_recorded_and_answer_continues(monkeypatch):
 
     assert [h["evidence_id"] for h in result.text_hits] == ["e1"]
     assert any("edge table locked" in f for f in result.failures)
-    assert result.graph_context == []
+    assert result.graph_evidence == []
 
 
 # ---------------------------------------------------------------------------
@@ -235,8 +232,8 @@ def test_expansion_skips_round_without_new_concepts(monkeypatch):
         "突破", ["突破"], acc=first.acc, expanded_concepts=first.expanded_concepts
     )
 
-    assert [e["evidence_id"] for e in first.graph_context] == ["g1"]
-    assert again.graph_context == []
+    assert [e["evidence_id"] for e in first.graph_evidence] == ["g1"]
+    assert again.graph_evidence == []
     assert again.expanded_concepts == first.expanded_concepts
 
 
@@ -254,7 +251,7 @@ def test_gap_round_with_a_new_concept_expands_incrementally(monkeypatch):
         expanded_concepts=["breakout"],
     )
 
-    assert [e["evidence_id"] for e in result.graph_context] == ["g2"]
+    assert [e["evidence_id"] for e in result.graph_evidence] == ["g2"]
     assert result.expanded_concepts == ["breakout", "gap"]
 
 
@@ -439,18 +436,17 @@ def test_seam_with_real_hydration_dedupes_seen_evidence(monkeypatch):
 
     result = pipeline.retrieve_evidence("突破", ["突破"])
 
-    ids = [e["evidence_id"] for e in result.graph_context]
+    ids = [e["evidence_id"] for e in result.graph_evidence]
     # mechanism chain outranks the taxonomy edge; both hydrate from the DB
     assert ids == ["m1", "h1"]
-    assert result.graph_context[0]["seen_index"] == 0
-    assert result.graph_context[0]["text"] == ""
+    assert result.graph_evidence[0]["seen_index"] == 0
+    assert result.graph_evidence[0]["text"] == ""
     assert result.text_hits[0]["evidence_id"] == "m1"
 
 
 def test_default_graph_block_budget_is_1200_estimated_tokens():
     assert expansion.MAX_CONTEXT_TOKENS == 1200
     plan = expansion.plan_context(
-        ["breakout"],
         mechanism=[_candidate(f"m{i}", text="突" * 200) for i in range(6)],
         taxonomy=[_candidate("t0", text="分类", source="taxonomy")],
     )
@@ -473,7 +469,7 @@ def test_seam_exposes_graph_budget_stats_for_evaluation(monkeypatch):
     assert result.graph_stats["selected"] == expansion.MAX_EVIDENCE
     assert result.graph_stats["truncated_evidence"] is True
     assert result.graph_stats["seeds"] == 1
-    assert len(result.graph_context) == result.graph_stats["selected"]
+    assert len(result.graph_evidence) == result.graph_stats["selected"]
 
 
 def test_gap_query_terms_seed_expansion_too(monkeypatch):
@@ -483,7 +479,7 @@ def test_gap_query_terms_seed_expansion_too(monkeypatch):
         "继续说明", ["继续说明", "突破的后续"], acc={"old": _unit("old")}
     )
 
-    assert [e["evidence_id"] for e in result.graph_context] == ["g9"]
+    assert [e["evidence_id"] for e in result.graph_evidence] == ["g9"]
 
 
 def test_text_hit_concepts_seed_second_pass(monkeypatch):
@@ -497,4 +493,211 @@ def test_text_hit_concepts_seed_second_pass(monkeypatch):
 
     # the query mentions no concept; the hit-evidence text supplies the seed
     assert result.expanded_concepts == ["breakout"]
-    assert [e["evidence_id"] for e in result.graph_context] == ["g5"]
+    assert [e["evidence_id"] for e in result.graph_evidence] == ["g5"]
+
+
+# ---------------------------------------------------------------------------
+# edge budget: counted per traversed candidate, not per selected entry
+# ---------------------------------------------------------------------------
+
+
+def test_edge_budget_binds_on_traversed_candidates():
+    # 40 candidate edges over only 5 distinct evidence ids: the evidence cap
+    # never binds, so the edge budget must stop the walk
+    plan = expansion.plan_context(
+        mechanism=[_candidate(f"e{i % 5}") for i in range(40)],
+        taxonomy=[],
+    )
+
+    assert plan.stats["truncated_edges"] is True
+    assert plan.stats["truncated_evidence"] is False
+    assert plan.stats["candidates"] == expansion.MAX_EDGES + 1
+    assert len(plan.entries) == 5
+
+
+def test_edge_budget_keeps_mechanism_before_taxonomy_at_the_boundary():
+    plan = expansion.plan_context(
+        mechanism=[_candidate(f"m{i}") for i in range(4)],
+        taxonomy=[_candidate(f"t{i}", source="taxonomy") for i in range(4)],
+        max_edges=4,
+    )
+
+    assert [e["evidence_id"] for e in plan.entries] == ["m0", "m1", "m2", "m3"]
+    assert plan.stats["truncated_edges"] is True
+
+
+# ---------------------------------------------------------------------------
+# conditioned claims stay conditioned in the prompt
+# ---------------------------------------------------------------------------
+
+
+def test_rendered_claim_prints_its_condition_and_exceptions():
+    line = generate.render_graph_context(
+        [
+            {
+                "evidence_id": "g1",
+                "source": "mechanism",
+                "claim": {
+                    "subject": "突破",
+                    "predicate": "常常失败",
+                    "qualifiers": {"context": ["强趋势"], "modality": "usually"},
+                    "conditions": ["区间边缘"],
+                    "exceptions": ["突破后有跟随"],
+                },
+                "text": "图谱正文",
+                "seen_index": None,
+            }
+        ]
+    )[0]
+
+    assert "突破 → 常常失败" in line
+    assert "条件" in line
+    for expected in ("强趋势", "usually", "区间边缘", "突破后有跟随"):
+        assert expected in line
+
+
+# ---------------------------------------------------------------------------
+# gap-round accumulation
+# ---------------------------------------------------------------------------
+
+
+def test_gap_round_appends_new_entries_to_prior_graph_evidence(monkeypatch):
+    _patched(monkeypatch, hits_by_query={}, mechanism=[_candidate("g2", concept="gap")])
+
+    result = pipeline.retrieve_evidence(
+        "缺口 后续",
+        ["缺口 后续"],
+        acc={"e1": _unit("e1")},
+        expanded_concepts=["breakout"],
+        prior_graph_evidence=[_candidate("g1")],
+    )
+
+    assert [e["evidence_id"] for e in result.graph_evidence] == ["g1", "g2"]
+    assert result.graph_stats["seeds"] == 1
+    assert result.graph_stats["accumulated"] == 2
+
+
+def test_gap_round_dedupes_by_evidence_id_and_keeps_prior_body(monkeypatch):
+    _patched(
+        monkeypatch,
+        hits_by_query={},
+        mechanism=[_candidate("g1", text="this-round text"), _candidate("g2", concept="gap")],
+    )
+
+    result = pipeline.retrieve_evidence(
+        "缺口 后续",
+        ["缺口 后续"],
+        expanded_concepts=["breakout"],
+        prior_graph_evidence=[_candidate("g1", text="prior text")],
+    )
+
+    assert [e["evidence_id"] for e in result.graph_evidence] == ["g1", "g2"]
+    assert result.graph_evidence[0]["text"] == "prior text"
+
+
+def test_round_without_new_concepts_preserves_prior_evidence_and_reports_stats(monkeypatch):
+    _patched(monkeypatch, hits_by_query={})
+
+    result = pipeline.retrieve_evidence(
+        "突破",
+        ["突破"],
+        expanded_concepts=["breakout"],
+        prior_graph_evidence=[_candidate("g1")],
+    )
+
+    assert [e["evidence_id"] for e in result.graph_evidence] == ["g1"]
+    assert result.graph_stats["seeds"] == 0
+    assert result.graph_stats["selected"] == 1
+    assert result.graph_stats["truncated_edges"] is False
+
+
+# ---------------------------------------------------------------------------
+# one citation-binding rule shared by the pipeline and generation
+# ---------------------------------------------------------------------------
+
+
+def test_pipeline_binding_skips_derived_observations_and_dedupes():
+    units = [
+        _unit("e1"),
+        {"evidence_id": "obs-1", "provenance": "derived_observation", "text": "观察"},
+        _unit("p1"),
+    ]
+
+    assert pipeline.citable_units([_unit("e1")], [_unit("e1"), _unit("p1")]) == [
+        units[0],
+        units[2],
+    ]
+    assert pipeline.citation_binding(units) == {"e1": 0, "p1": 1}
+
+
+def test_generation_uses_the_pipeline_citation_indices(monkeypatch):
+    units = [
+        _unit("e1", text="原文一"),
+        {"evidence_id": "obs-1", "provenance": "derived_observation", "text": "观察"},
+        _unit("p1", text="原文二"),
+    ]
+    index = pipeline.citation_binding(units)
+    captured = {}
+
+    def fake_chat_json(schema, messages, **kwargs):
+        captured["user"] = messages[-1]["content"]
+        return generate.Answer(answer="答", cited_indices=[1])
+
+    monkeypatch.setattr(generate.gateway, "chat_json", fake_chat_json)
+
+    answer = generate.generate("问题", units, citation_index=index)
+
+    assert answer["evidence_ids"] == ["p1"]
+    assert "[1]" in captured["user"]
+    assert "原文二" in captured["user"].split("[1]", 1)[1]
+
+
+def test_router_falls_back_to_hybrid_text_when_filtering_empties_routes(monkeypatch):
+    monkeypatch.setattr(
+        router.gateway,
+        "chat_json",
+        lambda model, messages, **kwargs: router.QueryPlan(routes=["graph_local"]),
+    )
+
+    assert router.route("突破").routes == ["hybrid_text"]
+
+
+def test_retrieve_node_hands_prior_graph_evidence_back_and_keeps_it(monkeypatch):
+    from paknow.workflows import graph as graph_flow
+
+    captured = {}
+
+    def fake_retrieve(query, queries, **kwargs):
+        captured.update(kwargs)
+        return SimpleNamespace(
+            acc={},
+            text_hits=[],
+            figures=[],
+            context_units=[],
+            citable_units=[],
+            citation_index={},
+            toc_context=[],
+            barrefs=[],
+            graph_evidence=[
+                *kwargs["prior_graph_evidence"],
+                {"evidence_id": "g2", "non_citable": True},
+            ],
+            graph_stats={"seeds": 1, "selected": 2, "accumulated": 2},
+            expanded_concepts=["breakout", "gap"],
+            failures=[],
+        )
+
+    monkeypatch.setattr(graph_flow, "retrieve_evidence", fake_retrieve)
+    state = {
+        "query": "缺口 后续",
+        "plan": router.QueryPlan(),
+        "graph_evidence": [{"evidence_id": "g1"}],
+        "expanded_concepts": ["breakout"],
+        "acc": {},
+    }
+
+    out = graph_flow._retrieve_node(state)
+
+    assert captured["prior_graph_evidence"] == [{"evidence_id": "g1"}]
+    assert [e["evidence_id"] for e in out["graph_evidence"]] == ["g1", "g2"]
+    assert out["graph_stats"]["accumulated"] == 2

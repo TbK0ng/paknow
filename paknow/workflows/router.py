@@ -62,8 +62,10 @@ def route(query: str, images: list[bytes] | None = None) -> QueryPlan:
     try:
         plan = gateway.chat_json(QueryPlan, messages, images=images, max_tokens=2048)
         # drop anything outside the scored-channel vocabulary, including the
-        # retired graph_local label
+        # retired graph_local label; never leave the retrieval seam route-less
         plan.routes = [r for r in plan.routes if r in ROUTE_VOCAB]
+        if not plan.routes:
+            plan.routes = ["hybrid_text"]
         return plan
     except Exception:
         # fail-safe: degrade to a plain knowledge_qa plan

@@ -48,6 +48,16 @@ def canonical_for(surface: str | None) -> str | None:
     return term.canonical if term else None
 
 
+def resolved_canonical(surface: str, fallback: str) -> str:
+    """Pin a surface form on the dictionary's primary canonical concept.
+
+    Chapter-derived ``auto_*`` entries repeat the aliases of the base vocabulary
+    for the same surface form; the first registered canonical wins, so aliases
+    that resolve here are the same ids retrieval seeds and taxonomy edges use.
+    """
+    return canonical_for(surface) or fallback
+
+
 def label_for(canonical: str) -> str:
     term = resolve_term(canonical)
     return display_label(term) if term else canonical

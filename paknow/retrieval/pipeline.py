@@ -8,10 +8,14 @@ Partitions are explicit on :class:`RetrievalResult`:
 
 - ``text_hits``: scored text recall, the only rank order the answer uses and
   the only channel that produces citable citations;
-- ``graph_evidence`` / ``graph_context``: graph expansion entries. They are
-  understanding aids only: ``provenance="graph"``, ``non_citable=True``, and
-  never merged into the citable units the answer indexes;
+- ``graph_evidence``: graph expansion entries, accumulated across gap rounds.
+  They are understanding aids only: ``provenance="graph"``,
+  ``non_citable=True``, and never merged into the citable units the answer
+  indexes;
 - ``context_units``: parent/adjacent units fetched for reading context;
+- ``citable_units`` / ``citation_index``: the exact list generation renders and
+  the evidence-id -> ``[n]`` binding derived from it, so generation never
+  re-derives the ordering rule;
 - ``figures`` / ``toc_context`` / ``barrefs``: auxiliary recall;
 - ``failures``: non-fatal failures; retrieval never raises for one bad step.
 """
@@ -42,8 +46,9 @@ class RetrievalResult:
 
     text_hits: list[dict[str, Any]] = field(default_factory=list)
     graph_evidence: list[dict[str, Any]] = field(default_factory=list)
-    graph_context: list[dict[str, Any]] = field(default_factory=list)
     context_units: list[dict[str, Any]] = field(default_factory=list)
+    citable_units: list[dict[str, Any]] = field(default_factory=list)
+    citation_index: dict[str, int] = field(default_factory=dict)
     figures: list[dict[str, Any]] = field(default_factory=list)
     toc_context: list[dict[str, Any]] = field(default_factory=list)
     barrefs: list[dict[str, Any]] = field(default_factory=list)
@@ -52,6 +57,37 @@ class RetrievalResult:
     expanded_concepts: list[str] = field(default_factory=list)
     graph_stats: dict[str, Any] = field(default_factory=dict)
     query_count: int = 0
+
+
+def citable_units(
+    text_hits: Sequence[Mapping[str, Any]],
+    context_units: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    """Text hits then new context units: exactly what generation renders."""
+    units: list[dict[str, Any]] = [
+        dict(hit) for hit in text_hits if hit.get("evidence_id")
+    ]
+    have = {str(unit["evidence_id"]) for unit in units}
+    for unit in context_units:
+        evidence_id = unit.get("evidence_id")
+        if evidence_id and str(evidence_id) not in have:
+            units.append(dict(unit))
+            have.add(str(evidence_id))
+    return units
+
+
+def citation_binding(units: Sequence[Mapping[str, Any]]) -> dict[str, int]:
+    """Evidence id -> rendered ``[n]`` index; derived observations are unnumbered."""
+    index: dict[str, int] = {}
+    position = 0
+    for unit in units:
+        if unit.get("provenance") == "derived_observation":
+            continue
+        evidence_id = unit.get("evidence_id")
+        if evidence_id and str(evidence_id) not in index:
+            index[str(evidence_id)] = position
+        position += 1
+    return index
 
 
 def retrieve_evidence(
@@ -63,12 +99,15 @@ def retrieve_evidence(
     wants_examples: bool = False,
     acc: Mapping[str, dict[str, Any]] | None = None,
     expanded_concepts: Sequence[str] = (),
+    prior_graph_evidence: Sequence[Mapping[str, Any]] = (),
 ) -> RetrievalResult:
     """Run one retrieval round over ``queries`` (max 6) and return partitions.
 
     ``acc`` accumulates hits across rounds so bounded re-retrieval widens the
     candidate set instead of replacing it. ``expanded_concepts`` carries the
     concepts already expanded, so a gap round only follows new ones.
+    ``prior_graph_evidence`` is the graph block accumulated by earlier rounds;
+    this round appends only new evidence ids and never drops it.
     """
     failures: list[str] = []
     seen: dict[str, dict[str, Any]] = dict(acc or {})
@@ -159,17 +198,9 @@ def retrieve_evidence(
         except Exception as e:  # noqa: BLE001
             failures.append(f"caption_search: {e}")
 
-    # citation indices must match generate()'s citable unit list exactly:
-    # text hits then context units, minus derived observations
-    seen_index: dict[str, int] = {}
-    citation_index = 0
-    for unit in [*hits, *context_units]:
-        if unit.get("provenance") == "derived_observation":
-            continue
-        eid = unit.get("evidence_id")
-        if eid and eid not in seen_index:
-            seen_index[eid] = citation_index
-        citation_index += 1
+    # citation indices must match generate()'s rendered unit list exactly
+    units = citable_units(hits, context_units)
+    seen_index = citation_binding(units)
 
     prior_expanded = list(dict.fromkeys(expanded_concepts))
     new_seeds = expansion.select_new_seeds(
@@ -178,19 +209,48 @@ def retrieve_evidence(
         expanded=prior_expanded,
     )
     graph_entries: list[dict[str, Any]] = []
-    graph_stats: dict[str, Any] = {}
+    graph_seen: set[str] = set()
+    for entry in prior_graph_evidence:
+        evidence_id = entry.get("evidence_id")
+        key = str(evidence_id) if evidence_id else None
+        if key is not None and key in graph_seen:
+            continue
+        graph_entries.append(dict(entry))
+        if key is not None:
+            graph_seen.add(key)
+
+    base_stats = dict(expansion.PlannedContext().stats)
     if new_seeds:
         plan, graph_failures = expansion.expand(new_seeds, seen_index=seen_index)
         failures.extend(graph_failures)
-        graph_entries = plan.entries
-        graph_stats = {**plan.stats, "seeds": len(new_seeds)}
+        for entry in plan.entries:
+            key = str(entry.get("evidence_id"))
+            if key in graph_seen:
+                continue
+            graph_entries.append(entry)
+            graph_seen.add(key)
+        graph_stats = {
+            **plan.stats,
+            "seeds": len(new_seeds),
+            "accumulated": len(graph_entries),
+        }
         prior_expanded = list(dict.fromkeys([*prior_expanded, *new_seeds]))
+    else:
+        # a round with no new concepts pays for nothing and must still report
+        # stats, so cache-hit calls do not look like missing instrumentation
+        graph_stats = {
+            **base_stats,
+            "selected": len(graph_entries),
+            "seeds": 0,
+            "accumulated": len(graph_entries),
+        }
 
     return RetrievalResult(
         text_hits=hits,
         graph_evidence=graph_entries,
-        graph_context=graph_entries,
         context_units=context_units,
+        citable_units=units,
+        citation_index=seen_index,
         figures=figures,
         toc_context=toc_context,
         barrefs=barrefs,

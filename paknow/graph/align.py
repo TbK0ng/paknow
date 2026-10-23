@@ -2,7 +2,10 @@
 
 Deterministic first: an exact normalized alias resolves through
 :func:`paknow.graph.identity.canonical_for`; otherwise dictionary matches on the
-normalized subject align only when they point at exactly one canonical concept.
+normalized subject align only when they point at exactly one canonical concept
+after :func:`~paknow.graph.identity.resolved_canonical` (the same identity path
+taxonomy and expansion use, so a shared alias never aligns to an ``auto_*``
+twin that retrieval never seeds).
 Multi-match and no-match subjects remain residual and may be offered to a
 batched model, but only above a confidence threshold.
 
@@ -13,7 +16,6 @@ non-citable auxiliary context (ADR-0002). Edges keep ``origin='claim_extract'``.
 """
 from __future__ import annotations
 
-import re
 from collections import Counter
 from dataclasses import dataclass, field
 from typing import Any, Iterable
@@ -29,7 +31,9 @@ from paknow.graph.identity import (
     concept_kind_for,
     concept_node_id,
     label_for,
+    resolved_canonical,
 )
+from paknow.graph.taxonomy import normalize_heading
 from paknow.retrieval.dictionary import find_terms, load_terms
 
 METHOD_ALIAS = "alias"
@@ -38,8 +42,6 @@ METHOD_MODEL = "model"
 
 DEFAULT_THRESHOLD = 0.8
 DEFAULT_BATCH_SIZE = 25
-
-_WS = re.compile(r"\s+")
 
 
 class SubjectAlignment(BaseModel):
@@ -75,28 +77,31 @@ class AlignmentReport:
     model_errors: list[str] = field(default_factory=list)
 
 
-def normalize_subject(text: str) -> str:
-    """Collapse whitespace/NBSP; matching itself is case-insensitive."""
-    return _WS.sub(" ", (text or "").replace("\xa0", " ")).strip()
-
-
 def align_subject(subject: str) -> Alignment | None:
     """Deterministic alignment for one claim subject, or ``None`` when residual."""
-    normalized = normalize_subject(subject)
+    normalized = normalize_heading(subject)
     if not normalized:
         return None
     canonical = canonical_for(normalized)
     if canonical is not None:
         return Alignment(concept_id=canonical, method=METHOD_ALIAS)
-    concepts = {m.canonical for m in find_terms(normalized)}
+    concepts = _subject_concepts(normalized)
     if len(concepts) == 1:
         return Alignment(concept_id=next(iter(concepts)), method=METHOD_SUBSTRING)
     return None
 
 
+def _subject_concepts(subject: str) -> set[str]:
+    """Canonical ids a subject resolves to, through the dictionary identity path."""
+    return {
+        resolved_canonical(m.alias, m.canonical)
+        for m in find_terms(normalize_heading(subject))
+    }
+
+
 def subject_candidates(subject: str) -> list[str]:
     """Every canonical concept the dictionary finds in the subject."""
-    return sorted({m.canonical for m in find_terms(normalize_subject(subject))})
+    return sorted(_subject_concepts(subject))
 
 
 def _has_api_key() -> bool:
@@ -104,7 +109,18 @@ def _has_api_key() -> bool:
 
 
 def _candidate_catalog() -> list[tuple[str, str]]:
-    return sorted({(t.canonical, label_for(t.canonical)) for t in load_terms()})
+    """Identity ids the model may choose from, labelled in Chinese.
+
+    Only ids reachable from a surface alias are offered: a ``auto_*`` entry that
+    merely repeats a base entry's alias can never be a retrieval seed, so
+    aligning a claim to it would make the claim unreachable.
+    """
+    identities = {
+        resolved_canonical(alias, term.canonical)
+        for term in load_terms()
+        for alias in term.aliases
+    }
+    return sorted((canonical, label_for(canonical)) for canonical in identities)
 
 
 def _messages(subjects: list[str], catalog: list[tuple[str, str]]) -> list[dict[str, str]]:
@@ -215,10 +231,10 @@ def align_claims(
     with factory() as s:
         total = s.query(ClaimRow).count()
         before = s.query(ClaimRow).filter(ClaimRow.subject_concept_id.isnot(None)).count()
-        rows = s.query(ClaimRow).filter(ClaimRow.subject_concept_id.is_(None)).all()
         subjects: dict[str, list[str]] = {}
+        rows = s.query(ClaimRow).filter(ClaimRow.subject_concept_id.is_(None)).all()
         for row in rows:
-            subjects.setdefault(normalize_subject(row.subject), []).append(row.claim_id)
+            subjects.setdefault(normalize_heading(row.subject), []).append(row.claim_id)
 
         plan: dict[str, Alignment] = {}
         for subject in subjects:
@@ -255,10 +271,13 @@ def align_claims(
         written = 0
         if apply and plan:
             for subject, alignment in plan.items():
+                # update the rows that were actually planned: the plan key is
+                # normalized, so filtering on the raw subject would miss
+                # whitespace/NBSP variants
                 written += (
                     s.query(ClaimRow)
                     .filter(
-                        ClaimRow.subject == subject,
+                        ClaimRow.claim_id.in_(subjects[subject]),
                         ClaimRow.subject_concept_id.is_(None),
                     )
                     .update(

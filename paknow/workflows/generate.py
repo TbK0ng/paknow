@@ -1,11 +1,12 @@
 """Evidence-grounded answer generation with citation binding (plan §7.3)."""
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Mapping
 
 from pydantic import BaseModel, Field
 
 from paknow.gateway import gateway
+from paknow.retrieval.pipeline import citation_binding
 
 _ANSWER_SYSTEM = """你是交易价格行为资料的问答助手。只依据提供的证据回答，逐项绑定证据编号 [n]。
 - 先分析后举例：答案主体是"理解与分析"——定义、成立条件、判断逻辑、机制、与相似形态的区别；不要以图例清单作为答案主体。
@@ -58,8 +59,16 @@ def _render_unit(i: int, u: dict[str, Any]) -> str:
     return f"[{i}] ({src}){tag} {u['text']}"
 
 
-def build_context(units: list[dict[str, Any]]) -> str:
-    return "\n\n".join(_render_unit(i, u) for i, u in enumerate(units))
+def build_context(
+    units: list[dict[str, Any]], index: Mapping[str, int] | None = None
+) -> str:
+    """Render numbered evidence; ``index`` is the pipeline's [n] binding."""
+    return "\n\n".join(
+        _render_unit(
+            index.get(str(u.get("evidence_id")), i) if index else i, u
+        )
+        for i, u in enumerate(units)
+    )
 
 
 def _graph_locator(entry: dict[str, Any]) -> str:
@@ -77,12 +86,33 @@ def _graph_locator(entry: dict[str, Any]) -> str:
     return " · ".join(loc) or "未知出处"
 
 
+def _claim_conditions(claim: dict[str, Any]) -> str:
+    """Compact condition/qualifier text so a conditioned claim never reads absolute."""
+    parts: list[str] = []
+    for key in ("conditions", "qualifiers", "exceptions"):
+        value = claim.get(key)
+        if not value:
+            continue
+        if isinstance(value, dict):
+            for name, item in value.items():
+                if isinstance(item, (list, tuple)):
+                    item = "、".join(str(x) for x in item)
+                if item:
+                    parts.append(f"{name}={item}")
+        elif isinstance(value, (list, tuple)):
+            parts.extend(str(item) for item in value if item)
+        else:
+            parts.append(str(value))
+    return "；".join(parts)
+
+
 def render_graph_context(entries: list[dict[str, Any]]) -> list[str]:
     """One compact non-citable line per graph entry, each carrying its id.
 
     Entries already present in the citable text keep only a ``已见 [n]``
     pointer so the body is never duplicated and the citation binding stays
-    intact.
+    intact. Claim conditions/qualifiers are printed inline so a conditioned
+    claim does not read as an unconditional rule.
     """
     lines: list[str] = []
     for entry in entries:
@@ -90,6 +120,9 @@ def render_graph_context(entries: list[dict[str, Any]]) -> list[str]:
         claim = entry.get("claim")
         if claim:
             desc = f"{claim.get('subject', '')} → {claim.get('predicate', '')}"
+            conditions = _claim_conditions(claim)
+            if conditions:
+                desc += f"（条件：{conditions}）"
         elif entry.get("relation"):
             desc = f"{entry.get('from_label', '')} -{entry['relation']}-> {entry.get('to_label', '')}"
         else:
@@ -113,7 +146,8 @@ def generate(
     *,
     mode: str = "extractive",
     max_tokens: int = 8192,
-    graph_context: list[dict[str, Any]] | None = None,
+    graph_evidence: list[dict[str, Any]] | None = None,
+    citation_index: Mapping[str, int] | None = None,
     toc_context: list[dict[str, Any]] | None = None,
     fallback: str | None = None,
     barrefs: list[dict[str, Any]] | None = None,
@@ -124,7 +158,8 @@ def generate(
     # they go into an unnumbered block so citation indices stay consistent
     evidence = [u for u in units if u.get("provenance") != "derived_observation"]
     visual = [u for u in units if u.get("provenance") == "derived_observation"]
-    context = build_context(evidence)
+    index = dict(citation_index) if citation_index is not None else citation_binding(evidence)
+    context = build_context(evidence, index)
     parts = [f"问题：{query}"]
     if toc_context:
         parts.append(
@@ -134,10 +169,10 @@ def generate(
                 for t in toc_context
             )
         )
-    if graph_context:
+    if graph_evidence:
         parts.append(
             "图谱扩展（不可引用，仅作理解辅助；引用编号只指向「证据」区）：\n"
-            + "\n".join(render_graph_context(graph_context))
+            + "\n".join(render_graph_context(graph_evidence))
         )
     if visual:
         parts.append(
@@ -180,10 +215,14 @@ def generate(
         {"role": "user", "content": user},
     ]
     ans = gateway.chat_json(Answer, messages, images=images, max_tokens=max_tokens)
+    by_number = {
+        index.get(str(unit.get("evidence_id")), position): unit
+        for position, unit in enumerate(evidence)
+    }
     evidence_ids = [
-        evidence[i]["evidence_id"]
+        by_number[i]["evidence_id"]
         for i in ans.cited_indices
-        if 0 <= i < len(evidence) and evidence[i].get("evidence_id")
+        if i in by_number and by_number[i].get("evidence_id")
     ]
     return {
         "answer": ans.answer,

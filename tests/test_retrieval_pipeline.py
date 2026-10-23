@@ -72,7 +72,7 @@ def test_text_hits_and_auxiliary_context_are_separate_partitions(monkeypatch):
     assert [f["figure_id"] for f in result.figures] == ["f1"]
     assert result.toc_context == [{"doc_title": "T", "chapter_path": ["c"]}]
     assert result.barrefs[0]["pattern"] == "p"
-    assert result.graph_evidence == [] and result.graph_context == []
+    assert result.graph_evidence == []
     assert result.failures == []
     assert result.query_count == 1  # duplicate query collapsed
 

@@ -14,7 +14,7 @@ from langgraph.graph import END, START, StateGraph
 
 from paknow.memory.sop import select_sop
 from paknow.memory.trace import save_trace
-from paknow.retrieval.pipeline import retrieve_evidence
+from paknow.retrieval.pipeline import citable_units, retrieve_evidence
 from paknow.workflows.evidence import check_sufficiency
 from paknow.workflows.generate import generate
 from paknow.workflows.router import QueryPlan, retrieval_queries, route
@@ -50,10 +50,12 @@ class QState(TypedDict, total=False):
     sop_fallback: str | None
     sop_stop: str | None
     sop_skipped_ops: list[str]
-    # graph expansion output (non-citable) and expansion progress
-    graph_context: list[dict[str, Any]]
+    # graph expansion output (non-citable), accumulated across gap rounds
     graph_evidence: list[dict[str, Any]]
+    graph_stats: dict[str, Any]
     expanded_concepts: list[str]
+    citable_units: list[dict[str, Any]]
+    citation_index: dict[str, int]
     toc_context: list[dict[str, Any]]
     context_units: list[dict[str, Any]]
     barrefs: list[dict[str, Any]]
@@ -102,15 +104,18 @@ def _retrieve_node(state: QState) -> QState:
         wants_examples=state.get("wants_examples", False),
         acc=state.get("acc", {}),
         expanded_concepts=state.get("expanded_concepts", []),
+        prior_graph_evidence=state.get("graph_evidence", []),
     )
     state["acc"] = result.acc
     state["hits"] = result.text_hits
     state["figures"] = result.figures
     state["context_units"] = result.context_units
+    state["citable_units"] = result.citable_units
+    state["citation_index"] = result.citation_index
     state["toc_context"] = result.toc_context
     state["barrefs"] = result.barrefs
-    state["graph_context"] = result.graph_context
     state["graph_evidence"] = result.graph_evidence
+    state["graph_stats"] = result.graph_stats
     state["expanded_concepts"] = result.expanded_concepts
     state.setdefault("failures", []).extend(result.failures)
     state["round"] = state.get("round", 0) + 1
@@ -145,18 +150,16 @@ def _generate_node(state: QState) -> QState:
     mode = "synthesis" if state.get("is_framework") else "extractive"
     # graph expansion stays a separate understanding aid: it is rendered in its
     # own prompt block and never joins the citable units / cited indices
-    units = [h for h in state.get("hits", []) if h.get("evidence_id")]
-    have = {u["evidence_id"] for u in units}
-    for u in state.get("context_units", []):
-        if u.get("evidence_id") and u["evidence_id"] not in have:
-            units.append(u)
-            have.add(u["evidence_id"])
+    units = state.get("citable_units")
+    if units is None:
+        units = citable_units(state.get("hits", []), state.get("context_units", []))
     state["answer"] = generate(
         state["query"],
         units,
         state.get("images"),
         mode=mode,
-        graph_context=state.get("graph_context"),
+        graph_evidence=state.get("graph_evidence"),
+        citation_index=state.get("citation_index"),
         toc_context=state.get("toc_context"),
         fallback=state.get("sop_fallback"),
         barrefs=state.get("barrefs"),
@@ -240,7 +243,8 @@ def run_query(query: str, images: list[bytes] | None = None) -> dict[str, Any]:
         "routes": final.get("routes", []),
         "wants_examples": final.get("wants_examples", False),
         "hits": final.get("hits", []),
-        "graph_context": final.get("graph_context", []),
+        "graph_evidence": final.get("graph_evidence", []),
+        "graph_stats": final.get("graph_stats", {}),
         "figures": figures,
         "barrefs": final.get("barrefs", []),
         "answer": final.get("answer"),
