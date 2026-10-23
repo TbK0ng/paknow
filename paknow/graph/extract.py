@@ -104,6 +104,7 @@ def persist_extraction(doc_id: str, evidence_id: str, result: ExtractionResult) 
                         to_node=evidence_id,
                         relation="SUPPORTED_BY",
                         source=evidence_id,
+                        origin="claim_extract",
                     )
                 )
         s.commit()

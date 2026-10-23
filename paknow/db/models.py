@@ -144,6 +144,8 @@ class GraphEdgeRow(Base):
     to_node: Mapped[str] = mapped_column(String(64), index=True)
     relation: Mapped[str] = mapped_column(String(32), index=True)
     source: Mapped[str] = mapped_column(Text)
+    # how this edge came to exist: heading_parse | claim_extract | figure_extract | seed
+    origin: Mapped[str] = mapped_column(String(16), default="claim_extract", index=True)
     extraction_status: Mapped[str] = mapped_column(String(16), default="pending")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 

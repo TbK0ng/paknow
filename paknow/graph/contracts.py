@@ -95,5 +95,7 @@ class GraphEdge(BaseModel):
     to_node: str
     relation: Relation
     source: str                      # evidence_id / doc_id proving the relation
+    # how the edge came to exist; keeps rebuilds from touching manual seeds
+    origin: str = "claim_extract"    # heading_parse | claim_extract | figure_extract | seed
     extraction_status: ReviewStatus = ReviewStatus.pending
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
