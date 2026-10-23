@@ -1,7 +1,7 @@
 # 召回宽度消融（02 号票）
 
 - 数据集：`evals/gold/graph_expansion_v2.json`，60 题（百科 20、机制 20、例外/失效 10、带条件主张 10），每题 6 条冻结扩展查询
-- 数据集 SHA-256：`f635cb2d6ecfb395d645ab393e6cda7108c07df1cb319ac992e667742d28f4ba`，与 `evals/gold/graph_expansion_v2.sha256` 一致；本次未改动数据集
+- 数据集 SHA-256：`7cf35d945cfc35572d0fb31b4c96fb4d3fa54adb36859e4186c6e3c0d5d55560`，与 `evals/gold/graph_expansion_v2.sha256` 一致。相对上一轮只给原 20 题补了 `expected_points`（判定器输入），`question`、`expanded_queries`、`expected_evidence`、`expected_relations` 与检索口径均未变；图谱臂产物按新哈希重跑，数字不变。
 - 检索缝：`retrieve_evidence(..., text_width=N)` → `diversify(top_k=N, max_per_doc=5)`；默认 14 与线上一致
 - 基线：`gold-v2-baseline.json`（并集探针，每查询 `hybrid_search(top_k=20)` 后取并集；两次 graph 运行的 `--reuse-baseline` 均先校验上面的 SHA-256）
 - 运行方式：四次运行串行完成（embedded Qdrant 单进程，不可并发），全部产物在 `.scratch/retrieval-eval-parity/`
@@ -10,17 +10,17 @@
 
 | 运行 | 模式 | 宽度 | 题数 | 期望命中（并集 / 总期望） | 其中文本臂 | 其中图谱证据 | 净增益 | 截断 | 失败 |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | ---: |
-| `gold-v2-baseline.json` | baseline（并集探针） | 14* | 60 | 73 / 123 | — | — | — | — | 0 |
+| `gold-v2-baseline.json` | baseline（并集探针） | —* | 60 | 73 / 123 | — | — | — | — | 0 |
 | `gold-v2-text-w14.json` | text | 14 | 60 | 41 / 123 | 41 | — | — | — | 0 |
 | `gold-v2-text-w20.json` | text | 20 | 60 | 42 / 123 | 42 | — | — | — | 0 |
 | `gold-v2-graph-w14.json` | graph | 14 | 60 | 55 / 123 | 41 | 18 | +14 | 60 题 `evidence` | 0 |
 | `gold-v2-graph-w20.json` | graph | 20 | 60 | 55 / 123 | 42 | 18 | +13 | 60 题 `evidence` | 0 |
 
-\* baseline 无多样性步骤；宽度只被接受并记录在产物顶层，不影响并集探针的数字。
+\* baseline 无多样性步骤；`--text-width` 被接受但不写入产物、也不影响并集探针的数字，因此并集探针文件在任意宽度下逐字节一致。
 
 补充口径：
 
-- 净增益 = 图谱臂并集命中 − 同宽度文本臂命中（`union_found − regression_text_found`）。
+- 净增益 = 图谱臂命中 − 同宽度文本臂命中（`graph_arm_found − regression_text_found`）。
 - 完全命中题：baseline 39/60；text 14 与 20 均为 20/60。
 - 图独有题（期望证据落在 top-20 并集之外）：21/60，本次四次运行不变。
 - graph 运行相对并集探针：图谱证据命中 18 条，新召回 9 条，丢失 27 条（其中文本路径单独丢失 32 / 31 条）；图谱条目 840 条（每题 14），全部 60 题都先触发「证据条数 ≤14」上限，边 ≤32 与 token ≤1,200 均未触顶。

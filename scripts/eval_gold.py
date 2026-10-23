@@ -20,9 +20,9 @@ Three modes:
   union probe, graph-only expected units (in graph evidence but not in the
   text arm), baseline units lost by the new text path, budget truncations,
   the fixed graph-unique verdict and the net gain. The graph arm's expected
-  hits are text hits plus graph evidence (``union_found``), so net gain is
-  ``union_found - regression_text_found``. Truncation flags stay in the report
-  but are not a verdict.
+  hits are text hits plus graph evidence (``graph_arm_found``), so net gain is
+  ``graph_arm_found - regression_text_found``. Truncation flags stay in the
+  report but are not a verdict.
 
 Graph mode can reuse an already recorded union-probe baseline with
 ``--reuse-baseline``. That path verifies ``evals/gold/graph_expansion.sha256``
@@ -35,9 +35,9 @@ and never touches the union-probe file.
 ``--text-width`` (default 14) is the recall width handed to the diversity step.
 ``text`` and ``graph`` apply it to every arm they run, so the width ablation can
 vary one parameter while everything else stays fixed. The union probe has no
-diversity step: the flag is accepted and recorded there, but its numbers do not
-depend on it. The production default is unchanged, so a plain run reproduces the
-online width.
+diversity step: the flag is accepted there but neither recorded nor used, so the
+artifact stays byte-identical across widths. The production default is
+unchanged, so a plain run reproduces the online width.
 
 This is an offline evaluation, not a CI gate: it needs the text index and the
 embedding model. It does not call the routing model.
@@ -53,7 +53,6 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import sys
 from pathlib import Path
@@ -65,6 +64,7 @@ if str(ROOT) not in sys.path:
 
 from paknow.retrieval.pipeline import retrieve_evidence  # noqa: E402
 from paknow.retrieval.search import hybrid_search  # noqa: E402
+from scripts.eval_common import display_path, file_sha256  # noqa: E402
 
 DEFAULT_DATASET = ROOT / "evals" / "gold" / "graph_expansion.json"
 DEFAULT_DATASET_HASH = ROOT / "evals" / "gold" / "graph_expansion.sha256"
@@ -84,15 +84,6 @@ _TRUNCATION_REASONS = (
 
 def load_dataset(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
-
-
-def dataset_sha256(path: Path) -> str:
-    """SHA-256 of the dataset file bytes, so sidecars match independent tools."""
-    digest = hashlib.sha256()
-    with path.open("rb") as fh:
-        for chunk in iter(lambda: fh.read(1 << 20), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def read_dataset_hash(sidecar: Path) -> str:
@@ -119,7 +110,7 @@ def verify_frozen_dataset(
             f"  sha256sum {dataset} > {sidecar}"
         )
     expected = read_dataset_hash(sidecar)
-    actual = dataset_sha256(dataset)
+    actual = file_sha256(dataset)
     if actual != expected:
         raise SystemExit(
             f"frozen dataset hash mismatch for {dataset}:\n"
@@ -184,13 +175,17 @@ def graph_only(
     return [eid for eid in expected if eid in graph and eid not in text]
 
 
-def union_found(
+def graph_arm_found(
     expected: Sequence[str],
     *,
     text_ids: Iterable[str],
     graph_ids: Iterable[str],
 ) -> list[str]:
-    """Expected units the graph arm reaches: text hits plus graph evidence."""
+    """Expected units the graph arm reaches: text hits plus graph evidence.
+
+    Named for the arm, not for the union probe: this is the graph run's own
+    coverage and has nothing to do with the frozen top-K union baseline.
+    """
     covered = set(text_ids) | set(graph_ids)
     return [eid for eid in expected if eid in covered]
 
@@ -260,28 +255,19 @@ def summarize(rows: list[dict]) -> dict:
         "expected_missing": expected_total - found_total,
         "items_with_any_hit": sum(1 for r in rows if r["hit"]),
         "items_with_all_hits": sum(1 for r in rows if not r["missing"]),
-        "items_graph_unique": sum(1 for r in rows if r["graph_unique"]),
+        "items_graph_unique": sum(1 for r in rows if r.get("graph_unique")),
     }
 
 
 def summarize_text(rows: list[dict]) -> dict:
     """Production-parity summary; same fields as the union probe minus its verdict."""
-    expected_total = sum(len(r["expected"]) for r in rows)
-    found_total = sum(len(r["found"]) for r in rows)
-    return {
-        "items": len(rows),
-        "expected_total": expected_total,
-        "expected_found": found_total,
-        "expected_missing": expected_total - found_total,
-        "items_with_any_hit": sum(1 for r in rows if r["hit"]),
-        "items_with_all_hits": sum(1 for r in rows if not r["missing"]),
-    }
+    return {k: v for k, v in summarize(rows).items() if k != "items_graph_unique"}
 
 
 def summarize_graph(rows: list[dict]) -> dict:
     truncations = [r["truncation"] for r in rows]
     text_found = sum(len(r["regression_text_found"]) for r in rows)
-    union = sum(len(r["union_found"]) for r in rows)
+    graph_arm = sum(len(r["graph_arm_found"]) for r in rows)
     return {
         "items": len(rows),
         "expected_total": sum(len(r["expected"]) for r in rows),
@@ -289,8 +275,8 @@ def summarize_graph(rows: list[dict]) -> dict:
         "regression_text_found": text_found,
         "graph_found": sum(len(r["graph_found"]) for r in rows),
         "graph_only": sum(len(r["graph_only"]) for r in rows),
-        "union_found": union,
-        "net_gain": union - text_found,
+        "graph_arm_found": graph_arm,
+        "net_gain": graph_arm - text_found,
         "recovered_expected": sum(len(r["recovered_expected"]) for r in rows),
         "newly_recalled": sum(len(r["newly_recalled"]) for r in rows),
         "lost": sum(len(r["lost"]) for r in rows),
@@ -364,21 +350,20 @@ def evaluate_graph_item(
     item: dict,
     *,
     baseline_union: Iterable[str],
-    text_ids: Iterable[str] | None = None,
+    text_ids: Iterable[str],
     text_width: int = 14,
 ) -> dict:
     """Run one frozen question through the shipped retrieval seam.
 
-    ``text_ids`` is the production-parity text arm for the same question; when
-    omitted the round's own text hits are used, which must be identical.
-    ``text_width`` is passed to the same diversity step as the text arm.
+    ``text_ids`` is the production-parity text arm for the same question; the
+    CLI always passes the separately-evaluated text round so both arms are
+    measured the same way. ``text_width`` is passed to the same diversity step
+    as the text arm.
     """
     result = retrieve_evidence(
         item["question"], list(item["expanded_queries"]), text_width=text_width
     )
-    text_arm = (
-        _evidence_ids(result.text_hits) if text_ids is None else list(text_ids)
-    )
+    text_arm = list(text_ids)
     graph_ids = _evidence_ids(result.graph_evidence)
     expected = item["expected_evidence"]
     diff = classify_diff(
@@ -394,7 +379,9 @@ def evaluate_graph_item(
         "expected": expected,
         **diff,
         "graph_only": graph_only(expected, text_ids=text_arm, graph_ids=graph_ids),
-        "union_found": union_found(expected, text_ids=text_arm, graph_ids=graph_ids),
+        "graph_arm_found": graph_arm_found(
+            expected, text_ids=text_arm, graph_ids=graph_ids
+        ),
         "graph_entries": len(graph_ids),
         "graph_stats": dict(result.graph_stats),
         "truncation": truncation_report(
@@ -457,14 +444,6 @@ def build_regression_payload(
     }
 
 
-def _display_path(path: Path) -> str:
-    """Repo-relative when possible, absolute otherwise (e.g. temp datasets)."""
-    try:
-        return str(path.resolve().relative_to(ROOT))
-    except ValueError:
-        return str(path)
-
-
 def print_table(rows: list[dict], summary: dict) -> None:
     print(f"{'id':8} {'cat':12} {'found':>5} {'exp':>4}  status")
     for r in rows:
@@ -521,7 +500,7 @@ def print_graph_table(rows: list[dict], summary: dict) -> None:
     print(
         "production-parity: "
         f"text arm {summary['regression_text_found']}, "
-        f"graph arm union {summary['union_found']} "
+        f"graph arm reached {summary['graph_arm_found']} "
         f"(graph evidence {summary['graph_found']}, graph-only {summary['graph_only']}), "
         f"net gain {summary['net_gain']:+d}"
     )
@@ -563,8 +542,8 @@ def main() -> None:
         default=14,
         help=(
             "recall width passed to the diversity step; 14 is the production "
-            "default. Recorded in every artifact; the union probe has no "
-            "diversity step, so its numbers are unchanged."
+            "default. Recorded in text and graph artifacts; the union probe "
+            "has no diversity step, so the flag is ignored there."
         ),
     )
     ap.add_argument("--limit", type=int, default=0)
@@ -599,14 +578,13 @@ def main() -> None:
         print_table(rows, summary)
         print(
             f"\ntext width: {args.text_width} "
-            "(recorded; the union probe has no diversity step)"
+            "(ignored; the union probe has no diversity step)"
         )
         payload = {
-            "dataset": _display_path(args.dataset),
+            "dataset": display_path(args.dataset),
             "frozen_at": dataset.get("frozen_at"),
             "protocol": dataset.get("retrieval_protocol"),
             "top_k": args.top_k,
-            "text_width": args.text_width,
             "summary": summary,
             "items": rows,
         }
@@ -616,7 +594,7 @@ def main() -> None:
         print_text_table(rows, summary)
         print(f"\ntext width: {args.text_width} (diversity top_k)")
         payload = build_text_payload(
-            dataset_path=_display_path(args.dataset),
+            dataset_path=display_path(args.dataset),
             dataset=dataset,
             rows=rows,
             top_k=args.top_k,
@@ -652,7 +630,7 @@ def main() -> None:
                 )
             )
         payload = build_regression_payload(
-            dataset_path=_display_path(args.dataset),
+            dataset_path=display_path(args.dataset),
             dataset=dataset,
             baseline=baseline,
             rows=rows,
@@ -665,17 +643,13 @@ def main() -> None:
         print(f"\ntext width: {args.text_width} (diversity top_k, both arms)")
         if baseline_reused:
             print(
-                f"\nbaseline: reused verified artifact {_display_path(args.baseline)} "
+                f"\nbaseline: reused verified artifact {display_path(args.baseline)} "
                 f"(dataset sha256 {dataset_digest})"
             )
 
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
-    try:
-        shown = out.resolve().relative_to(ROOT)
-    except ValueError:
-        shown = out
-    print(f"\nwrote {shown}")
+    print(f"\nwrote {display_path(out)}")
 
 
 if __name__ == "__main__":

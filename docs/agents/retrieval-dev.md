@@ -65,9 +65,10 @@ Three recall modes, all reading the same frozen queries:
 
 Recall metrics in graph mode: `graph_only` (expected units in graph evidence
 but not in the text arm) is the primary metric. The graph arm's expected hits
-are `union_found` = text hits ∪ graph evidence, so `net_gain = union_found −
-regression_text_found`; `graph_found` (graph evidence only) stays a separate
-field. Truncation counts are still reported but are not a verdict. Graph
+are `graph_arm_found` = text hits ∪ graph evidence, so `net_gain =
+graph_arm_found − regression_text_found`; `graph_found` (graph evidence only)
+stays a separate field. The name is about the arm, not the union probe.
+Truncation counts are still reported but are not a verdict. Graph
 evidence budget is `MAX_EVIDENCE=14`, bounded by `MAX_CONTEXT_TOKENS=1200`;
 edge traversal stays at `MAX_EDGES=32`.
 
@@ -89,9 +90,10 @@ PYTHONPATH=. E:/PAknow/.venv/Scripts/python.exe scripts/eval_gold.py --mode base
 
 - `--mode text` and `--mode graph` each write their own artifact and never
   touch the union-probe JSON.
-- `--mode graph --reuse-baseline` verifies `evals/gold/graph_expansion.sha256`
-  before trusting the union probe; `--mode graph` without it reruns the probe
-  in memory.
+- `--mode graph` always loads the union probe from `--baseline`; a missing file
+  raises before any retrieval starts. `--reuse-baseline` only adds the
+  verification: it checks `evals/gold/graph_expansion.sha256` against the
+  dataset bytes before trusting that file.
 - `--limit N` and `--out PATH` are available for partial runs; the same
   commands run from the main repo or a worktree with the env vars above.
 - None of the modes calls the routing model; all load the embedding model and
@@ -176,15 +178,18 @@ serialized window as the recall eval: embedded Qdrant is single-process.
    reasoning budget shares that ceiling, and at 8192 the longest answers came
    back with empty content at `finish=length`.
 
-The 40 new v2 items carry authored `expected_points` bound to evidence ids; the
-20 original items ship unchanged and have none, so for those the
-expected-evidence text is the correctness anchor and the record says
-`points_source: "evidence_excerpt"`. Those anchors are terse heading/summary
-fragments ("失败，构成楔形底"), so their correctness scores are a lower bound: an
-answer that paraphrases the idea without reproducing the fragment can still
-score 0. Compare strata with that in mind.
+All 60 v2 items carry authored `expected_points` bound to evidence ids: the 40
+new items from authoring, the 20 original items derived from their
+`expected_evidence` text (the frozen v1 fields themselves are untouched). The
+judge falls back to the expected-evidence text only for a dataset item without
+points, marking that record `points_source: "evidence_excerpt"`; the v2 dataset
+never takes that path. The original items' points stay close to their terse
+heading-style anchors ("失败，构成楔形底"), so a paraphrase can still score
+below 2 — compare strata with that in mind.
 
-Artifacts go to `.scratch/retrieval-eval-parity/judgements/<UTC-timestamp>/`:
+Artifacts go to `.scratch/retrieval-eval-parity/judgements/<UTC-timestamp>/`
+(the committed reference run is `judgements/20261023T141041Z/`: 120/120 records
+judged, no errors, dataset hash `7cf35d94…`):
 `records.jsonl` (per-record verdict: hard reasons, the three scores, unsupported
 claims, coverage, evidence size), `summary.json` (counts, per-arm and
 per-stratum hard-pass rate / score distributions / unsupported-claim counts,
@@ -279,7 +284,8 @@ server or copy the objects dir per worktree (large).
 
 ## Not runnable without infrastructure
 
-`eval_gold.py` (both modes), `eval_answers.py`, the taxonomy dry run/apply, the
-claim-alignment dry run/apply and all `smoke_*` scripts need the local corpus
-artifacts above (the answer runner additionally needs the cloud key). Only
-`--help` and the test suite run green without them.
+`eval_gold.py` (all three modes), `eval_answers.py`, `eval_judge.py`, the
+taxonomy dry run/apply, the claim-alignment dry run/apply and all `smoke_*`
+scripts need the local corpus artifacts above; the answer runner and the judge
+additionally need the cloud key. Only `--help` and the test suite run green
+without them.

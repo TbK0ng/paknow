@@ -3,6 +3,7 @@
   "frozen_at": "2026-10-23",
   "protocol": "hybrid_search(top_k=20) per frozen query; top-20 union; no routing, no rerank",
   "top_k": 20,
+  "text_width": 14,
   "mode": "graph",
   "baseline_reused": true,
   "baseline_summary": {
@@ -29,7 +30,7 @@
     "regression_text_found": 16,
     "graph_found": 13,
     "graph_only": 12,
-    "union_found": 28,
+    "graph_arm_found": 28,
     "net_gain": 12,
     "recovered_expected": 9,
     "newly_recalled": 9,
@@ -71,7 +72,7 @@
       "graph_unique": false,
       "graph_unique_recovered": false,
       "graph_only": [],
-      "union_found": [],
+      "graph_arm_found": [],
       "graph_entries": 14,
       "graph_stats": {
         "candidates": 16,
@@ -126,7 +127,7 @@
       "graph_unique": true,
       "graph_unique_recovered": false,
       "graph_only": [],
-      "union_found": [
+      "graph_arm_found": [
         "eb0060c008738555e2583eccc08759a2",
         "1d83a0a9080240344c9177e5ab2cc4b4"
       ],
@@ -176,7 +177,7 @@
       "graph_unique": false,
       "graph_unique_recovered": false,
       "graph_only": [],
-      "union_found": [
+      "graph_arm_found": [
         "94bbeb00f09f549082761927fcf7b968"
       ],
       "graph_entries": 14,
@@ -234,7 +235,7 @@
       "graph_unique": false,
       "graph_unique_recovered": false,
       "graph_only": [],
-      "union_found": [
+      "graph_arm_found": [
         "ece546c3b83ba9ff8baa6c49bbba8733",
         "4b6ee5d889e220cb45c01c17a6b1bdcd"
       ],
@@ -293,7 +294,7 @@
       "graph_unique": false,
       "graph_unique_recovered": false,
       "graph_only": [],
-      "union_found": [
+      "graph_arm_found": [
         "3546dcad106552ec66fea23d4e70c856",
         "d819d7ff2ca0c4e4967e326371aca21e"
       ],
@@ -349,7 +350,7 @@
       "graph_unique": false,
       "graph_unique_recovered": false,
       "graph_only": [],
-      "union_found": [
+      "graph_arm_found": [
         "0e2c249d3b76bd8d87e9a41e8f60304d"
       ],
       "graph_entries": 14,
@@ -401,7 +402,7 @@
       "graph_unique": false,
       "graph_unique_recovered": false,
       "graph_only": [],
-      "union_found": [
+      "graph_arm_found": [
         "c4259e41e8a1ff68f38a6a45146ea84f",
         "e7f8295f98ab4f50c283fbf61cffcba9"
       ],
@@ -451,7 +452,7 @@
       "graph_unique": false,
       "graph_unique_recovered": false,
       "graph_only": [],
-      "union_found": [
+      "graph_arm_found": [
         "133fafbcf874c332ff9c1a15299b7543"
       ],
       "graph_entries": 14,
@@ -506,7 +507,7 @@
       "graph_unique": false,
       "graph_unique_recovered": false,
       "graph_only": [],
-      "union_found": [
+      "graph_arm_found": [
         "e8a4845ca3960812aa92332c6c34c13d"
       ],
       "graph_entries": 14,
@@ -555,7 +556,7 @@
       "graph_unique": false,
       "graph_unique_recovered": false,
       "graph_only": [],
-      "union_found": [
+      "graph_arm_found": [
         "70074b9992cb9216f018d26b3c659a25"
       ],
       "graph_entries": 14,
@@ -623,7 +624,7 @@
         "cef8b481f6df7299941c4b676c15c999",
         "bca2e3898d49a9a6149a1cb2668cb883"
       ],
-      "union_found": [
+      "graph_arm_found": [
         "38de0072aaf37b666ca771d380096a96",
         "cef8b481f6df7299941c4b676c15c999",
         "bca2e3898d49a9a6149a1cb2668cb883"
@@ -683,7 +684,7 @@
       "graph_unique": true,
       "graph_unique_recovered": false,
       "graph_only": [],
-      "union_found": [],
+      "graph_arm_found": [],
       "graph_entries": 14,
       "graph_stats": {
         "candidates": 16,
@@ -746,7 +747,7 @@
       "graph_only": [
         "2f84c72607665ba007e01aadcb393aee"
       ],
-      "union_found": [
+      "graph_arm_found": [
         "2f84c72607665ba007e01aadcb393aee",
         "dded563fceb3227616b981d604da3203"
       ],
@@ -812,7 +813,7 @@
       "graph_only": [
         "dded563fceb3227616b981d604da3203"
       ],
-      "union_found": [
+      "graph_arm_found": [
         "dded563fceb3227616b981d604da3203"
       ],
       "graph_entries": 14,
@@ -870,7 +871,7 @@
       "graph_unique": true,
       "graph_unique_recovered": false,
       "graph_only": [],
-      "union_found": [],
+      "graph_arm_found": [],
       "graph_entries": 14,
       "graph_stats": {
         "candidates": 18,
@@ -930,7 +931,7 @@
         "3b07a477c10e307acbe189e2424a1c82",
         "0bcafd210d34306f5fd0fcd15e0a195c"
       ],
-      "union_found": [
+      "graph_arm_found": [
         "3b07a477c10e307acbe189e2424a1c82",
         "0bcafd210d34306f5fd0fcd15e0a195c"
       ],
@@ -998,7 +999,7 @@
         "964597e441c0de153d9ef2105d842285",
         "53d1ed976584910b48c36aa23580d936"
       ],
-      "union_found": [
+      "graph_arm_found": [
         "964597e441c0de153d9ef2105d842285",
         "ce2b62d6e9578e6d2dd755f048409d5f",
         "53d1ed976584910b48c36aa23580d936"
@@ -1049,7 +1050,7 @@
       "graph_unique": false,
       "graph_unique_recovered": false,
       "graph_only": [],
-      "union_found": [
+      "graph_arm_found": [
         "8eac6759d8b55a0ba5aa9e8be4cadda1"
       ],
       "graph_entries": 14,
@@ -1116,7 +1117,7 @@
         "9fa2638af2f5465db6c88764842e9e44",
         "964597e441c0de153d9ef2105d842285"
       ],
-      "union_found": [
+      "graph_arm_found": [
         "8ef770a0d81c76cec759ad9a593f5834",
         "9fa2638af2f5465db6c88764842e9e44",
         "964597e441c0de153d9ef2105d842285"
@@ -1173,7 +1174,7 @@
       "graph_unique": true,
       "graph_unique_recovered": false,
       "graph_only": [],
-      "union_found": [],
+      "graph_arm_found": [],
       "graph_entries": 14,
       "graph_stats": {
         "candidates": 16,
