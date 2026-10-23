@@ -1,0 +1,1170 @@
+{
+  "generated_at": "2026-10-23",
+  "dataset": "evals/gold/graph_expansion_v2.json",
+  "protocol": "one paknow.gateway.chat_json call per drafted item; input is the question plus candidate evidence texts only (no retrieval results, no category); verdict sufficient/insufficient/ambiguous",
+  "summary": {
+    "attempts": 67,
+    "items_checked": 40,
+    "verified_items": 40,
+    "residual_items": 0
+  },
+  "residual_ids": [],
+  "verdicts": [
+    {
+      "attempt": 1,
+      "id": "enc-11",
+      "question": "看跌的双顶旗形没能继续往下走，反而先做出更低的低点再横住，这段被归成什么？",
+      "expected_evidence": [
+        "715ab63aab264f80e02c0634b2ec1c30",
+        "ff7ef5f22c7fdd5e0248243fb540d736"
+      ],
+      "verdict": "insufficient",
+      "can_answer": false,
+      "missing": [
+        "两条证据给出的后续形态不一致，需要确认哪一条适用",
+        "缺少对“失败熊旗后先创新低再横盘”这一段的明确定义或命名",
+        "没有说明该段应归为交易区间还是双底形态",
+        "缺少前后时间顺序与所处趋势背景"
+      ],
+      "notes": "证据[1]只提到随后出现LL双底与交易区间，证据[2]则说失败后出现楔形顶部，二者指向不同归类；它们只描述了后续走势，并未直接回答“这段被归成什么”，因此不足以定论。",
+      "kept": false,
+      "final": false
+    },
+    {
+      "attempt": 2,
+      "id": "enc-12",
+      "question": "一波卖出高潮之后，接下来常见的结构有哪几种？",
+      "expected_evidence": [
+        "38a9a3419bc54cdfac362427f8691f83",
+        "c8fdc5614adbf3d440702d3eeaa25b43",
+        "2a08f8d4a63d20c412edb257b5eaf424"
+      ],
+      "verdict": "sufficient",
+      "can_answer": true,
+      "missing": [],
+      "notes": "证据已列出三种常见后续结构：强势买入信号K线后形成双底、H2底部后形成L2熊旗、随后形成多头通道，足以直接回答问题。",
+      "kept": true,
+      "final": true
+    },
+    {
+      "attempt": 3,
+      "id": "enc-13",
+      "question": "开盘就窄幅横着，上破和下破都没成功，后面更常见什么？",
+      "expected_evidence": [
+        "01fbcabae453b35f4a5c2ba478a2883c",
+        "35d1bcd20e9a4c4b1084a3047c4ea04d",
+        "06a38e7d0fc49978bea96b4feff36a33"
+      ],
+      "verdict": "insufficient",
+      "can_answer": false,
+      "missing": [
+        "缺少双向突破都失败后的统计结果或常见后续走势描述",
+        "只有个案证据，没有出现频率或样本数量",
+        "缺缺少区分日型/时段等背景条件，无法判断后续更常见哪种走势",
+        "证据3只描述形态本身，未给出随后结果"
+      ],
+      "notes": "三条证据都是区间开盘的单案例描述：一条是向上突破失败，一条是向下突破失败后午间反转，一条是双向突破先后失败但没说明后续。问题问的是双向突破失败后更常见的后续走势，现有材料没有归纳性结论或频率数据，无法回答。",
+      "kept": false,
+      "final": false
+    },
+    {
+      "attempt": 4,
+      "id": "enc-14",
+      "question": "连续几根外包K线叠在一起时，往上和往下追突破会怎样？",
+      "expected_evidence": [
+        "1b9ac2313706aa29dd181725ffb33ab8",
+        "9ead01a07b55824e0f8d4caad996c519",
+        "8de5ae6151048965c200310c844647b6"
+      ],
+      "verdict": "insufficient",
+      "can_answer": false,
+      "missing": [
+        "只有牛旗和熊旗两种同向序列，缺少牛熊交替的混合外包K线情况",
+        "缺少突破失败后价格通常回到区间中部还是另一边缘的说明",
+        "缺少不同趋势背景（强趋势中与区间中）追突破的差异",
+        "缺少“连续几根”到底几根才算、以及失败信号的确认方式"
+      ],
+      "notes": "证据[1]直接说明连续外包牛旗下上突破都失败，[2][3]补充随后转为交易区间，能部分回答问题，但样本只覆盖同向旗形，未覆盖混合方向的外包K线叠合，也缺少失败后的价格路径与趋势背景条件，因此不足以给出完整结论。",
+      "kept": false,
+      "final": false
+    },
+    {
+      "attempt": 5,
+      "id": "enc-11",
+      "question": "看跌的双顶旗形没能继续往下走，而是先做出更低的低点再横住，这种走势被归成什么？",
+      "expected_evidence": [
+        "715ab63aab264f80e02c0634b2ec1c30"
+      ],
+      "verdict": "insufficient",
+      "can_answer": false,
+      "missing": [
+        "证据只描述了形态演变过程，未给出该走势被归类的名称",
+        "缺少说明LL双底加交易区间是否等同于失败熊旗的标准归类",
+        "缺少该走势与普通交易区间或反转形态如何区分的判据"
+      ],
+      "notes": "证据[1]确认了HH双顶熊旗之后会出现LL双底与交易区间，但没有直接回答『被归成什么』这一归类问题，需要补充术语或分类结论。",
+      "kept": false,
+      "final": false
+    },
+    {
+      "attempt": 6,
+      "id": "enc-12",
+      "question": "一波卖出高潮之后，接下来常见的结构有哪几种？",
+      "expected_evidence": [
+        "38a9a3419bc54cdfac362427f8691f83",
+        "c8fdc5614adbf3d440702d3eeaa25b43",
+        "2a08f8d4a63d20c412edb257b5eaf424"
+      ],
+      "verdict": "sufficient",
+      "can_answer": true,
+      "missing": [],
+      "notes": "证据已列出三种常见结构：强势买入信号K线后双底、H2底部后L2熊旗、随后多头通道，足以回答。",
+      "kept": true,
+      "final": true
+    },
+    {
+      "attempt": 7,
+      "id": "enc-13",
+      "question": "交易区间开盘之后，多头突破和空头突破分别有什么结局？",
+      "expected_evidence": [
+        "01fbcabae453b35f4a5c2ba478a2883c",
+        "35d1bcd20e9a4c4b1084a3047c4ea04d",
+        "06a38e7d0fc49978bea96b4feff36a33"
+      ],
+      "verdict": "sufficient",
+      "can_answer": true,
+      "missing": [],
+      "notes": "证据表明：多头突破的结局是失败；空头突破的结局也是失败，并可能伴随后续多头突破失败或午间多头趋势反转。",
+      "kept": true,
+      "final": true
+    },
+    {
+      "attempt": 8,
+      "id": "enc-14",
+      "question": "连续外包牛旗出现之后，向上和向下的突破结果分别是什么，最后会落入哪种结构？",
+      "expected_evidence": [
+        "1b9ac2313706aa29dd181725ffb33ab8",
+        "8de5ae6151048965c200310c844647b6"
+      ],
+      "verdict": "insufficient",
+      "can_answer": false,
+      "missing": [
+        "向上突破失败后价格具体怎么走",
+        "向下突破失败后价格具体怎么走",
+        "最终结构到底是牛旗还是交易区间需确认",
+        "两条证据是否互相矛盾需澄清"
+      ],
+      "notes": "证据[1]只说上下突破都失败，未给出分别的后续走势；证据[2]只说最终进入交易区间，与“牛旗”表述存在张力，且未分别说明向上、向下突破的结果。因此无法完整回答突破结果与最终结构两个要点。",
+      "kept": false,
+      "final": false
+    },
+    {
+      "attempt": 9,
+      "id": "enc-15",
+      "question": "开盘方向被证明是假动作之后，盘中可能接哪些走势？",
+      "expected_evidence": [
+        "4de48e3656dc670c6ffa5d983fa02bf3",
+        "495a09bf3af5ec04a3fe6a153316e2d0",
+        "0a6fa31e2abcc6e4344d7a846d3c279c"
+      ],
+      "verdict": "insufficient",
+      "can_answer": false,
+      "missing": [
+        "缺少对“假动作”的定义区分（假突破还是假反转）及其判定标准",
+        "仅有多头陷阱一例（空头通道），空头陷阱后的其他走势类型覆盖不足",
+        "缺少假动作后行情失败、重回震荡区间或延续原方向的对应走势",
+        "缺少出现概率或后续走势分类的完整清单"
+      ],
+      "notes": "三条证据只给出零散案例：空头陷阱后小幅回调多头趋势、空头陷阱后LL双底转多头趋势交易区间日、多头陷阱后进入空头通道。可作示例，但不足以系统回答“可能接哪些走势”，方向覆盖与走势类别均不完整。",
+      "kept": false,
+      "final": false
+    },
+    {
+      "attempt": 10,
+      "id": "enc-16",
+      "question": "上涨越走越窄，最后一次上冲后掉头，下跌的第一站通常是什么？",
+      "expected_evidence": [
+        "fe32b58d1c464c04d68ec32a291f5ffa",
+        "2533efff6bdbaba5d9844a7fbb11ad12",
+        "031ef8796ea6f40697f8f4a9288f4b01"
+      ],
+      "verdict": "insufficient",
+      "can_answer": false,
+      "missing": [
+        "缺少“第一站”的明确定义或目标位规则",
+        "缺少楔形起点、下轨或测量目标等具体价位关系",
+        "缺少时间周期与趋势背景对目标位的影响",
+        "候选证据只讲后续形态，未直接回答首站目标"
+      ],
+      "notes": "现有证据说明楔形顶后的可能走势，但没有给出“下跌第一站通常是什么”的直接规则，无法据此确定首站目标。",
+      "kept": false,
+      "final": false
+    },
+    {
+      "attempt": 11,
+      "id": "enc-17",
+      "question": "双底做出来以后，价格向上走一段，最后常常落在哪种结构里？",
+      "expected_evidence": [
+        "0ca1ca2eeeec25370cd794962364847a",
+        "19fc658e12744cc817f9d7ee685346da",
+        "cf0f9c0b942358d86fc0b36d9f146641"
+      ],
+      "verdict": "insufficient",
+      "can_answer": false,
+      "missing": [
+        "缺少“常常”的频率或统计依据",
+        "缺少普通双底与LL/HL双底的区分",
+        "缺少“向上走一段”的时间窗口定义",
+        "缺少与其他结构落点的对比"
+      ],
+      "notes": "证据只列出个别情形，且HL双底给出与交易区间不同的落点，无法归纳出常见结构。",
+      "kept": false,
+      "final": false
+    },
+    {
+      "attempt": 12,
+      "id": "enc-18",
+      "question": "趋势中的回调特别深，几乎回到起点，之后一般转成什么？",
+      "expected_evidence": [
+        "0b19860eef9cdd5885ca908dc7338cc1",
+        "9a89fe4d9f5dffb3a7c67ec6d9efc23d"
+      ],
+      "verdict": "insufficient",
+      "can_answer": false,
+      "missing": [
+        "缺少“几乎回到起点”的深度判定标准或阈值",
+        "未说明三角形与交易区间的关系（是否为其中一种）",
+        "缺少其他可能走向（反转、趋势恢复）的对比说明",
+        "证据只涉及多头趋势，未说明空头趋势是否相同"
+      ],
+      "notes": "两条证据方向大致一致：深度回调后多转为交易区间，其中一种形态是三角形；但只有两个具体描述，既没有给出“一般性”结论的概括，也没界定回调深度与形态之间的对应关系，因此不足以直接回答该问题。",
+      "kept": false,
+      "final": false
+    },
+    {
+      "attempt": 13,
+      "id": "enc-19",
+      "question": "大幅低开以后，盘中的反弹和回落都有哪些常见结局？",
+      "expected_evidence": [
+        "abcb3f634d0e190b4ce79aa2166a29e6",
+        "6c1a29917ea44d4e26683a591bd05972",
+        "0c1ffc1f892eea61b7c67164f8c99ecc"
+      ],
+      "verdict": "insufficient",
+      "can_answer": false,
+      "missing": [
+        "缺少大幅低开后反弹与回落组合的完整分类",
+        "证据未说明各结局的确认条件与概率",
+        "第2、3条未限定“大幅”低开，适用性不明",
+        "缺少反弹失败后回落新低或趋势延续等结局"
+      ],
+      "notes": "候选证据仅列举了部分跳空后的走势情形，且未系统回答小幅/大幅低开后盘中反弹与回落的常见结局，因此不足以完整作答。",
+      "kept": false,
+      "final": false
+    },
+    {
+      "attempt": 14,
+      "id": "enc-20",
+      "question": "先急涨、再沿通道缓涨的行情，通道被向下突破之后会转成什么？",
+      "expected_evidence": [
+        "c925fee8879ee9d72855ffcbb546f50f",
+        "0b7d9918ffc4b470e29c4b863e9400ce"
+      ],
+      "verdict": "sufficient",
+      "can_answer": true,
+      "missing": [],
+      "notes": "证据[2]直接回答了问题：通道被向下突破后，行情转为交易区间。证据[1]提到双底牛旗，属于另一种可能的演化描述，但不影响依据[2]作答。",
+      "kept": true,
+      "final": true
+    },
+    {
+      "attempt": 15,
+      "id": "mech-11",
+      "question": "紧密交易区间为什么像磁铁，向上或向下追突破为什么经常失败？",
+      "expected_evidence": [
+        "5472a0b83780b8486da7a8eeee190e64",
+        "00838a05232ae5772211b42657ce9c73",
+        "c3fed04bcf6436a285f64e59c759c01f"
+      ],
+      "verdict": "sufficient",
+      "can_answer": true,
+      "missing": [],
+      "notes": "证据[1]直接解释了磁铁效应：区间内多空双方都认为该价位有价值，价格到区间底部时多头更积极买入、空头不愿做空，到顶部时相反，因此突破后缺乏后续跟风盘，价格被拉回区间；并具体描述了向下突破失败的过程。证据[2]佐证紧密区间突破常失败、逆势回区间。证据[3]补充说明区间内多空仍在积极交易、以及最终一方耗尽后突破才成功，属于延伸背景。三点合起来足以回答“为什么像磁铁”与“为什么追突破常失败”。",
+      "kept": true,
+      "final": true
+    },
+    {
+      "attempt": 16,
+      "id": "mech-12",
+      "question": "急拉之后转成缓坡的尖峰加通道走势，后半段为什么会回测通道起点？",
+      "expected_evidence": [
+        "951eabecbe84ea6298230099ed3895ab",
+        "6b5f97090d4194f024d60ccf954534bd",
+        "615866ae8b2db0a307f6cd71d8d09383",
+        "8161d3b60e1e9b7a4474265e36230814"
+      ],
+      "verdict": "sufficient",
+      "can_answer": true,
+      "missing": [],
+      "notes": "证据已说明：尖峰后的通道常标志单边趋势转为双边交易，通道起点会成为新交易区的起点；交易者预期通道低点/起点被测试，因而在回调中分批做空，后半段回测通道起点是这种预期与交易区形成的体现。",
+      "kept": true,
+      "final": true
+    },
+    {
+      "attempt": 17,
+      "id": "mech-13",
+      "question": "价格接近某些位置时会突然加速，到了又马上掉头，书里怎么解释？",
+      "expected_evidence": [
+        "24100ff46110f09c9f7f14f4e1da8644",
+        "ebc6f9b176231cbf755587d7182868ee",
+        "f1204778d7b7513b6290c70f0a944834",
+        "bbcfd2ed29877a3de1992c4d18a2a6ab"
+      ],
+      "verdict": "sufficient",
+      "can_answer": true,
+      "missing": [],
+      "notes": "证据用“磁吸效应/真空效应”解释：支撑阻力像磁铁，价格越接近吸引力越强，途中因卖方或买方暂时退出形成真空，导致加速冲向该位置；到位后强手获利或反向建仓，又迅速掉头。",
+      "kept": true,
+      "final": true
+    },
+    {
+      "attempt": 18,
+      "id": "mech-14",
+      "question": "怎样区分真正的趋势反转和一次逆势抢反弹？",
+      "expected_evidence": [
+        "044e7c90baf695139377d63f0b16037b",
+        "06ef90590d2141944f42a467af6bb923",
+        "708aa3940932b8b9c9c40a9eb5ad6c7d",
+        "17a7a10ba875e900a9480739932ba970"
+      ],
+      "verdict": "sufficient",
+      "can_answer": true,
+      "missing": [
+        "缺少可操作的判定清单（如突破关键摆动点、连续失败的同向信号）",
+        "未说明反转失败后的止损与退出规则",
+        "未给出逆势抢反弹的仓位与目标管理细节"
+      ],
+      "notes": "证据[2]直接给出核心区分：反转交易是可能引发 always-in 翻转的交易，逆势抢反弹则不是。证据[3]补充了识别路径：反转通常需要突破，使多数交易者相信 always-in 方向已改变；缓慢反转表现为原趋势旗形内同向信号接连失败，最终反向突破。证据[1][4]提供 always-in、突破、尖峰等背景概念。因此概念层面足以回答，但缺少实战检验清单与风险管理细则。",
+      "kept": true,
+      "final": true
+    },
+    {
+      "attempt": 19,
+      "id": "mech-15",
+      "question": "趋势里的回调为什么要等第二条腿走完才算结束？",
+      "expected_evidence": [
+        "6eb7a60eff40e2d3d9ff374bb2559612",
+        "3ad8fdd7a9db6fce275e9e2e0d5aab69",
+        "67ded5ba12943aae35014b8a4d9b7c5a"
+      ],
+      "verdict": "sufficient",
+      "can_answer": true,
+      "missing": [],
+      "notes": "证据支持概率性解释：回调常以两腿形式展开，第二腿常与第一腿等长（AB=CD/measured move），且约三分之二情况会出现至少两腿；第二腿走完后再判断趋势恢复，可避免把第一腿误当回调结束。但这不是必然规则，证据也提到较低高点可能只有一腿、约三分之一反转失败。",
+      "kept": true,
+      "final": true
+    },
+    {
+      "attempt": 20,
+      "id": "mech-16",
+      "question": "横盘之后向上突破又跌回区间，这个横盘事后应该怎么理解？",
+      "expected_evidence": [
+        "0a03888881ad37f74050360654f32a09",
+        "3271b2669b093284211d3d475e0f3cc3",
+        "cecfb98d85388811b7bd7b3d421120a2",
+        "9c8e12c633849c0f66d296c2684ca4d9"
+      ],
+      "verdict": "insufficient",
+      "can_answer": false,
+      "missing": [
+        "缺少区分“最终旗形”与普通横盘的前提条件，如是否处于趋势中及区间位置",
+        "未说明跌回区间后是继续横盘、反向突破还是趋势恢复的判别标准",
+        "未给出失败突破的确认信号，如跌破区间下沿、测量移动与磁吸效应何时失效",
+        "缺少无趋势背景下同类形态该如何归类的说明"
+      ],
+      "notes": "证据[1][2]指出牛市旗形向上突破失败后该横盘可视为牛市趋势中的最终旗形并导向反转，[3]给出磁吸效应，[4]说明反转形态也可能只是牛/熊旗。这些只覆盖“处于趋势中”的情形，且未涉及仅跌回区间而未反向突破时的处理，因此只能部分回答，仍需补充判别条件与后续确认信号。",
+      "kept": false,
+      "final": false
+    },
+    {
+      "attempt": 21,
+      "id": "mech-17",
+      "question": "第一次信号没走出来，为什么应该等第二次信号？",
+      "expected_evidence": [
+        "10bfbcda1f219ab0a1a2dd6169c3c279",
+        "09e2dc9cf77baaeae5cccf2ea5e46b19",
+        "d58efd24cdf1c7c17307cc0353a659de"
+      ],
+      "verdict": "insufficient",
+      "can_answer": false,
+      "missing": [
+        "缺少明确解释第二次信号为何成功率更高，如测试前低/前高、确认支撑阻力。",
+        "缺少第一次信号失败后何时应放弃原方向、何时等第二次信号的判断标准。",
+        "缺少第二次信号的风险控制、止损位置和入场时机说明。",
+        "缺少等待第二次信号可能错过行情的权衡与例外情况。"
+      ],
+      "notes": "证据只给出第二次信号的定义和若干例子，提到谨慎交易者会等第二次入场，但没有系统回答“为什么第一次没走出来就应等第二次”的核心原因和适用条件。",
+      "kept": false,
+      "final": false
+    },
+    {
+      "attempt": 22,
+      "id": "mech-18",
+      "question": "同一个形态放到更高周期上看会变成什么？",
+      "expected_evidence": [
+        "0877fc6bf090788fb25916cd3e9d8652",
+        "17d8f4a6a24166b93282e8d2373b8240",
+        "88872301a5163ea6148e736152b7a600"
+      ],
+      "verdict": "sufficient",
+      "can_answer": true,
+      "missing": [],
+      "notes": "证据[1]直接说明：同一形态在更高周期上会成为更高周期形态的微观形态（micro pattern），而较小周期上的微观形态在较大周期上就是标准形态。",
+      "kept": true,
+      "final": true
+    },
+    {
+      "attempt": 23,
+      "id": "mech-19",
+      "question": "强趋势K线之后立刻出现反向强趋势K线，这种高潮反转后面怎么发展？",
+      "expected_evidence": [
+        "56823e23d2899f7f13d853dee10bace8",
+        "c0693265dbd1b6bea27ea6223127334a",
+        "ebf46100eb3a1516b38296e38f395ef3"
+      ],
+      "verdict": "sufficient",
+      "can_answer": true,
+      "missing": [
+        "缺少判断后续是反转还是交易区间的明确标准",
+        "缺少失败概率或统计分布",
+        "缺少不同时间周期下的具体交易规则"
+      ],
+      "notes": "证据1直接描述该形态（climactic reversal / two-bar reversal）后的典型路径：先测试突破缺口或孤岛顶形成更低高点，多空同时卖出，下跌约10根K线以上，之后获利了结带来回调或交易区间，若区间被空头趋势K线跌破则为测量缺口。证据3补充说明该形态在更高周期上可能只是单根反转K线，后续常转为交易区间甚至多头通道。证据2给出反转成立的绝对条件（必须先突破原趋势线）并指出极少数高潮反转不会回测旧极值。综合可回答发展路径，但判别成功与否的量化标准与概率缺失。",
+      "kept": true,
+      "final": true
+    },
+    {
+      "attempt": 24,
+      "id": "mech-20",
+      "question": "从横盘或尖峰突破之后，第一目标位通常怎么量？",
+      "expected_evidence": [
+        "2c5556d3eb76567a761ffb3d114b0e5b",
+        "10c5e0a64d0dcd30ffe3b565b1ff2a82",
+        "c1e8a20448ca7f53d60088507f71eab6",
+        "2f4509fafa405667d29d388e7f1e98c5"
+      ],
+      "verdict": "sufficient",
+      "can_answer": true,
+      "missing": [],
+      "notes": "证据[1]直接回答横盘突破：回调（小交易区间）突破后的初始目标为约等于该交易区间高度的测量移动（measured move），且该区域常有获利了结与逆势者进场；证据[2]回答尖峰：尖峰后方向性概率约60%以上，目标为等于尖峰高度的测量移动；证据[3][4]补充说明趋势中突破新高/新低后预期还有一段约等于测量移动的行情。两者合并即覆盖“横盘”和“尖峰”两种情形，故足以回答第一目标位通常以被测幅（区间高度或尖峰高度）来量。唯一可细化的是测量起点（突破点/区间边界）与投射方向的图示细节，但不影响结论。",
+      "kept": true,
+      "final": true
+    },
+    {
+      "attempt": 25,
+      "id": "exc-01",
+      "question": "价格做出更低低点或更高低点，为什么经常不算主要趋势反转？",
+      "expected_evidence": [
+        "301be677f99a48d42521814d4f8247e0",
+        "b324b730c5a9b6a688538440a40d3a72",
+        "2f17d3f273a5e20a44ef657ed524c98e"
+      ],
+      "verdict": "insufficient",
+      "can_answer": false,
+      "missing": [
+        "缺少判断“主要趋势反转”的定义与标准",
+        "缺少趋势级别与时间周期关系的说明",
+        "缺少反转成功所需跟进、突破和结构确认条件",
+        "缺少更多不同市场环境下的反例或统计依据"
+      ],
+      "notes": "三条证据只说明个别LL/HH/HL为何失败，能提示背景趋势和次要反转的作用，但不足以系统回答“为什么经常不算主要趋势反转”。",
+      "kept": false,
+      "final": false
+    },
+    {
+      "attempt": 26,
+      "id": "exc-02",
+      "question": "回踩20均线的缺口K线，什么背景下不能当买入或卖出信号？",
+      "expected_evidence": [
+        "2a9f22e5d299e512c70aed43b279c124",
+        "edf0270199e5f16715a6f78b807105c8",
+        "31a3da0f44bdb31b27b02682b235ba63"
+      ],
+      "verdict": "sufficient",
+      "can_answer": true,
+      "missing": [],
+      "notes": "三条证据恰好覆盖三种失效背景：抛物线楔形顶之后买入信号失效、小幅回调空头趋势中卖出信号失效、卖出高潮底部之后的均线缺口K线失效（多空皆不宜）。三者合并即可回答“什么背景下不能当买入或卖出信号”，方向（买、卖、通用）与背景均已给出，无需额外证据。",
+      "kept": true,
+      "final": true
+    },
+    {
+      "attempt": 27,
+      "id": "exc-03",
+      "question": "楔形底没撑住之后，价格可能演化成哪些形态？",
+      "expected_evidence": [
+        "3415bd7f2a95d0b8cfedc283d9f14ff7",
+        "780ad4886269f3a6494e7776447482d9",
+        "96634b269a1f69ce02230f7d8224e2e5"
+      ],
+      "verdict": "insufficient",
+      "can_answer": false,
+      "missing": [
+        "缺少“没撑住”的判定标准，例如跌破颈线、收盘确认或幅度阈值",
+        "缺少各演化形态的区分条件与优先级，无法判断何时变成双顶熊旗、深度回调或嵌套楔形",
+        "缺少各演化对应的确认信号与目标位/失效位",
+        "缺少适用的时间周期与样本来源，证据为孤立结论"
+      ],
+      "notes": "三条证据只罗列了三种可能走向（双顶熊旗、无止境回调、嵌套更大楔形底），方向性答案勉强可给，但其中一条只是模糊描述而非形态，且没有任何判定条件、概率或确认规则，无法据此可靠推断价格演化路径，故判定为证据不足。",
+      "kept": false,
+      "final": false
+    },
+    {
+      "attempt": 28,
+      "id": "exc-04",
+      "question": "楔形顶失败、价格没有反转时，后面可能出现什么？",
+      "expected_evidence": [
+        "5839117359f4313b98bd494988759f4f",
+        "5b0653ff2ee34242ef19ff43cb6e3c9a",
+        "55349233ef4feb913edb74d599799939"
+      ],
+      "verdict": "sufficient",
+      "can_answer": true,
+      "missing": [
+        "缺少判定楔形顶“失败”的确认标准",
+        "缺少各后续形态出现的条件与概率",
+        "缺少失败后是否还有其他可能结果",
+        "缺少对应的交易应对与止损参考"
+      ],
+      "notes": "证据直接给出三类后续演变：失败的楔形顶转为牛旗、转为卖出高潮加双底、失败的抛物线楔形转为14根K线的多头微通道，足以回答“后面可能出现什么”。但没有给出失败判定标准、各结局的概率或触发条件，也未穷尽可能性，因此只能作方向性回答，不能支撑概率或操作层面的结论。",
+      "kept": true,
+      "final": true
+    },
+    {
+      "attempt": 29,
+      "id": "exc-05",
+      "question": "空头末端的最后一个旗形反转失败，通常意味着什么？",
+      "expected_evidence": [
+        "076bb510b08cac5f22300b3be4e1248f",
+        "7d3ce9a9e7bd8804455aeaa28b20aab8",
+        "4f220ff7be0f54dece532b78a7ccb940"
+      ],
+      "verdict": "sufficient",
+      "can_answer": true,
+      "missing": [
+        "缺少“空头末端”与“最终熊旗”是否同一结构的界定",
+        "未说明判定“反转失败”的具体标准",
+        "缺少失败后目标位（如测幅、创新低）的说明"
+      ],
+      "notes": "证据[2]直接给出核心结论：最后（最终）熊旗向上反转失败，意味着空头趋势恢复、下跌延续；[1]进一步印证“向上反转失败”，[3]则补充了失败空头陷阱的形态背景。因此足以回答“通常意味着什么”，但这些证据只是结构性标签，没有给出失败确认条件与后续目标位等细节。",
+      "kept": true,
+      "final": true
+    },
+    {
+      "attempt": 30,
+      "id": "exc-06",
+      "question": "高潮之后的反转没有成立，会留下哪些结构？",
+      "expected_evidence": [
+        "0825193c35420520c4d1204065111f24",
+        "5f51be9f8bf2e6a878c586be13902c3f",
+        "6584b82ed6b93e2e32c0670e5adc4a29"
+      ],
+      "verdict": "insufficient",
+      "can_answer": false,
+      "missing": [
+        "缺少“结构”的定义或结构清单",
+        "缺少反转成立的对照判定条件",
+        "缺少失败后一般价格行为规律（趋势恢复、区间形成、测量移动）",
+        "仅覆盖三种个例，未覆盖其他高潮情形"
+      ],
+      "notes": "三条证据分别给出买入高潮失败、卖出高潮中ii反弹失败、卖出高潮反转在EMA处双顶，均为个例的后续形态描述，能举例说明“留下什么”，但未系统列举结构类型，也未说明判定标准与普适规律，因此不足以完整回答问题。",
+      "kept": false,
+      "final": false
+    },
+    {
+      "attempt": 31,
+      "id": "exc-07",
+      "question": "怎么判断一个看起来像陷阱的走势其实没生效？",
+      "expected_evidence": [
+        "68d6c863487e1c831c1cafb5567b1e63",
+        "56b89a6e49b5fb1a440d6a7b3ffd0d5c",
+        "a5df070f5b3af2a42905d62c97cb5037"
+      ],
+      "verdict": "insufficient",
+      "can_answer": false,
+      "missing": [
+        "缺少“陷阱未生效”的明确定义与判定标准",
+        "缺少确认失效所需的价格与K线信号清单",
+        "缺少不同方向和时间周期的适用条件",
+        "缺少系统化判断步骤或反例说明"
+      ],
+      "notes": "证据只列举了三个局部案例和信号，如缺少空头卖出信号K线、惊喜K线、失败的LH反转，未形成回答“怎么判断”的通用规则。",
+      "kept": false,
+      "final": false
+    },
+    {
+      "attempt": 32,
+      "id": "exc-08",
+      "question": "突破失败之后，反向走势通常先走出什么？",
+      "expected_evidence": [
+        "5575c0ae221c44ae2e39120e508ee68a",
+        "088e5def341801930417d6f6ef834573",
+        "69bc2fc7e9f8bd08261bb872e538ae45"
+      ],
+      "verdict": "insufficient",
+      "can_answer": false,
+      "missing": [
+        "缺少对“突破失败后反向走势首先形成什么”的一般化结论",
+        "只给了三个具体形态案例，未说明初始反向结构（如回测突破位、LH/HL）",
+        "未定义“先走出”的时间尺度与确认标准",
+        "缺少反向走势初期的典型形态或信号清单"
+      ],
+      "notes": "候选证据仅列举了突破失败导致反转的三个具体情形（区间下破、楔形底下方破、双底下方破），能说明失败突破常引发反向走势，但未回答反向走势“通常先走出什么”这一模式性问题，因此不足以得出结论。",
+      "kept": false,
+      "final": false
+    },
+    {
+      "attempt": 33,
+      "id": "exc-09",
+      "question": "通道里的突破和反转，为什么多数不能当真？",
+      "expected_evidence": [
+        "36354ef09fca84d5dd97a366c22d99ce",
+        "8d426e6dcb2a244477875622ca339670",
+        "538270b389035ea5f1af6fb49d710856"
+      ],
+      "verdict": "insufficient",
+      "can_answer": false,
+      "missing": [
+        "缺少通道边界与有效突破/反转的判定标准",
+        "缺少失败案例的统计样本与比例，无法支撑“多数”",
+        "缺少确认条件，如收盘位置、回踩、量能等",
+        "缺少成功突破/反转的反例与适用边界"
+      ],
+      "notes": "现有证据只列出三个失败案例，能说明假突破和失败反转存在，但不足以解释为何“多数”不能当真，也缺少可验证的统计与判定规则。",
+      "kept": false,
+      "final": false
+    },
+    {
+      "attempt": 34,
+      "id": "exc-10",
+      "question": "牛旗走坏之后，空头一般能走到哪里？",
+      "expected_evidence": [
+        "18aab5a3f72a4d67d5d953d5af80019d",
+        "41160831acabdbdd5be392de15e687f9",
+        "67589b185012bb896802f252eeec2c14"
+      ],
+      "verdict": "insufficient",
+      "can_answer": false,
+      "missing": [
+        "牛旗失败后的标准目标位：向下测量移动、前低或交易区间下沿",
+        "不同失败形态（H2、iii等）对应跌幅与目标差异",
+        "走坏的确认条件及失败后常见路径（趋势延续还是转区间）",
+        "趋势背景、入场止损与目标测算规则"
+      ],
+      "notes": "候选证据只提到“超过向下MM”“带来交易区间”和一次EMA处H2失败，信息碎片化且相互不完整，无法据此回答空头一般能走到哪里。",
+      "kept": false,
+      "final": false
+    },
+    {
+      "attempt": 35,
+      "id": "cond-01",
+      "question": "不想按比例缩小仓位的时候，逆势交易还能不能做？",
+      "expected_evidence": [
+        "e58afdb137a5685768591e59c8eab41d"
+      ],
+      "verdict": "sufficient",
+      "can_answer": true,
+      "missing": [],
+      "notes": "证据[1]直接给出条件性结论：逆势交易仓位必须为正常仓位的30-50%，不愿缩仓则不应做逆势交易，足以回答该问题。",
+      "kept": true,
+      "final": true
+    },
+    {
+      "attempt": 36,
+      "id": "cond-02",
+      "question": "信号、背景和方向都很完美，为什么还可能不做这笔交易？",
+      "expected_evidence": [
+        "749ef77184c09e61b1f65f3db979cd84"
+      ],
+      "verdict": "sufficient",
+      "can_answer": true,
+      "missing": [],
+      "notes": "证据[1]直接给出唯一绝对否决条件：前方阻力/支撑过近导致空间（Room）不足，即潜在盈利空间不足止损距离的2倍时，即使信号、背景、AI方向都完美也不做。该证据已完整回答“为什么还可能不做这笔交易”，无需补充其他条件。",
+      "kept": true,
+      "final": true
+    },
+    {
+      "attempt": 37,
+      "id": "cond-03",
+      "question": "回调数到第几次之后，就不该再按趋势思路做了？",
+      "expected_evidence": [
+        "418944eab33576aabb183168cbb29c01"
+      ],
+      "verdict": "sufficient",
+      "can_answer": true,
+      "missing": [],
+      "notes": "证据明确：H3/L3 时趋势已减弱；到 H4/L4 时市场很可能已转为交易区间，应从趋势策略切换到区间策略。因此，回调计数到第4次（H4/L4）后，就不应再按趋势思路做。",
+      "kept": true,
+      "final": true
+    },
+    {
+      "attempt": 38,
+      "id": "cond-04",
+      "question": "哪种缺口通常很快会被回补？",
+      "expected_evidence": [
+        "bd5b4c28617ece147f8e580bcbbdb629"
+      ],
+      "verdict": "sufficient",
+      "can_answer": true,
+      "missing": [],
+      "notes": "证据直接指出衰竭缺口（EG）通常很快会被回补，足以回答该问题；如需要可补充与其他缺口（如突破缺口、持续性缺口）的对比，但非必需。",
+      "kept": true,
+      "final": true
+    },
+    {
+      "attempt": 39,
+      "id": "cond-05",
+      "question": "缺口刚出现时，能不能当场确定它是哪一种？",
+      "expected_evidence": [
+        "a37888141dae12ef3ba76bc29d4e66f5"
+      ],
+      "verdict": "sufficient",
+      "can_answer": true,
+      "missing": [],
+      "notes": "证据[1]直接回答了问题：缺口刚出现时无法当场确定类型，只能依据后续K线行为逐步判断，属于明确的否定结论，足以作答。若需进一步扩展，可补充各类缺口的具体判别特征，但这不影响对本题的判断。",
+      "kept": true,
+      "final": true
+    },
+    {
+      "attempt": 40,
+      "id": "cond-06",
+      "question": "双内包或内外内形态，在什么位置才算可以独立入场的信号？",
+      "expected_evidence": [
+        "4032664410bb78b2e30d02a80b461c3f"
+      ],
+      "verdict": "insufficient",
+      "can_answer": false,
+      "missing": [
+        "未定义“回调末尾”的判定标准",
+        "未界定“关键结构位”包括哪些具体位置",
+        "未说明趋势方向与周期的确认条件",
+        "未给出 ii/ioi 形态本身的成立规则（包含关系、内包根数）"
+      ],
+      "notes": "证据[1]只给出方向性结论：形态须出现在趋势回调末尾或关键结构位，并在最后一根内包棒顺势方向极值外挂止损入场。它回答了“大方向上在哪儿”，但“回调末尾”和“关键结构位”都无操作化定义，也缺少形态识别规则与趋势确认条件，因此不足以直接落地为可执行的独立入场信号判定标准。若要补足，至少需要：回调/结构的量化定义、形态成立的K线规则、以及趋势与周期过滤条件。",
+      "kept": false,
+      "final": false
+    },
+    {
+      "attempt": 41,
+      "id": "cond-07",
+      "question": "开盘后半小时到一小时，一般会落在哪几种结构里？",
+      "expected_evidence": [
+        "34c0eb7ba7dfae64179bc14663ea7871"
+      ],
+      "verdict": "sufficient",
+      "can_answer": true,
+      "missing": [],
+      "notes": "证据[1]直接回答了问题：开盘后30-60分钟通常形成四种结构之一——趋势型、开盘区间突破（ORB）、开盘反转、开盘交易区间。已足够作答；若需更深入，可补充各结构的识别标准与对应策略，但非回答本题所必需。",
+      "kept": true,
+      "final": true
+    },
+    {
+      "attempt": 42,
+      "id": "cond-08",
+      "question": "从一个时段进入下一个时段时，前一时段的高低点会起什么作用？",
+      "expected_evidence": [
+        "34e282394bfc079ff6820fcc26084eea"
+      ],
+      "verdict": "sufficient",
+      "can_answer": true,
+      "missing": [],
+      "notes": "证据已说明：前一时段的高低点可能发生极性转换，前高变下一时段支撑，前低变下一时段阻力。",
+      "kept": true,
+      "final": true
+    },
+    {
+      "attempt": 43,
+      "id": "cond-09",
+      "question": "回调只走了一条腿，为什么还不能算结束？",
+      "expected_evidence": [
+        "38263836305d4b619af84051ad5d4970"
+      ],
+      "verdict": "insufficient",
+      "can_answer": false,
+      "missing": [
+        "缺少单腿为何不充分的机理（被套交易者、获利回吐、惯性等）",
+        "未说明单腿回调可以算结束的例外情形（强趋势、尖峰、极强动量）",
+        "未给出“腿”的判定标准（起止点、与均线/趋势线的关系）",
+        "未说明如何确认回调结束或第二腿已走完的信号"
+      ],
+      "notes": "证据只给出两条腿原则的定义与现象描述（单腿常不充分、价格常反弹后再走第二腿），能支持“不能算结束”的结论，但未解释原因、适用条件与例外，也未提供判断腿与结束的方法，故不足以完整回答问题。",
+      "kept": false,
+      "final": false
+    },
+    {
+      "attempt": 44,
+      "id": "cond-10",
+      "question": "三推楔形反转成立之后，目标一般先看哪里？",
+      "expected_evidence": [
+        "54b5a4889ee8f4a51910f85dd0880e75"
+      ],
+      "verdict": "sufficient",
+      "can_answer": true,
+      "missing": [],
+      "notes": "证据[1]直接回答了问题：三推楔形反转成立后，目标通常至少回到楔形的起点（即楔形形成前的起始位置，对应第一推的起点）。可作为依据给出答案；若需更细的测算方法或止损/失效条件，可另行补充，但不影响本题回答。",
+      "kept": true,
+      "final": true
+    },
+    {
+      "attempt": 45,
+      "id": "enc-11",
+      "question": "更高高点的双顶熊旗失败之后，价格先做出更低低点，再形成什么？",
+      "expected_evidence": [
+        "715ab63aab264f80e02c0634b2ec1c30"
+      ],
+      "verdict": "sufficient",
+      "can_answer": true,
+      "missing": [],
+      "notes": "证据[1]已直接说明：HH双顶熊旗随后形成LL双底和交易区间，可回答该问题。",
+      "kept": true,
+      "final": true
+    },
+    {
+      "attempt": 46,
+      "id": "enc-14",
+      "question": "连续外包牛旗的向上突破和向下突破，结果分别是什么？",
+      "expected_evidence": [
+        "1b9ac2313706aa29dd181725ffb33ab8"
+      ],
+      "verdict": "sufficient",
+      "can_answer": true,
+      "missing": [],
+      "notes": "证据[1]明确说明连续外包牛旗的向上突破与向下突破均失败，已分别回答两种突破的结果。",
+      "kept": true,
+      "final": true
+    },
+    {
+      "attempt": 47,
+      "id": "enc-15",
+      "question": "空头陷阱出现之后，后面可能走出哪几种结构？",
+      "expected_evidence": [
+        "4de48e3656dc670c6ffa5d983fa02bf3",
+        "495a09bf3af5ec04a3fe6a153316e2d0"
+      ],
+      "verdict": "insufficient",
+      "can_answer": false,
+      "missing": [
+        "仅有两条后续结构示例，未穷尽可能结构",
+        "缺少空头陷阱的定义与确认条件",
+        "缺少不同时间周期/背景下结构差异的说明",
+        "缺少后续结构出现概率或优先级信息"
+      ],
+      "notes": "现有证据只能说明两种可能走势，不能完整回答“可能走出哪几种结构”。",
+      "kept": false,
+      "final": false
+    },
+    {
+      "attempt": 48,
+      "id": "enc-16",
+      "question": "楔形顶之后，价格接下来先形成什么？",
+      "expected_evidence": [
+        "fe32b58d1c464c04d68ec32a291f5ffa"
+      ],
+      "verdict": "sufficient",
+      "can_answer": true,
+      "missing": [],
+      "notes": "证据[1]明确指出楔形顶之后随后形成卖出高潮底部，直接回答了价格接下来先形成什么。",
+      "kept": true,
+      "final": true
+    },
+    {
+      "attempt": 49,
+      "id": "enc-17",
+      "question": "双底之后上涨，随后会走成哪种日子？",
+      "expected_evidence": [
+        "0ca1ca2eeeec25370cd794962364847a"
+      ],
+      "verdict": "sufficient",
+      "can_answer": true,
+      "missing": [],
+      "notes": "证据[1]已明确说明双底后上涨，随后为交易区间日，足以回答问题。",
+      "kept": true,
+      "final": true
+    },
+    {
+      "attempt": 50,
+      "id": "enc-18",
+      "question": "深度回调之后，市场通常进入什么结构？",
+      "expected_evidence": [
+        "0b19860eef9cdd5885ca908dc7338cc1",
+        "9a89fe4d9f5dffb3a7c67ec6d9efc23d"
+      ],
+      "verdict": "insufficient",
+      "can_answer": false,
+      "missing": [
+        "需要更多样本和统计频率来支持“通常”",
+        "需明确“深度回调”的量化定义",
+        "需区分不同趋势类型、品种和时间周期",
+        "需说明三角形是否属于交易区间的一种"
+      ],
+      "notes": "两条证据分别指向交易区间和三角形，样本过少且结构表述不完全一致，不能充分回答“通常进入什么结构”。",
+      "kept": false,
+      "final": false
+    },
+    {
+      "attempt": 51,
+      "id": "enc-19",
+      "question": "大幅向下跳空之后，主要趋势反转和双底按什么顺序出现？",
+      "expected_evidence": [
+        "abcb3f634d0e190b4ce79aa2166a29e6"
+      ],
+      "verdict": "sufficient",
+      "can_answer": true,
+      "missing": [],
+      "notes": "证据已明确给出顺序：大幅向下跳空后，先出现LL主要趋势反转，随后出现双底HL主要趋势反转。",
+      "kept": true,
+      "final": true
+    },
+    {
+      "attempt": 52,
+      "id": "mech-16",
+      "question": "多头旗形的向上突破失败之后，这段横盘在事后被叫作什么？",
+      "expected_evidence": [
+        "0a03888881ad37f74050360654f32a09",
+        "3271b2669b093284211d3d475e0f3cc3"
+      ],
+      "verdict": "sufficient",
+      "can_answer": true,
+      "missing": [],
+      "notes": "证据[1]明确指出：多头旗形向上突破失败并反转下跌时，该旗形会成为牛市趋势中的“最终旗形”（final flag）；证据[2]也说明突破失败后，若该横盘原本是趋势中的旗形，则成为最终旗形。因此足以回答。",
+      "kept": true,
+      "final": true
+    },
+    {
+      "attempt": 53,
+      "id": "mech-17",
+      "question": "第一次入场信号不够确定时，应该等什么？",
+      "expected_evidence": [
+        "10bfbcda1f219ab0a1a2dd6169c3c279",
+        "09e2dc9cf77baaeae5cccf2ea5e46b19"
+      ],
+      "verdict": "sufficient",
+      "can_answer": true,
+      "missing": [],
+      "notes": "证据[1]定义第二次入场（second entry）为同一逻辑在几根K线内再次出现的入场信号；证据[2]说明第一次信号不确定时，谨慎交易者可等待第二次入场。因此可直接回答：等第二次入场信号。",
+      "kept": true,
+      "final": true
+    },
+    {
+      "attempt": 54,
+      "id": "exc-01",
+      "question": "在窄幅空头通道里，LL主要趋势反转失败之后变成什么？",
+      "expected_evidence": [
+        "301be677f99a48d42521814d4f8247e0"
+      ],
+      "verdict": "sufficient",
+      "can_answer": true,
+      "missing": [],
+      "notes": "证据[1]直接说明：在窄幅空头通道中，LL主要趋势反转失败后只是次要LL双底，足以回答该问题。",
+      "kept": true,
+      "final": true
+    },
+    {
+      "attempt": 55,
+      "id": "exc-03",
+      "question": "楔形底失败之后，先形成哪种反转形态？",
+      "expected_evidence": [
+        "3415bd7f2a95d0b8cfedc283d9f14ff7"
+      ],
+      "verdict": "ambiguous",
+      "can_answer": false,
+      "missing": [
+        "“双顶熊旗”是否属于反转形态的界定",
+        "楔形底失败后各形态出现的先后顺序",
+        "是否还有更早形成的反转形态",
+        "楔形底失败的具体判定与时间点"
+      ],
+      "notes": "证据给出“双顶熊旗”，但双顶属反转形态、熊旗属持续形态，二者组合后是否即问题所称“反转形态”存在歧义，且未说明是否为首个形成的形态，故不足以确定答案。",
+      "kept": false,
+      "final": false
+    },
+    {
+      "attempt": 56,
+      "id": "exc-06",
+      "question": "卖出高潮中出现的ii买入信号，反弹结果如何？",
+      "expected_evidence": [
+        "5f51be9f8bf2e6a878c586be13902c3f"
+      ],
+      "verdict": "sufficient",
+      "can_answer": true,
+      "missing": [],
+      "notes": "证据[1]直接说明卖出高潮中的 ii 买入信号出现后反弹失败，已覆盖问题的核心结论。",
+      "kept": true,
+      "final": true
+    },
+    {
+      "attempt": 57,
+      "id": "exc-07",
+      "question": "第二腿陷阱式上涨为什么会失败？",
+      "expected_evidence": [
+        "68d6c863487e1c831c1cafb5567b1e63"
+      ],
+      "verdict": "sufficient",
+      "can_answer": true,
+      "missing": [],
+      "notes": "证据直接给出失败原因：缺少空头卖出信号K线。",
+      "kept": true,
+      "final": true
+    },
+    {
+      "attempt": 58,
+      "id": "exc-08",
+      "question": "18根K线区间上方的突破失败之后，价格转向哪边？",
+      "expected_evidence": [
+        "5575c0ae221c44ae2e39120e508ee68a"
+      ],
+      "verdict": "sufficient",
+      "can_answer": true,
+      "missing": [],
+      "notes": "证据[1]直接表明18根K线区间上方的突破失败后转为向下突破，因此可回答价格转向下方。",
+      "kept": true,
+      "final": true
+    },
+    {
+      "attempt": 59,
+      "id": "exc-09",
+      "question": "急涨与通道型楔形多头通道上方的突破，结果如何？",
+      "expected_evidence": [
+        "36354ef09fca84d5dd97a366c22d99ce"
+      ],
+      "verdict": "sufficient",
+      "can_answer": true,
+      "missing": [],
+      "notes": "证据[1]直接给出结论：急涨与通道型楔形多头通道的上方突破失败，已能回答问题。",
+      "kept": true,
+      "final": true
+    },
+    {
+      "attempt": 60,
+      "id": "exc-10",
+      "question": "牛旗失败之后，空头趋势的跌幅会到哪里？",
+      "expected_evidence": [
+        "18aab5a3f72a4d67d5d953d5af80019d"
+      ],
+      "verdict": "insufficient",
+      "can_answer": false,
+      "missing": [
+        "向下MM的具体测量方法（起点、终点）",
+        "超过向下MM后的下一目标位或延伸规则",
+        "牛旗失败的确认条件与失效边界",
+        "不同市场/周期下的统计或例外说明"
+      ],
+      "notes": "证据只说明跌幅会超过向下MM，未给出具体目标位或计算方式，无法回答“会到哪里”。",
+      "kept": false,
+      "final": false
+    },
+    {
+      "attempt": 61,
+      "id": "cond-06",
+      "question": "ii或ioi形态出现在什么位置时，可以作为独立的入场信号？",
+      "expected_evidence": [
+        "4032664410bb78b2e30d02a80b461c3f"
+      ],
+      "verdict": "sufficient",
+      "can_answer": true,
+      "missing": [],
+      "notes": "证据直接给出位置条件：趋势回调末尾或关键结构位；并补充了入场方式（在最后一根内包棒顺势方向极值外挂止损入场单），足以回答该问题。",
+      "kept": true,
+      "final": true
+    },
+    {
+      "attempt": 62,
+      "id": "cond-09",
+      "question": "回调只走了一条腿时，价格接下来可能怎么走？",
+      "expected_evidence": [
+        "38263836305d4b619af84051ad5d4970"
+      ],
+      "verdict": "sufficient",
+      "can_answer": true,
+      "missing": [],
+      "notes": "证据已直接说明：一条腿回调常不充分，价格可能先小幅反弹，再走第二条腿。",
+      "kept": true,
+      "final": true
+    },
+    {
+      "attempt": 63,
+      "id": "enc-15",
+      "question": "空头陷阱之后，价格随后形成什么趋势？",
+      "expected_evidence": [
+        "4de48e3656dc670c6ffa5d983fa02bf3"
+      ],
+      "verdict": "sufficient",
+      "can_answer": true,
+      "missing": [],
+      "notes": "证据[1]直接说明空头陷阱之后价格形成小幅回调的多头趋势，已能回答该问题。若需更严谨，可补充该趋势的幅度或持续时间描述，但不影响基本结论。",
+      "kept": true,
+      "final": true
+    },
+    {
+      "attempt": 64,
+      "id": "enc-18",
+      "question": "深度回调之后，市场进入哪种结构？",
+      "expected_evidence": [
+        "0b19860eef9cdd5885ca908dc7338cc1"
+      ],
+      "verdict": "sufficient",
+      "can_answer": true,
+      "missing": [],
+      "notes": "证据[1]直接指出深度回调后进入交易区间，与问题所问的市场结构对应，可直接作答。",
+      "kept": true,
+      "final": true
+    },
+    {
+      "attempt": 65,
+      "id": "exc-03",
+      "question": "楔形底失败之后形成什么？",
+      "expected_evidence": [
+        "3415bd7f2a95d0b8cfedc283d9f14ff7"
+      ],
+      "verdict": "sufficient",
+      "can_answer": true,
+      "missing": [],
+      "notes": "证据[1]直接说明楔形底失败后形成双顶熊旗，与问题对应，可据以作答。虽仅有一条证据，但已给出明确结论，不存在歧义。",
+      "kept": true,
+      "final": true
+    },
+    {
+      "attempt": 66,
+      "id": "exc-10",
+      "question": "牛旗失败之后，空头趋势的跌幅和向下测量移动相比如何？",
+      "expected_evidence": [
+        "18aab5a3f72a4d67d5d953d5af80019d"
+      ],
+      "verdict": "sufficient",
+      "can_answer": true,
+      "missing": [],
+      "notes": "候选证据直接给出比较结论：牛旗失败后空头趋势的跌幅超过了向下测量移动（向下MM），已足以回答该问题。",
+      "kept": true,
+      "final": true
+    },
+    {
+      "attempt": 67,
+      "id": "enc-18",
+      "question": "深度回调之后，市场进入什么结构？",
+      "expected_evidence": [
+        "0b19860eef9cdd5885ca908dc7338cc1",
+        "9a89fe4d9f5dffb3a7c67ec6d9efc23d"
+      ],
+      "verdict": "ambiguous",
+      "can_answer": false,
+      "missing": [
+        "缺少判定交易区间与三角形的具体标准",
+        "缺少深度回调的幅度或比例定义",
+        "缺少回调后的实际价格走势确认",
+        "缺少时间周期与样本范围说明"
+      ],
+      "notes": "两条证据分别指向交易区间和三角形两种不同结构，彼此不一致，无法据此唯一确定深度回调后的市场结构，需补充判定条件或更多样本才能回答。",
+      "kept": false,
+      "final": false
+    }
+  ]
+}
