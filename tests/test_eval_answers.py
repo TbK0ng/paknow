@@ -112,6 +112,35 @@ def test_citation_checks_pass_when_all_cited_ids_are_citable_and_not_graph():
     }
 
 
+def test_citation_checks_allow_a_graph_entry_that_is_also_text_citable():
+    # the graph block points at a text unit too ("已见 [n]"): citing it cites
+    # the author's text, not graph synthesis
+    checks = eval_answers.citation_checks(["e1"], {"e1"}, {"e1", "g1"})
+
+    assert checks["graph_citations"] == []
+    assert checks["hard_pass"] is True
+
+
+def test_refresh_checks_recomputes_from_stored_ids():
+    record = {
+        "id": "q1",
+        "arm": "graph",
+        "status": "ok",
+        "cited_evidence_ids": ["g1"],
+        "citable_ids": ["e1"],
+        "graph_evidence_ids": ["g1"],
+        "expected_evidence": ["e1"],
+        "graph_citations": [],  # stale value from an older run
+        "hard_pass": True,
+    }
+
+    refreshed = eval_answers.refresh_checks(record)
+
+    assert refreshed["graph_citations"] == ["g1"]
+    assert refreshed["hard_pass"] is False
+    assert refreshed["coverage"] == 1.0
+
+
 def test_citation_checks_fail_on_out_of_set_and_graph_citations():
     checks = eval_answers.citation_checks(["e1", "e9", "g1"], {"e1"}, {"g1"})
 

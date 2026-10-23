@@ -112,8 +112,9 @@ question and its own retrieval result; the runner never passes the expected
 evidence or the gold answer points into the chain. Routes, rounds, retrieval
 failures, the answer, cited ids, the citable set and the graph evidence ids are
 recorded per item. The deterministic checks are pure: every cited id must be in
-that answer's citable set, no graph evidence id may be cited, and
-expected-evidence coverage (`covered / expected`, with the missing ids) is
+that answer's citable set, no graph-only evidence id may be cited (a graph entry
+that duplicates a citable text unit is still that text unit, not synthesis),
+and expected-evidence coverage (`covered / expected`, with the missing ids) is
 computed per item. Coverage is reported as a distribution, not folded into the
 hard verdict.
 

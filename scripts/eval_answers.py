@@ -94,11 +94,17 @@ def citation_checks(
     citable_ids: Iterable[str],
     graph_ids: Iterable[str],
 ) -> dict[str, Any]:
-    """Citation hard constraints: in the citable set, and never graph-only."""
+    """Citation hard constraints: in the citable set, and never graph-only.
+
+    A graph entry may point at evidence that is also a citable text unit (the
+    graph block renders it as ``已见 [n]``); citing that id is citing the
+    author's text, not the graph's synthesis. Only ids that exist *solely* as
+    graph evidence are forbidden.
+    """
     citable = set(citable_ids)
-    graph = set(graph_ids)
+    graph_only = set(graph_ids) - citable
     invalid = [eid for eid in cited_ids if eid not in citable]
-    graph_citations = [eid for eid in cited_ids if eid in graph]
+    graph_citations = [eid for eid in cited_ids if eid in graph_only]
     return {
         "invalid_citations": invalid,
         "graph_citations": graph_citations,
@@ -211,6 +217,27 @@ def run_item(
         **coverage,
         "elapsed_s": round(elapsed, 3),
     }
+
+
+def refresh_checks(record: Mapping[str, Any]) -> dict:
+    """Recompute deterministic fields from the stored ids (pure, idempotent)."""
+    record = dict(record)
+    if record.get("status") != "ok":
+        return record
+    record.update(
+        citation_checks(
+            record.get("cited_evidence_ids") or [],
+            record.get("citable_ids") or [],
+            record.get("graph_evidence_ids") or [],
+        )
+    )
+    record.update(
+        expected_coverage(
+            record.get("expected_evidence") or [],
+            record.get("citable_ids") or [],
+        )
+    )
+    return record
 
 
 # ---------------------------------------------------------------------------
@@ -468,7 +495,9 @@ def main() -> None:
         )
     wall = time.monotonic() - started
 
-    records = merge_records(items, ARMS, checkpoint)
+    # recompute the deterministic fields from the stored ids so artifacts stay
+    # consistent when the constraint definition is tightened between runs
+    records = [refresh_checks(r) for r in merge_records(items, ARMS, checkpoint)]
     timestamp = out_dir.name
     payload = build_payload(
         dataset_path=args.dataset,
@@ -477,7 +506,17 @@ def main() -> None:
         limit=args.limit,
         timestamp=timestamp,
     )
-    payload["wall_time_s"] = round(wall, 1)
+    summary_path = out_dir / "summary.json"
+    previous_wall = 0.0
+    if summary_path.exists():
+        try:
+            previous_wall = float(json.loads(summary_path.read_text(encoding="utf-8")).get("wall_time_s") or 0)
+        except (ValueError, json.JSONDecodeError):
+            previous_wall = 0.0
+    payload["wall_time_s"] = round(previous_wall + wall, 1)
+    payload["chain_time_s"] = round(
+        sum(float(r.get("elapsed_s") or 0) for r in records), 1
+    )
     payload["ran"] = len(todo)
     write_records(out_dir / "records.jsonl", records)
     (out_dir / "summary.json").write_text(
