@@ -1,7 +1,6 @@
 """Evidence-grounded answer generation with citation binding (plan §7.3)."""
 from __future__ import annotations
 
-import json
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -63,6 +62,50 @@ def build_context(units: list[dict[str, Any]]) -> str:
     return "\n\n".join(_render_unit(i, u) for i, u in enumerate(units))
 
 
+def _graph_locator(entry: dict[str, Any]) -> str:
+    loc = []
+    if entry.get("chapter_path"):
+        loc.append(" › ".join(entry["chapter_path"]))
+    if entry.get("pdf_page"):
+        loc.append(f"PDF第{entry['pdf_page']}页")
+    if entry.get("printed_page"):
+        loc.append(f"印刷页{entry['printed_page']}")
+    if entry.get("figure_label"):
+        loc.append(str(entry["figure_label"]))
+    if entry.get("epub_href"):
+        loc.append("EPUB " + str(entry["epub_href"]).rsplit("/", 1)[-1])
+    return " · ".join(loc) or "未知出处"
+
+
+def render_graph_context(entries: list[dict[str, Any]]) -> list[str]:
+    """One compact non-citable line per graph entry, each carrying its id.
+
+    Entries already present in the citable text keep only a ``已见 [n]``
+    pointer so the body is never duplicated and the citation binding stays
+    intact.
+    """
+    lines: list[str] = []
+    for entry in entries:
+        kind = "机制" if entry.get("source") == "mechanism" else "分类"
+        claim = entry.get("claim")
+        if claim:
+            desc = f"{claim.get('subject', '')} → {claim.get('predicate', '')}"
+        elif entry.get("relation"):
+            desc = f"{entry.get('from_label', '')} -{entry['relation']}-> {entry.get('to_label', '')}"
+        else:
+            desc = entry.get("from_label") or "关联证据"
+        ref = f"证据 {entry.get('evidence_id')}"
+        if entry.get("seen_index") is not None:
+            ref += f"（已见 [{entry['seen_index']}]）"
+            body = ""
+        else:
+            body = f" | {(entry.get('text') or '')[:220]}"
+        lines.append(
+            f"- （不可引用·仅理解辅助）[{kind}] {desc} | {ref} | {_graph_locator(entry)}{body}"
+        )
+    return lines
+
+
 def generate(
     query: str,
     units: list[dict[str, Any]],
@@ -70,7 +113,7 @@ def generate(
     *,
     mode: str = "extractive",
     max_tokens: int = 8192,
-    graph_context: dict[str, Any] | None = None,
+    graph_context: list[dict[str, Any]] | None = None,
     toc_context: list[dict[str, Any]] | None = None,
     fallback: str | None = None,
     barrefs: list[dict[str, Any]] | None = None,
@@ -93,8 +136,8 @@ def generate(
         )
     if graph_context:
         parts.append(
-            "知识图谱上下文（概念/主张/周期链，用于校验与归纳，不直接引用编号）：\n"
-            + json.dumps(graph_context, ensure_ascii=False, indent=1)
+            "图谱扩展（不可引用，仅作理解辅助；引用编号只指向「证据」区）：\n"
+            + "\n".join(render_graph_context(graph_context))
         )
     if visual:
         parts.append(

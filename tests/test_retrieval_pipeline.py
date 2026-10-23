@@ -7,6 +7,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from paknow.graph import expansion
 from paknow.retrieval import pipeline
 
 
@@ -47,6 +48,9 @@ def _patched(monkeypatch, *, hits_by_query, fail_queries=(), expanded=None):
     )
     monkeypatch.setattr(pipeline, "toc_recall", lambda q: [{"doc_title": "T", "chapter_path": ["c"]}])
     monkeypatch.setattr(pipeline, "barref_lookup", lambda q: [{"bars": ["1"], "relation": "top", "pattern": "p", "snippet": "s"}])
+    # graph expansion is a separate partition; this test file exercises text recall
+    monkeypatch.setattr(expansion, "load_mechanism_candidates", lambda *a, **k: [])
+    monkeypatch.setattr(expansion, "load_taxonomy_candidates", lambda *a, **k: [])
 
 
 def test_text_hits_and_auxiliary_context_are_separate_partitions(monkeypatch):
@@ -68,7 +72,7 @@ def test_text_hits_and_auxiliary_context_are_separate_partitions(monkeypatch):
     assert [f["figure_id"] for f in result.figures] == ["f1"]
     assert result.toc_context == [{"doc_title": "T", "chapter_path": ["c"]}]
     assert result.barrefs[0]["pattern"] == "p"
-    assert result.graph_evidence == [] and result.graph_context == {}
+    assert result.graph_evidence == [] and result.graph_context == []
     assert result.failures == []
     assert result.query_count == 1  # duplicate query collapsed
 

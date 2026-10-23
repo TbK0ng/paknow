@@ -13,6 +13,10 @@ from pydantic import BaseModel, Field
 from paknow.gateway import gateway
 from paknow.retrieval.dictionary import expand_query
 
+# A route is a recall channel with its own score. Graph expansion is not a
+# route: it runs after recall and never participates in scoring (ADR-0003).
+ROUTE_VOCAB = ("hybrid_text", "toc", "visual_page", "numeric")
+
 _QUERY_SYSTEM = """你是交易资料系统的查询理解与构建器。输入用户问题、已识别术语、附件。输出一个结构化查询计划，字段语义：
 
 - intent: knowledge_qa(具体知识/定义) | synthesis(机制/框架/原理/综述) | chart_analysis(上传图表) | backtest(回测/统计) | study(学习路径/全书)。
@@ -21,7 +25,7 @@ _QUERY_SYSTEM = """你是交易资料系统的查询理解与构建器。输入�
 - sub_queries: 2~4 个检索子问题，覆盖不同角度，中英术语都写。
 - hyde: 写一段假设性的完整回答（150~300字，用于召回，不是最终答案），把该问题可能的标准答案骨架写出来。
 - evidence_needs: definition/context/figure/counterexample/comparison/toc/cycle(周期阶段)。
-- routes: hybrid_text/toc/graph_local/visual_page/numeric。
+- routes: hybrid_text/toc/visual_page/numeric（只列有独立打分的召回通道）。
 - wants_examples: 用户是否明确要求举例/图例（"举个例子/有哪些图/哪里出现过/给我看图"）。仅在明确要例子时为 true；理解类问题（"什么是/如何判断/为什么"）为 false。
 - metadata: 结构化过滤提示（如 {doc_hint}），没有就 {}。
 - data_state: market_ready|screenshot_only|none；请求数值但无行情数据时不得走 numeric。
@@ -56,7 +60,11 @@ def route(query: str, images: list[bytes] | None = None) -> QueryPlan:
         {"role": "user", "content": user},
     ]
     try:
-        return gateway.chat_json(QueryPlan, messages, images=images, max_tokens=2048)
+        plan = gateway.chat_json(QueryPlan, messages, images=images, max_tokens=2048)
+        # drop anything outside the scored-channel vocabulary, including the
+        # retired graph_local label
+        plan.routes = [r for r in plan.routes if r in ROUTE_VOCAB]
+        return plan
     except Exception:
         # fail-safe: degrade to a plain knowledge_qa plan
         return QueryPlan(
