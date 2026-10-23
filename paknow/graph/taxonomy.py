@@ -48,7 +48,6 @@ TAXONOMY_RELATIONS: tuple[Relation, ...] = (
     Relation.INVALIDATED_BY,
     Relation.TRANSITIONS_TO,
 )
-_RELATION_VALUES = tuple(r.value for r in TAXONOMY_RELATIONS)
 
 _HEADER_THRESHOLD = 5
 _WS = re.compile(r"\s+")
@@ -137,6 +136,18 @@ def dedupe_headings(
     )
 
 
+def _match_concept(match: TermMatch) -> str:
+    """Resolve an alias to the dictionary's primary canonical concept.
+
+    Chapter-derived ``auto_*`` dictionary entries repeat the aliases of the base
+    vocabulary (``auto_trading_range_tr`` also claims ``交易区间``). Identity
+    resolution keeps the first registered canonical for a surface form, so this
+    pins a title mentioning ``交易区间`` on ``trading_range`` instead of minting a
+    second concept node with the same label.
+    """
+    return canonical_for(match.alias) or match.canonical
+
+
 def _failed_variant(canonical: str) -> str:
     """``突破`` + ``失败`` resolves to the dictionary's ``failed_breakout``."""
     if canonical.startswith("failed_"):
@@ -171,16 +182,18 @@ def parse_heading(text: str) -> ParsedHeading | None:
     right_matches = find_terms(right)
     if not left_matches or not right_matches:
         return None
+    left_concepts = [_match_concept(m) for m in left_matches]
+    right_concepts = [_match_concept(m) for m in right_matches]
 
     # the head of the situation is the concept right before a 失败 marker (the
     # failed variant), otherwise its first concept; the outcome's head is last
     failure_at = left.find("失败")
     if failure_at >= 0:
-        before = [m for m in left_matches if m.end <= failure_at]
-        from_concept = _failed_variant(before[-1].canonical) if before else left_matches[0].canonical
+        before = [_match_concept(m) for m in left_matches if m.end <= failure_at]
+        from_concept = _failed_variant(before[-1]) if before else left_concepts[0]
     else:
-        from_concept = left_matches[0].canonical
-    to_concept = right_matches[-1].canonical
+        from_concept = left_concepts[0]
+    to_concept = right_concepts[-1]
 
     if "随后" in right:
         relation = Relation.TRANSITIONS_TO
@@ -195,7 +208,7 @@ def parse_heading(text: str) -> ParsedHeading | None:
     elif re.search(r"中的|之中的", left) and _only_concepts(left, left_matches) and _only_concepts(right, right_matches):
         # "context：entry" where the entry is a subtype of the context concept
         relation = Relation.PART_OF
-        from_concept, to_concept = right_matches[-1].canonical, left_matches[-1].canonical
+        from_concept, to_concept = right_concepts[-1], left_concepts[-1]
     else:
         return None
 
@@ -241,42 +254,69 @@ def _concepts_in(edges: Iterable[TaxonomyEdge]) -> set[str]:
     return {c for e in edges for c in (e.from_concept, e.to_concept)}
 
 
-def rebuild_taxonomy(*, header_threshold: int = _HEADER_THRESHOLD, session_factory=None) -> dict[str, Any]:
-    """Rebuild heading-derived taxonomy edges; seeded edges are untouched."""
+def load_heading_units(
+    *, doc_ids: Iterable[str] | None = None, session_factory=None
+) -> list[HeadingUnit]:
+    """Heading evidence units in deterministic order, optionally scoped to docs."""
     factory = session_factory or SessionLocal
     with factory() as s:
-        rows = (
-            s.query(EvidenceUnitRow)
-            .filter(EvidenceUnitRow.block_type == "heading")
-            .order_by(EvidenceUnitRow.doc_id, EvidenceUnitRow.evidence_id)
-            .all()
-        )
+        query = s.query(EvidenceUnitRow).filter(EvidenceUnitRow.block_type == "heading")
+        if doc_ids is not None:
+            ids = sorted(doc_ids)
+            if not ids:
+                return []
+            query = query.filter(EvidenceUnitRow.doc_id.in_(ids))
+        rows = query.order_by(EvidenceUnitRow.doc_id, EvidenceUnitRow.evidence_id).all()
+        return [HeadingUnit(r.evidence_id, r.doc_id, r.text) for r in rows]
+
+
+def rebuild_taxonomy(
+    *,
+    header_threshold: int = _HEADER_THRESHOLD,
+    doc_ids: Iterable[str] | None = None,
+    session_factory=None,
+) -> dict[str, Any]:
+    """Rebuild heading-derived taxonomy edges; other origins are untouched.
+
+    ``doc_ids`` scopes the parse (the encyclopedia, in the real corpus); ``None``
+    reads every heading in the database.
+    """
+    factory = session_factory or SessionLocal
     build = build_taxonomy_edges(
-        (HeadingUnit(r.evidence_id, r.doc_id, r.text) for r in rows),
+        load_heading_units(doc_ids=doc_ids, session_factory=factory),
         header_threshold=header_threshold,
     )
 
     with factory() as s:
-        existing = {
-            n.concept_id
+        existing_nodes = {
+            n.node_id: n
             for n in s.query(GraphNodeRow).filter(GraphNodeRow.node_type == "concept").all()
         }
-        for canonical in sorted(_concepts_in(build.edges) - existing):
+        existing_concepts = {n.concept_id for n in existing_nodes.values() if n.concept_id}
+        for canonical in sorted(_concepts_in(build.edges) - existing_concepts):
+            node_id = concept_node_id(canonical)
+            node = existing_nodes.get(node_id)
+            if node is not None:
+                # a pre-existing node without an identity inherits it instead of
+                # producing a duplicate row with the same primary key
+                node.concept_id = canonical
+                node.label = node.label or label_for(canonical)
+                node.concept_kind = node.concept_kind or concept_kind_for(canonical)
+                continue
             s.add(
                 GraphNodeRow(
-                    node_id=concept_node_id(canonical),
+                    node_id=node_id,
                     node_type="concept",
                     label=label_for(canonical),
                     concept_id=canonical,
                     concept_kind=concept_kind_for(canonical),
                 )
             )
+        # origin names the producer, so a full rebuild replaces every heading
+        # edge even if the parser's relation set changed
         (
             s.query(GraphEdgeRow)
-            .filter(
-                GraphEdgeRow.origin == ORIGIN_HEADING,
-                GraphEdgeRow.relation.in_(_RELATION_VALUES),
-            )
+            .filter(GraphEdgeRow.origin == ORIGIN_HEADING)
             .delete(synchronize_session=False)
         )
         for e in build.edges:
@@ -324,7 +364,14 @@ def taxonomy_neighbors(
                 GraphEdgeRow.relation.in_(allowed),
                 or_(GraphEdgeRow.from_node.in_(node_ids), GraphEdgeRow.to_node.in_(node_ids)),
             )
-            .order_by(GraphEdgeRow.relation, GraphEdgeRow.from_node, GraphEdgeRow.to_node)
+            .order_by(
+                GraphEdgeRow.relation,
+                GraphEdgeRow.from_node,
+                GraphEdgeRow.to_node,
+                GraphEdgeRow.origin,
+                GraphEdgeRow.source,
+                GraphEdgeRow.edge_id,
+            )
             .limit(limit)
             .all()
         )

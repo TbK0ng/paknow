@@ -161,3 +161,130 @@ def test_rebuild_preserves_seed_edges_and_is_idempotent(monkeypatch):
     rels = {(n["relation"], n["to"]["concept_id"], n["direction"]) for n in neighbors}
     assert ("TRANSITIONS_TO", "breakout", "out") in rels
     assert all(n["evidence_id"] for n in neighbors)
+
+
+def test_shared_alias_resolves_to_primary_concept_not_auto_duplicate():
+    # configs/terms.yaml has both trading_range and auto_trading_range_tr for
+    # 「交易区间」; the parser must not mint a second node carrying the same label
+    parsed = parse_heading("楔形底下方的突破失败：交易区间")
+
+    assert parsed is not None
+    assert parsed.relation is Relation.INVALIDATED_BY
+    assert parsed.to_concept == "trading_range"
+
+
+def _memory_session(monkeypatch):
+    engine = create_engine("sqlite://")
+    Base.metadata.create_all(engine)
+    Session = sessionmaker(bind=engine, expire_on_commit=False)
+    monkeypatch.setattr(taxonomy, "SessionLocal", Session)
+    return Session
+
+
+def _add_doc(Session, doc_id: str, headings: list[tuple[str, str]]) -> None:
+    with Session() as s:
+        s.add(DocumentRow(doc_id=doc_id, content_hash=doc_id, format="pdf", source_path=f"{doc_id}.pdf"))
+        for eid, text in headings:
+            s.add(
+                EvidenceUnitRow(
+                    evidence_id=eid,
+                    doc_id=doc_id,
+                    locator={"doc_id": doc_id, "format": "pdf", "pdf_page_1based": 1},
+                    text=text,
+                    text_hash=eid,
+                    block_type="heading",
+                )
+            )
+        s.commit()
+
+
+def test_rebuild_scopes_parsing_to_requested_documents(monkeypatch):
+    Session = _memory_session(monkeypatch)
+    _add_doc(Session, "enc", [("e1", "18根K线区间下方的突破失败：随后向上突破")])
+    _add_doc(Session, "book", [("b1", "向下跳空：卖出高潮，但向上反转失败")])
+
+    stats = taxonomy.rebuild_taxonomy(doc_ids=["enc"])
+
+    assert stats["headings_in"] == 1
+    assert stats["edges"] == 1
+    with Session() as s:
+        assert s.query(GraphEdgeRow).filter(GraphEdgeRow.origin == "heading_parse").count() == 1
+
+
+def test_rebuild_replaces_every_heading_edge_regardless_of_relation(monkeypatch):
+    Session = _memory_session(monkeypatch)
+    _add_doc(Session, "enc", [("e1", "18根K线区间下方的突破失败：随后向上突破")])
+    with Session() as s:
+        s.add_all(
+            [
+                GraphEdgeRow(
+                    edge_id="stale-heading",
+                    from_node=concept_node_id("trend"),
+                    to_node=concept_node_id("breakout"),
+                    relation="SUPPORTED_BY",
+                    source="old",
+                    origin="heading_parse",
+                ),
+                GraphEdgeRow(
+                    edge_id="seed-edge",
+                    from_node=concept_node_id("trend"),
+                    to_node=concept_node_id("trading_range"),
+                    relation="TRANSITIONS_TO",
+                    source="seed",
+                    origin="seed",
+                ),
+            ]
+        )
+        s.commit()
+
+    taxonomy.rebuild_taxonomy(doc_ids=["enc"])
+
+    with Session() as s:
+        assert s.query(GraphEdgeRow).filter(GraphEdgeRow.edge_id == "stale-heading").count() == 0
+        assert s.query(GraphEdgeRow).filter(GraphEdgeRow.edge_id == "seed-edge").count() == 1
+        assert s.query(GraphEdgeRow).filter(GraphEdgeRow.origin == "heading_parse").count() == 1
+
+
+def test_neighbor_order_is_stable_when_endpoints_and_relation_match(monkeypatch):
+    Session = _memory_session(monkeypatch)
+    _add_doc(Session, "enc", [("e1", "18根K线区间下方的突破失败：随后向上突破")])
+    with Session() as s:
+        s.add_all(
+            [
+                GraphNodeRow(
+                    node_id=concept_node_id("failed_breakout"),
+                    node_type="concept",
+                    label="失败突破",
+                    concept_id="failed_breakout",
+                ),
+                GraphNodeRow(
+                    node_id=concept_node_id("breakout"),
+                    node_type="concept",
+                    label="突破",
+                    concept_id="breakout",
+                ),
+                GraphEdgeRow(
+                    edge_id="seed-edge",
+                    from_node=concept_node_id("failed_breakout"),
+                    to_node=concept_node_id("breakout"),
+                    relation="TRANSITIONS_TO",
+                    source="seed",
+                    origin="seed",
+                ),
+                GraphEdgeRow(
+                    edge_id="heading-edge",
+                    from_node=concept_node_id("failed_breakout"),
+                    to_node=concept_node_id("breakout"),
+                    relation="TRANSITIONS_TO",
+                    source="e1",
+                    origin="heading_parse",
+                ),
+            ]
+        )
+        s.commit()
+
+    first = taxonomy.taxonomy_neighbors(["failed_breakout"])
+    second = taxonomy.taxonomy_neighbors(["failed_breakout"])
+
+    assert first == second
+    assert [n["origin"] for n in first] == ["heading_parse", "seed"]
