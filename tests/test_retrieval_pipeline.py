@@ -115,3 +115,57 @@ def test_expand_failure_does_not_break_text_hits(monkeypatch):
 
     assert [h["evidence_id"] for h in result.text_hits] == ["e4"]
     assert any("db locked" in f for f in result.failures)
+
+
+def test_graph_off_is_an_empty_partition_with_identical_text_hits(monkeypatch):
+    _patched(
+        monkeypatch,
+        hits_by_query={
+            "q": [
+                {"evidence_id": "e1", "text": "a", "doc_id": "d1", "score": 0.9},
+                {"evidence_id": "e2", "text": "b", "doc_id": "d1", "score": 0.5},
+            ]
+        },
+    )
+    seeded: list[str] = []
+    monkeypatch.setattr(
+        expansion, "seed_concepts", lambda text, **kw: seeded.append(text) or ["concept"]
+    )
+
+    off = pipeline.retrieve_evidence(
+        "q",
+        ["q"],
+        prior_graph_evidence=[{"evidence_id": "g1"}],
+        expand_graph=False,
+    )
+
+    assert seeded == []  # no seed query was submitted
+    assert off.graph_evidence == []
+    assert off.graph_stats["enabled"] is False
+    assert off.graph_stats["selected"] == 0
+    assert off.graph_stats["accumulated"] == 0
+    assert off.failures == []
+
+    on = pipeline.retrieve_evidence("q", ["q"])
+
+    assert seeded[0] == "q"  # the query seed is submitted once the layer is on
+    assert on.graph_stats["enabled"] is True
+    assert [h["evidence_id"] for h in on.text_hits] == [
+        h["evidence_id"] for h in off.text_hits
+    ]
+    assert on.citable_units == off.citable_units
+    assert on.citation_index == off.citation_index
+
+
+def test_graph_off_does_not_report_seed_failures(monkeypatch):
+    _patched(monkeypatch, hits_by_query={"q": [{"evidence_id": "e1", "text": "a", "doc_id": "d1", "score": 0.9}]})
+
+    def boom(*args, **kwargs):
+        raise RuntimeError("seed offline")
+
+    monkeypatch.setattr(expansion, "seed_concepts", boom)
+
+    result = pipeline.retrieve_evidence("q", ["q"], expand_graph=False)
+
+    assert [h["evidence_id"] for h in result.text_hits] == ["e1"]
+    assert result.failures == []

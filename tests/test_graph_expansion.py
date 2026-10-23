@@ -444,6 +444,20 @@ def test_seam_with_real_hydration_dedupes_seen_evidence(monkeypatch):
     assert result.text_hits[0]["evidence_id"] == "m1"
 
 
+def test_graph_evidence_budget_is_14_and_the_other_caps_stay():
+    assert expansion.MAX_EVIDENCE == 14
+    assert expansion.MAX_CONTEXT_TOKENS == 1200
+    assert expansion.MAX_EDGES == 32
+
+    plan = expansion.plan_context(
+        mechanism=[_candidate(f"g{i}") for i in range(20)],
+        taxonomy=[],
+    )
+
+    assert plan.stats["selected"] == 14
+    assert plan.stats["truncated_evidence"] is True
+
+
 def test_default_graph_block_budget_is_1200_estimated_tokens():
     assert expansion.MAX_CONTEXT_TOKENS == 1200
     plan = expansion.plan_context(
@@ -461,7 +475,7 @@ def test_seam_exposes_graph_budget_stats_for_evaluation(monkeypatch):
     _patched(
         monkeypatch,
         hits_by_query={},
-        mechanism=[_candidate(f"g{i}") for i in range(10)],
+        mechanism=[_candidate(f"g{i}") for i in range(expansion.MAX_EVIDENCE + 2)],
     )
 
     result = pipeline.retrieve_evidence("突破", ["突破"])
