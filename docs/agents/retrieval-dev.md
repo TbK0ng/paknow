@@ -1,0 +1,144 @@
+# Retrieval / eval dev environment
+
+Copy-paste reference for anything that touches the text index, the evidence graph,
+or the gold evaluation. Commands assume the main repo at `E:/PAknow`; run them
+from the directory named in each block. Python is the shared venv
+`E:/PAknow/.venv/Scripts/python.exe`.
+
+## Paths and overrides
+
+| Thing | Default | Override |
+|---|---|---|
+| Metadata DB | `sqlite:///./data/paknow.db` (relative to CWD; `E:/PAknow/data/paknow.db` from the main repo root) | `PAKNOW_DB_URL` — always use the absolute form `sqlite:///E:/PAknow/data/paknow.db` |
+| Derived objects / Qdrant | `<project_root>/data/objects` (`E:/PAknow/data/objects` in the main repo) | `OBJECTS_DIR=E:/PAknow/data/objects` |
+| Embedded Qdrant storage | `<OBJECTS_DIR>/qdrant` | `QDRANT_URL` switches to a server (empty = embedded) |
+| BGE-M3 / reranker / VL cache | `E:\use_model` (`HF_HOME` is set by `paknow/config.py`) | `HF_HOME`, or the `hf_home` setting |
+| Gold dataset | `evals/gold/graph_expansion.json` | `--dataset` |
+| Frozen baseline | `.scratch/graph-expansion/gold-baseline.json` | `--baseline` |
+| Baseline / graph output | `.scratch/graph-expansion/gold-{baseline,regression}.json` | `--out` |
+
+`project_root` is derived from the installed package location, so a worktree
+resolves `data/` inside the worktree. Worktrees are created without the ignored
+`data/` tree (`.gitignore`: `data/objects/`, `data/*.db*`): the DB, object store
+and Qdrant index are absent. Point the env vars at the main repo's absolute
+paths, or create an untracked junction (`mklink /J data\objects E:\PAknow\data\objects`).
+Never commit `data/`.
+
+## Environment setup
+
+Git Bash / POSIX form (each block below assumes it):
+
+```bash
+export PAKNOW_DB_URL=sqlite:///E:/PAknow/data/paknow.db
+export OBJECTS_DIR=E:/PAknow/data/objects
+export PYTHONPATH=.
+```
+
+PowerShell equivalent:
+
+```powershell
+$env:PAKNOW_DB_URL="sqlite:///E:/PAknow/data/paknow.db"
+$env:OBJECTS_DIR="E:/PAknow/data/objects"
+$env:PYTHONPATH="."
+```
+
+Run every command from the checkout root (main repo or worktree); `PYTHONPATH=.`
+makes `paknow` and `scripts/` imports resolve. `--help` works with no env at all.
+
+## Commands
+
+### Tests (no DB, no Qdrant, no model)
+
+```bash
+PYTHONPATH=. E:/PAknow/.venv/Scripts/python.exe -m pytest tests -q
+```
+
+### Gold evaluation (needs DB + objects + BGE-M3)
+
+```bash
+PAKNOW_DB_URL=sqlite:///E:/PAknow/data/paknow.db \
+OBJECTS_DIR=E:/PAknow/data/objects \
+PYTHONPATH=. E:/PAknow/.venv/Scripts/python.exe scripts/eval_gold.py --mode baseline
+
+PAKNOW_DB_URL=sqlite:///E:/PAknow/data/paknow.db \
+OBJECTS_DIR=E:/PAknow/data/objects \
+PYTHONPATH=. E:/PAknow/.venv/Scripts/python.exe scripts/eval_gold.py --mode graph
+```
+
+- `--mode baseline` re-records the frozen baseline. Do this only when the
+  dataset or the retrieval metric is intentionally re-frozen; otherwise use
+  `--mode graph`, which compares against the committed baseline.
+- `--mode graph` writes `.scratch/graph-expansion/gold-regression.json` in the
+  current checkout. `--limit N` and `--out PATH` are available for partial runs.
+- Neither mode calls the routing model; both load the embedding model and the
+  Qdrant text collection.
+
+### Taxonomy rebuild (needs DB)
+
+```bash
+# dry run: prints dedupe/parse/coverage numbers, edge counts and fingerprint
+PAKNOW_DB_URL=sqlite:///E:/PAknow/data/paknow.db PYTHONPATH=. \
+  E:/PAknow/.venv/Scripts/python.exe scripts/build_taxonomy.py
+
+# apply: replaces every origin='heading_parse' edge; seeded/claim/figure edges untouched
+PAKNOW_DB_URL=sqlite:///E:/PAknow/data/paknow.db PYTHONPATH=. \
+  E:/PAknow/.venv/Scripts/python.exe scripts/build_taxonomy.py --apply
+```
+
+`--doc-id <id>` scopes to one document; `--header-threshold N` drops titles that
+repeat across headings (default 5). Dry run writes nothing.
+
+### Claim alignment (needs DB)
+
+```bash
+# dry run: deterministic alias matching only; rewrites the two report files below
+PAKNOW_DB_URL=sqlite:///E:/PAknow/data/paknow.db PYTHONPATH=. \
+  E:/PAknow/.venv/Scripts/python.exe scripts/align_claims.py
+
+# apply deterministic alignments; --model adds the residual model pass (needs DEEPSEEK_API_KEY)
+PAKNOW_DB_URL=sqlite:///E:/PAknow/data/paknow.db PYTHONPATH=. \
+  E:/PAknow/.venv/Scripts/python.exe scripts/align_claims.py --apply
+```
+
+Dry run does not write the DB but does regenerate
+`.scratch/graph-expansion/claim-alignment.md` and `claim-residuals.json` in the
+current checkout — restore those if you did not mean to change them.
+
+### Smoke runs (needs the full corpus, Qdrant and often the cloud key)
+
+`scripts/smoke_{full,query,search,ingest,pdf,chart}.py`. Keep them in the same
+serialized window as the eval (see below).
+
+## Embedded Qdrant is single-process
+
+The default local-mode client locks its storage folder. A second client on the
+same `data/objects/qdrant` fails with:
+
+```
+Storage folder ... is already accessed by another instance of Qdrant client.
+```
+
+Serialize every retrieval/eval/smoke run: stop `uvicorn` (and any notebook or
+script holding the client) before starting another. Never run two evals, an eval
+plus a smoke run, or two agents' retrieval work against the same objects dir
+concurrently. Two checks may read the DB concurrently; only the vector store is
+locked. For parallel work, either give one process `QDRANT_URL=http://localhost:6333`
+server or copy the objects dir per worktree (large).
+
+## Failure lookup
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| `sqlite3.OperationalError: unable to open database file`, or "no such table" | `PAKNOW_DB_URL` relative and resolved against the worktree CWD / absent `data/` | Set the absolute main-repo URL |
+| `Storage folder ... is already accessed by another instance of Qdrant client.` | Embedded client already open (API server, eval, smoke) | Stop the other process; run serially |
+| Empty search results / "collection not found" | `OBJECTS_DIR` points at an empty or stale tree | Set `OBJECTS_DIR=E:/PAknow/data/objects` |
+| Model download attempts, `OSError` resolving `BAAI/bge-m3`, or slow first call | `HF_HOME` not pointing at the warmed cache | Confirm `settings.hf_home` is `E:\use_model`; set `HF_HOME` before importing `paknow` |
+| `ModuleNotFoundError: paknow` / `scripts` | `PYTHONPATH=.` missing or wrong CWD | Run from the checkout root with `PYTHONPATH=.` |
+| Baseline numbers changed unexpectedly | `--mode baseline` was used instead of `--mode graph` | Restore `gold-baseline.json` from git; use graph mode |
+| Evals are unusably slow | First call downloads/loads BGE-M3 on CPU | Check the CUDA env (torch CUDA build per README); reuse one process for repeated calls |
+
+## Not runnable without infrastructure
+
+`eval_gold.py` (both modes), the taxonomy dry run/apply, the claim-alignment
+dry run/apply and all `smoke_*` scripts need the local corpus artifacts above.
+Only `--help` and the test suite run green without them.
