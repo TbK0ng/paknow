@@ -58,7 +58,7 @@ curl -s -X POST http://localhost:8000/query \
 ```json
 {
   "intent": "synthesis",
-  "routes": ["hybrid_text", "graph_local", "toc"],
+  "routes": ["hybrid_text", "toc"],
   "wants_examples": false,
   "hits": [ {"evidence_id": "...", "reranked": true, "...": "..."} ],
   "figures": [],

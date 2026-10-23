@@ -50,6 +50,7 @@ class RetrievalResult:
     failures: list[str] = field(default_factory=list)
     acc: dict[str, dict[str, Any]] = field(default_factory=dict)
     expanded_concepts: list[str] = field(default_factory=list)
+    graph_stats: dict[str, Any] = field(default_factory=dict)
     query_count: int = 0
 
 
@@ -177,10 +178,12 @@ def retrieve_evidence(
         expanded=prior_expanded,
     )
     graph_entries: list[dict[str, Any]] = []
+    graph_stats: dict[str, Any] = {}
     if new_seeds:
         plan, graph_failures = expansion.expand(new_seeds, seen_index=seen_index)
         failures.extend(graph_failures)
         graph_entries = plan.entries
+        graph_stats = {**plan.stats, "seeds": len(new_seeds)}
         prior_expanded = list(dict.fromkeys([*prior_expanded, *new_seeds]))
 
     return RetrievalResult(
@@ -194,6 +197,7 @@ def retrieve_evidence(
         failures=failures,
         acc=seen,
         expanded_concepts=prior_expanded,
+        graph_stats=graph_stats,
         query_count=len(round_queries),
     )
 

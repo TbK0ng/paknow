@@ -37,7 +37,7 @@
 | 查询构建 | 多查询、Step-Back、HyDE、LLM/向量路由、Text2SQL/Cypher | 改写已采用；结构化查询未用 | 单次 QueryPlan 替代多步 Agent；metadata 未接线 |
 | 生成 | OutputParser/Pydantic、Function Calling、GRNF、引用 | 结构化输出与引用更强；工具调用缺口 | `chat_json` + Pydantic + `[n]` 后端绑定 |
 | 评估 | RAG Triad、Precision/Recall/MRR/MAP、Ragas、Phoenix | **最大缺口** | 只有程序化 trace 信号，没有质量评测 |
-| 图谱 | KG 构建、Neo4j/Cypher、GraphRAG/LightRAG/FRAG/GraphIRAG | 局部图检索已采用 | 条件化主张 + 有界 BFS；无社区摘要/全局 GraphRAG |
+| 图谱 | KG 构建、Neo4j/Cypher、GraphRAG/LightRAG/FRAG/GraphIRAG | 局部图检索已采用 | 条件化主张 + 有界沿边扩展；无社区摘要/全局 GraphRAG |
 | Agentic | Plan→Retrieve→Critique→Refine、工具生态、多 Agent | 受控采用 | 有核验-补检索；无自主工具选择/多 Agent |
 | 记忆/工程 | 教程仅 trace；PAknow 额外做 SOP | 超出教程 | SOP 生命周期 + git；active 被评测缺口卡住 |
 
@@ -239,8 +239,8 @@ Docker，且 Qdrant 的命名向量刚好满足“同点 dense+sparse + RRF”�
 | LlamaIndex Evaluation | 未使用 | 不适用 | 没有用 LlamaIndex |
 | Ragas（Faithfulness / AnswerRelevancy / ContextPrecision / ContextRecall） | 未使用 | **未实现** | 评测暂缓；这是最直接的补齐路径 |
 | Phoenix / OpenTelemetry 追踪 | 未使用；`RunTrace` 记录请求/路由/证据/失败/耗时/版本快照 | 部分替代 | 有可观测性，但没有可视化/漂移分析 |
-| 金标准数据集 | 未冻结 | **未实现** | 计划 600 条，实际未开始 |
-| 回归门槛 / 消融 B0–B7 | 未做 | **未实现** | 无法证明重排/图谱/toc/邻接的增量 |
+| 金标准数据集 | 20 条（百科 10、机制 10），每题 6 条冻结扩展查询；`scripts/eval_gold.py` | 已采用（小规模） | 只覆盖图谱扩展，不覆盖生成质量 |
+| 回归门槛 / 消融 B0–B7 | 图谱扩展的基线与回归对比 | 部分采用 | 只做了图谱一项；重排/toc/邻接仍无消融 |
 | 程序化 trace 信号 | `retrieval_error/no_evidence/low_evidence/no_answer` 按意图分组 | 已采用（局部） | 只服务 SOP 蒸馏，不是质量评测 |
 | SOP 对照回放 | 未实现；`record_replay` 有接口，无数据 | **接线缺口** | `active` 晋升因此关闭 |
 
@@ -258,20 +258,26 @@ Docker，且 Qdrant 的命名向量刚好满足“同点 dense+sparse + RRF”�
 | 质量控制 / 人工抽检 / 冲突消解 | `extraction_status=pending`；未做人工审核 | **未实现** | 候选主张可用但未审 |
 | Neo4j / 属性图 | 未使用；SQLite 表 + Python 有界 BFS | 权衡替代 | 当前 3,621 节点/3,425 边，专用图库运维收益低 |
 | Cypher / Text2Cypher | 未使用 | 不适用/权衡替代 | 查询是固定模式，不需要生成 Cypher |
-| 多跳 / 子图 / 路径检索 | `expand_evidence_ids` 最多 2 跳/20 条；`transition_chains` 环 | 部分采用 | 有界，避免“趋势/市场”高出度节点爆炸 |
+| 多跳 / 子图 / 路径检索 | 概念分类 1 跳、机制链 2 跳，回取证据 ≤8 | 部分采用 | 有界，避免“趋势/市场”高出度节点爆炸 |
 | GraphRAG（Microsoft）社区检测/Leiden/全局摘要 | 未实现 | **未实现** | 全局综述目前靠 toc + synthesis prompt |
-| LightRAG 双层检索 | `concept_lookup` + claim/evidence 检索是轻量双层 | 部分采用 | 没有 LightRAG 的完整图索引 |
+| LightRAG 双层检索 | 词典种子 + 主张/证据扩展是轻量双层 | 部分采用 | 没有 LightRAG 的完整图索引 |
 | FRAG 查询分流 | QueryPlan 路由 | 部分采用 | 固定路由，不是自适应复杂度分类 |
 | GraphIRAG 迭代检索 | 充分性检查 + 补检索 | 部分采用 | 有迭代，但不以“信息增益”为停止准则 |
-| 图检索指标（Context Precision/Recall/Citation） | 未计算 | **未实现** | 同评估缺口 |
+| 图检索指标（Context Precision/Recall/Citation） | 金标准 top-20 并集命中 + 「图独有」口径 | 部分采用 | 只有召回类指标；无 precision 与 citation 指标 |
 | 条件化主张 | `ClaimRow.qualifiers`（context/modality/polarity） | 超出教程 | 交易知识高度条件化；去掉条件会产出危险结论 |
-| 图-文回填 | `graph_evidence` 并入生成证据 | 已采用 | 图谱结果必须回到原文 |
+| 图-文回填 | 图谱证据进入独立的「图谱扩展」提示区块 | 已采用 | 图谱结果必须回到原文；该区块不可引用，不进入 `evidence_ids` |
 | 图检索 bug | `.overlap()` 在 SQLite JSON 上抛错，且此前从未被调用 | 已修复 | 典型的“代码存在但主链路没接线” |
 
 **复盘**：PAknow 的图谱不是教程第 7/9 章的缩小版，而是**为条件化交易知识定制**的：
-主张带 `context/modality/polarity`，检索按“主题 > 谓词 > 条件”排序，生命周期环单独建。
+主张带 `context/modality/polarity`；图谱不作为独立打分路由，而是在文本召回后沿概念分类
+（1 跳）与「概念 → 主张 → `SUPPORTED_BY` 证据」（2 跳）做有界扩展，预算为概念 ≤8、
+边 ≤32、回取证据 ≤8、图块 ≤1,200 tokens。扩展结果标记 `provenance=graph`、
+`non_citable=True`，只作理解辅助，引用仍只指向原文证据（ADR-0002/0003）。
+
 代价是规模小、没有社区摘要、没有 Neo4j。全局综述目前靠目录 + `synthesis` 提示词，
-不是 GraphRAG 的全局摘要；这是明确的未实现项。
+不是 GraphRAG 的全局摘要；这是明确的未实现项。金标准回归只支持一个窄结论：图谱能在
+5 道题上召回 6 条文本 top-20 并集外的期望证据；但新链路文本侧宽度差吃掉同样多的基线证据，
+净召回增量为 0（见第 4 章 §7.4）。这不是把扩展判死，而是说明文本宽度与图谱扩展必须一起评估。
 
 ## 12. Agentic RAG
 
@@ -284,7 +290,7 @@ Docker，且 Qdrant 的命名向量刚好满足“同点 dense+sparse + RRF”�
 | 诊断式改写 | `next_query` 来自缺失证据，不是盲改写 | 已采用 | 与教程一致 |
 | 充分性评估 | LLM 结构化 `Sufficiency`；失败 fail-open | 已采用 | 没有核验器就退化为固定轮数 |
 | 工具生态 | hybrid/toc/graph/barref/caption；无 web/SQL/numeric | 部分采用 | 与当前数据源一致 |
-| Agent + KG 协同 | `graph_local` 路由 + `graph_evidence` | 部分采用 | 有图检索，但没有动态工具编排 |
+| Agent + KG 协同 | 图谱扩展（召回后沿概念/主张边补证据）+ `graph_evidence` | 部分采用 | 图不是独立路由、不参与打分；没有动态工具编排 |
 | 轨迹记录 | `RunTrace`（请求/路由/证据/失败/耗时/版本） | 已采用且更强 | 可审计，不只是日志 |
 | 检索历史记忆 | 单次运行 `acc`；跨运行只在 trace | 部分采用 | 没有长期“哪条路线成功”的记忆 |
 
