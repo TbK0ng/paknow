@@ -15,6 +15,20 @@ PAKNOW_DB_URL=sqlite:///E:/PAknow/data/paknow.db OBJECTS_DIR=E:/PAknow/data/obje
 
 基线本次重跑与 01 号票记录逐字段一致（24/50、10/20、10/20），数据集未被重新生成。
 
+## 复用已验收基线（`--reuse-baseline`）
+
+基线已验证、且数据集逐字节未变时，回归可以直接复用 `gold-baseline.json`，不必再跑一遍基线：
+
+```bash
+PAKNOW_DB_URL=sqlite:///E:/PAknow/data/paknow.db OBJECTS_DIR=E:/PAknow/data/objects PYTHONPATH=. \
+  python scripts/eval_gold.py --mode graph --reuse-baseline
+```
+
+- 复用前必须通过冻结校验：`evals/gold/graph_expansion.sha256` 记录数据集文件的 SHA-256，脚本读文件字节计算后比对。sidecar 可用 `sha256sum evals/gold/graph_expansion.json > evals/gold/graph_expansion.sha256` 生成（也接受纯 64 位十六进制），当前值为 `f8868fd198776921bf0671c82298b9310d4de16953180f4dfcc1830cb15b9c54`。
+- 哈希不匹配、sidecar 缺失或格式非法时直接失败，并提示重跑 `--mode baseline`；`--reuse-baseline` 只接受 `--mode graph`，基线模式会明确报错。
+- 复用只读基线：脚本不写 `gold-baseline.json`（保持与 01 号票逐字节一致），并在回归 JSON 顶层记 `"baseline_reused": true`，终端也会打印所用数据集哈希。
+- 若数据集或基线任一发生变化，先删除/更新 sidecar 并重跑 `--mode baseline`，再跑回归；不得绕过校验复用旧基线。
+
 ## 口径（沿用 01 号票，不调整）
 
 - **图独有**：该题至少一条期望证据不在 6 条扩展查询的 top-20 并集内。

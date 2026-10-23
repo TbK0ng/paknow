@@ -15,17 +15,25 @@ Two modes:
   new text path, budget truncations, and the fixed graph-unique verdict (at
   least one expected unit outside the six-query top-20 union).
 
+Graph mode can reuse an already recorded baseline with ``--reuse-baseline``.
+That path verifies ``evals/gold/graph_expansion.sha256`` against the dataset
+bytes before trusting the artifact, records ``baseline_reused: true`` in the
+report, and never rewrites the baseline JSON. A missing sidecar or a hash
+mismatch is a hard failure: the frozen dataset changed, so rerun the baseline.
+
 This is an offline evaluation, not a CI gate: it needs the text index and the
 embedding model. It does not call the routing model.
 
 Usage:
     python scripts/eval_gold.py
     python scripts/eval_gold.py --mode graph
+    python scripts/eval_gold.py --mode graph --reuse-baseline
     python scripts/eval_gold.py --limit 4 --out .scratch/graph-expansion/baseline.json
 """
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -39,9 +47,12 @@ from paknow.retrieval.pipeline import retrieve_evidence  # noqa: E402
 from paknow.retrieval.search import hybrid_search  # noqa: E402
 
 DEFAULT_DATASET = ROOT / "evals" / "gold" / "graph_expansion.json"
+DEFAULT_DATASET_HASH = ROOT / "evals" / "gold" / "graph_expansion.sha256"
 DEFAULT_BASELINE = ROOT / ".scratch" / "graph-expansion" / "gold-baseline.json"
 DEFAULT_BASELINE_OUT = ROOT / ".scratch" / "graph-expansion" / "gold-baseline.json"
 DEFAULT_GRAPH_OUT = ROOT / ".scratch" / "graph-expansion" / "gold-regression.json"
+
+_HASH_HEX = frozenset("0123456789abcdef")
 
 _TRUNCATION_REASONS = (
     ("edges", "truncated_edges"),
@@ -52,6 +63,56 @@ _TRUNCATION_REASONS = (
 
 def load_dataset(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def dataset_sha256(path: Path) -> str:
+    """SHA-256 of the dataset file bytes, so sidecars match independent tools."""
+    digest = hashlib.sha256()
+    with path.open("rb") as fh:
+        for chunk in iter(lambda: fh.read(1 << 20), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def read_dataset_hash(sidecar: Path) -> str:
+    """First token of the sidecar, accepting plain hex or ``sha256sum`` output."""
+    raw = sidecar.read_text(encoding="utf-8")
+    tokens = raw.split()
+    digest = tokens[0].lower() if tokens else ""
+    if len(digest) != 64 or not set(digest) <= _HASH_HEX:
+        raise SystemExit(
+            f"invalid dataset hash sidecar {sidecar}: expected a 64-character "
+            f"SHA-256 hex digest, got {raw.strip()!r}"
+        )
+    return digest
+
+
+def verify_frozen_dataset(
+    dataset: Path, *, sidecar: Path = DEFAULT_DATASET_HASH
+) -> str:
+    """Fail unless the dataset bytes still match the recorded SHA-256."""
+    if not sidecar.exists():
+        raise SystemExit(
+            f"no dataset hash sidecar at {sidecar}; --reuse-baseline needs one to "
+            f"prove {dataset} is frozen. Generate it with:\n"
+            f"  sha256sum {dataset} > {sidecar}"
+        )
+    expected = read_dataset_hash(sidecar)
+    actual = dataset_sha256(dataset)
+    if actual != expected:
+        raise SystemExit(
+            f"frozen dataset hash mismatch for {dataset}:\n"
+            f"  sidecar {sidecar}: {expected}\n"
+            f"  actual: {actual}\n"
+            "the gold dataset changed; rerun --mode baseline and update the sidecar"
+        )
+    return actual
+
+
+def require_reuse_mode(mode: str, reuse: bool) -> None:
+    """Reusing a baseline only makes sense for the graph diff."""
+    if reuse and mode != "graph":
+        raise SystemExit("--reuse-baseline is only valid with --mode graph")
 
 
 def _evidence_ids(units: Iterable[Mapping[str, Any]]) -> list[str]:
@@ -244,6 +305,7 @@ def build_regression_payload(
     baseline: Mapping[str, Any],
     rows: list[dict],
     top_k: int,
+    baseline_reused: bool = False,
 ) -> dict:
     return {
         "dataset": dataset_path,
@@ -251,10 +313,19 @@ def build_regression_payload(
         "protocol": dataset.get("retrieval_protocol"),
         "top_k": top_k,
         "mode": "graph",
+        "baseline_reused": baseline_reused,
         "baseline_summary": baseline.get("summary"),
         "summary": summarize_graph(rows),
         "items": rows,
     }
+
+
+def _display_path(path: Path) -> str:
+    """Repo-relative when possible, absolute otherwise (e.g. temp datasets)."""
+    try:
+        return str(path.resolve().relative_to(ROOT))
+    except ValueError:
+        return str(path)
 
 
 def print_table(rows: list[dict], summary: dict) -> None:
@@ -311,7 +382,17 @@ def main() -> None:
     ap.add_argument("--out", type=Path, default=None)
     ap.add_argument("--top-k", type=int, default=20, help="per-query top-K; 20 matches online recall width")
     ap.add_argument("--limit", type=int, default=0)
+    ap.add_argument("--dataset-hash", type=Path, default=DEFAULT_DATASET_HASH)
+    ap.add_argument(
+        "--reuse-baseline",
+        action="store_true",
+        help=(
+            "graph mode: reuse the existing --baseline JSON instead of running "
+            "the baseline, after verifying the frozen dataset SHA-256"
+        ),
+    )
     args = ap.parse_args()
+    require_reuse_mode(args.mode, args.reuse_baseline)
 
     dataset = load_dataset(args.dataset)
     items = dataset["items"]
@@ -326,7 +407,7 @@ def main() -> None:
         summary = summarize(rows)
         print_table(rows, summary)
         payload = {
-            "dataset": str(args.dataset.relative_to(ROOT)),
+            "dataset": _display_path(args.dataset),
             "frozen_at": dataset.get("frozen_at"),
             "protocol": dataset.get("retrieval_protocol"),
             "top_k": args.top_k,
@@ -334,6 +415,13 @@ def main() -> None:
             "items": rows,
         }
     else:
+        baseline_reused = False
+        dataset_digest = None
+        if args.reuse_baseline:
+            dataset_digest = verify_frozen_dataset(
+                args.dataset, sidecar=args.dataset_hash
+            )
+            baseline_reused = True
         baseline = json.loads(args.baseline.read_text(encoding="utf-8"))
         baseline_rows = {row["id"]: row for row in baseline.get("items", [])}
         rows = []
@@ -345,13 +433,19 @@ def main() -> None:
                 )
             rows.append(evaluate_graph_item(item, baseline_union=base_row["hits"]))
         payload = build_regression_payload(
-            dataset_path=str(args.dataset.relative_to(ROOT)),
+            dataset_path=_display_path(args.dataset),
             dataset=dataset,
             baseline=baseline,
             rows=rows,
             top_k=args.top_k,
+            baseline_reused=baseline_reused,
         )
         print_graph_table(rows, payload["summary"])
+        if baseline_reused:
+            print(
+                f"\nbaseline: reused verified artifact {_display_path(args.baseline)} "
+                f"(dataset sha256 {dataset_digest})"
+            )
 
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
