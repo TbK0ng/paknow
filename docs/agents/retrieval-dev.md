@@ -14,8 +14,8 @@ from the directory named in each block. Python is the shared venv
 | Embedded Qdrant storage | `<OBJECTS_DIR>/qdrant` | `QDRANT_URL` switches to a server (empty = embedded) |
 | BGE-M3 / reranker / VL cache | `E:\use_model` (`HF_HOME` is set by `paknow/config.py`) | `HF_HOME`, or the `hf_home` setting |
 | Gold dataset | `evals/gold/graph_expansion.json` | `--dataset` |
-| Frozen baseline | `.scratch/graph-expansion/gold-baseline.json` | `--baseline` |
-| Baseline / graph output | `.scratch/graph-expansion/gold-{baseline,regression}.json` | `--out` |
+| Frozen union-probe baseline | `.scratch/graph-expansion/gold-baseline.json` | `--baseline` |
+| Union-probe / text / graph output | `.scratch/graph-expansion/gold-baseline.json`, `.scratch/retrieval-eval-parity/gold-text.json`, `.scratch/graph-expansion/gold-regression.json` | `--out` |
 
 `project_root` is derived from the installed package location, so a worktree
 resolves `data/` inside the worktree. Worktrees are created without the ignored
@@ -55,23 +55,45 @@ PYTHONPATH=. E:/PAknow/.venv/Scripts/python.exe -m pytest tests -q
 
 ### Gold evaluation (needs DB + objects + BGE-M3)
 
+Three recall modes, all reading the same frozen queries:
+
+| Mode | Path | Artifact | Meaning |
+|---|---|---|---|
+| `baseline` | `hybrid_search(top_k=--top-k)` per query, union | `.scratch/graph-expansion/gold-baseline.json` | Union probe: upper-bound reference. Byte-identical across reruns; only re-record when the dataset or metric is intentionally re-frozen. |
+| `text` | `retrieve_evidence(..., expand_graph=False)` | `.scratch/retrieval-eval-parity/gold-text.json` | Production-parity baseline: same seam, rerank, diversity and width as the online text channel, only the graph layer off. |
+| `graph` | `retrieve_evidence(...)` plus a `text` round per item | `.scratch/graph-expansion/gold-regression.json` | Shipped chain. Reports the union-probe delta and the production-parity delta (graph-only hits, net gain = graph expected hits − text expected hits). |
+
+Recall metrics in graph mode: `graph_only` (expected units in graph evidence
+but not in the text arm) is the primary metric; `net_gain` is graph expected
+hits minus text expected hits. Truncation counts are still reported but are
+not a verdict. Graph evidence budget is `MAX_EVIDENCE=14`, bounded by
+`MAX_CONTEXT_TOKENS=1200`; edge traversal stays at `MAX_EDGES=32`.
+
 ```bash
+# production-parity baseline, then graph regression against the committed union probe
+PAKNOW_DB_URL=sqlite:///E:/PAknow/data/paknow.db \
+OBJECTS_DIR=E:/PAknow/data/objects \
+PYTHONPATH=. E:/PAknow/.venv/Scripts/python.exe scripts/eval_gold.py --mode text
+
+PAKNOW_DB_URL=sqlite:///E:/PAknow/data/paknow.db \
+OBJECTS_DIR=E:/PAknow/data/objects \
+PYTHONPATH=. E:/PAknow/.venv/Scripts/python.exe scripts/eval_gold.py --mode graph --reuse-baseline
+
+# re-record the union probe only when intentionally re-freezing
 PAKNOW_DB_URL=sqlite:///E:/PAknow/data/paknow.db \
 OBJECTS_DIR=E:/PAknow/data/objects \
 PYTHONPATH=. E:/PAknow/.venv/Scripts/python.exe scripts/eval_gold.py --mode baseline
-
-PAKNOW_DB_URL=sqlite:///E:/PAknow/data/paknow.db \
-OBJECTS_DIR=E:/PAknow/data/objects \
-PYTHONPATH=. E:/PAknow/.venv/Scripts/python.exe scripts/eval_gold.py --mode graph
 ```
 
-- `--mode baseline` re-records the frozen baseline. Do this only when the
-  dataset or the retrieval metric is intentionally re-frozen; otherwise use
-  `--mode graph`, which compares against the committed baseline.
-- `--mode graph` writes `.scratch/graph-expansion/gold-regression.json` in the
-  current checkout. `--limit N` and `--out PATH` are available for partial runs.
-- Neither mode calls the routing model; both load the embedding model and the
-  Qdrant text collection.
+- `--mode text` and `--mode graph` each write their own artifact and never
+  touch the union-probe JSON.
+- `--mode graph --reuse-baseline` verifies `evals/gold/graph_expansion.sha256`
+  before trusting the union probe; `--mode graph` without it reruns the probe
+  in memory.
+- `--limit N` and `--out PATH` are available for partial runs; the same
+  commands run from the main repo or a worktree with the env vars above.
+- None of the modes calls the routing model; all load the embedding model and
+  the Qdrant text collection. Run them one at a time (see below).
 
 ### Taxonomy rebuild (needs DB)
 

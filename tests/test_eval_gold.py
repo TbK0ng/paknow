@@ -42,6 +42,74 @@ def test_graph_unique_is_any_expected_outside_baseline_union():
 
 
 # ---------------------------------------------------------------------------
+# graph-only metric and net gain
+# ---------------------------------------------------------------------------
+
+
+def test_graph_only_is_expected_graph_evidence_the_text_arm_lacks():
+    assert eval_gold.graph_only(
+        ["a", "b", "c"], text_ids={"a"}, graph_ids={"a", "b", "z"}
+    ) == ["b"]
+    assert eval_gold.graph_only(["a"], text_ids={"a"}, graph_ids={"a", "b"}) == []
+
+
+def test_net_gain_is_graph_expected_hits_minus_text_arm_expected_hits():
+    rows = [
+        {**_row("mech-01"), "graph_found": ["a", "b"], "regression_text_found": ["a"],
+         "graph_only": ["b"]},
+        {**_row("mech-02"), "graph_found": [], "regression_text_found": ["a"],
+         "graph_only": []},
+    ]
+
+    summary = eval_gold.summarize_graph(rows)
+
+    assert summary["graph_found"] == 2
+    assert summary["regression_text_found"] == 2
+    assert summary["graph_only"] == 1
+    assert summary["net_gain"] == 0
+
+
+def test_net_gain_is_negative_when_the_graph_arm_reaches_less():
+    rows = [
+        {**_row("mech-01"), "graph_found": ["a"], "regression_text_found": ["a", "b"],
+         "graph_only": []},
+    ]
+
+    summary = eval_gold.summarize_graph(rows)
+
+    assert summary["net_gain"] == -1
+
+
+def test_evaluate_text_item_runs_the_seam_with_graph_off(monkeypatch):
+    seen = {}
+
+    def fake_retrieve(query, queries, **kwargs):
+        seen["query"] = query
+        seen["queries"] = list(queries)
+        seen["kwargs"] = kwargs
+        return _FakeResult(["a"], [], {"enabled": False, "selected": 0})
+
+    monkeypatch.setattr(eval_gold, "retrieve_evidence", fake_retrieve)
+    item = {
+        "id": "enc-01",
+        "category": "encyclopedia",
+        "question": "q",
+        "expanded_queries": ["q", "q2"],
+        "expected_evidence": ["a", "b"],
+    }
+
+    row = eval_gold.evaluate_text_item(item)
+
+    assert seen == {"query": "q", "queries": ["q", "q2"], "kwargs": {"expand_graph": False}}
+    assert row["found"] == ["a"]
+    assert row["missing"] == ["b"]
+    assert row["hit"] is True
+    assert row["hits"] == ["a"]
+    assert row["graph_stats"]["enabled"] is False
+    assert row["failures"] == []
+
+
+# ---------------------------------------------------------------------------
 # per-question diff
 # ---------------------------------------------------------------------------
 
@@ -163,6 +231,7 @@ def _row(row_id: str) -> dict:
         "still_missing": [],
         "graph_unique": True,
         "graph_unique_recovered": True,
+        "graph_only": ["a"],
         "graph_entries": 1,
         "graph_stats": {"selected": 1, "tokens": 12},
         "truncation": {"truncated": False, "hit_limits": [], "selected": 1, "tokens": 12},
@@ -175,11 +244,20 @@ def test_regression_payload_has_a_stable_key_order_and_is_serializable():
     dataset = {"frozen_at": "2026-10-23", "retrieval_protocol": "p"}
     baseline = {"summary": {"expected_found": 24}, "items": []}
 
+    text_summary = {
+        "items": 1,
+        "expected_total": 1,
+        "expected_found": 0,
+        "expected_missing": 1,
+        "items_with_any_hit": 0,
+        "items_with_all_hits": 0,
+    }
     payload = eval_gold.build_regression_payload(
         dataset_path="evals/gold/graph_expansion.json",
         dataset=dataset,
         baseline=baseline,
         rows=[_row("mech-01")],
+        text_summary=text_summary,
         top_k=20,
     )
 
@@ -191,11 +269,13 @@ def test_regression_payload_has_a_stable_key_order_and_is_serializable():
         "mode",
         "baseline_reused",
         "baseline_summary",
+        "text_arm_summary",
         "summary",
         "items",
     ]
     assert payload["mode"] == "graph"
     assert payload["baseline_reused"] is False
+    assert payload["text_arm_summary"] == text_summary
     assert payload["items"][0]["id"] == "mech-01"
     first = json.dumps(payload, ensure_ascii=False, indent=2)
     again = json.dumps(
@@ -204,12 +284,50 @@ def test_regression_payload_has_a_stable_key_order_and_is_serializable():
             dataset=dataset,
             baseline=baseline,
             rows=[_row("mech-01")],
+            text_summary=text_summary,
             top_k=20,
         ),
         ensure_ascii=False,
         indent=2,
     )
     assert first == again
+
+
+def test_text_payload_identifies_the_production_parity_mode():
+    dataset = {"frozen_at": "2026-10-23", "retrieval_protocol": "p"}
+    rows = [
+        {
+            "id": "enc-01",
+            "category": "encyclopedia",
+            "question": "q",
+            "expected": ["a", "b"],
+            "found": ["a"],
+            "missing": ["b"],
+            "hit": True,
+            "hits": ["a"],
+        }
+    ]
+
+    payload = eval_gold.build_text_payload(
+        dataset_path="evals/gold/graph_expansion.json",
+        dataset=dataset,
+        rows=rows,
+        top_k=20,
+    )
+
+    assert list(payload) == [
+        "dataset",
+        "frozen_at",
+        "protocol",
+        "top_k",
+        "mode",
+        "expand_graph",
+        "summary",
+        "items",
+    ]
+    assert payload["mode"] == "text"
+    assert payload["expand_graph"] is False
+    assert payload["summary"]["expected_found"] == 1
 
 
 # ---------------------------------------------------------------------------
@@ -253,6 +371,7 @@ def test_evaluate_graph_item_reuses_the_frozen_queries(monkeypatch):
     assert seen == {"query": "q", "queries": item["expanded_queries"]}
     assert seen["queries"] is not item["expanded_queries"]  # no mutation of the frozen list
     assert row["newly_recalled"] == ["b"]
+    assert row["graph_only"] == ["b"]
     assert row["lost"] == []
     assert row["still_missing"] == ["c"]
     assert row["graph_unique"] is True
@@ -441,6 +560,49 @@ def test_reuse_baseline_writes_verified_provenance_without_touching_baseline(
     payload = json.loads(out.read_text(encoding="utf-8"))
     assert payload["baseline_reused"] is True
     assert payload["summary"]["newly_recalled"] == 1
+    assert payload["summary"]["graph_only"] == 1
+    assert payload["summary"]["net_gain"] == 0  # both arms reached exactly one expected unit
+    assert payload["text_arm_summary"]["expected_found"] == 1
     assert payload["dataset"] == str(dataset)
+    assert baseline.read_bytes() == before
+
+
+def test_text_mode_writes_its_own_artifact_with_graph_off(tmp_path, monkeypatch):
+    dataset, _sidecar, baseline = _reuse_fixture(tmp_path)
+    before = baseline.read_bytes()
+    out = tmp_path / "text.json"
+    calls = []
+
+    def fake_retrieve(query, queries, **kwargs):
+        calls.append(dict(kwargs))
+        return _FakeResult(
+            ["a"],
+            [],
+            {"enabled": False, "selected": 0, "accumulated": 0, "candidates": 0,
+             "truncated_edges": False, "truncated_evidence": False,
+             "truncated_tokens": False, "tokens": 0},
+        )
+
+    monkeypatch.setattr(eval_gold, "retrieve_evidence", fake_retrieve)
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "eval_gold.py",
+            "--mode", "text",
+            "--dataset", str(dataset),
+            "--baseline", str(baseline),
+            "--out", str(out),
+        ],
+    )
+
+    eval_gold.main()
+
+    payload = json.loads(out.read_text(encoding="utf-8"))
+    assert calls == [{"expand_graph": False}]
+    assert payload["mode"] == "text"
+    assert payload["expand_graph"] is False
+    assert payload["summary"]["expected_found"] == 1
+    assert payload["items"][0]["graph_stats"]["enabled"] is False
+    assert payload["items"][0]["failures"] == []
     assert baseline.read_bytes() == before
 
