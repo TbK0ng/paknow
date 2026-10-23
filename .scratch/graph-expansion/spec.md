@@ -1,4 +1,4 @@
-Status: ready-for-agent
+Status: resolved
 
 # 图谱扩展：把概念分类与主张边接进召回
 
@@ -102,3 +102,7 @@ Status: ready-for-agent
 - 图谱现状：概念节点 139、图节点 927、主张 1,888（仅 278 挂概念）、`SUPPORTED_BY` 1,888、`ILLUSTRATED_BY` 1,529、结构边 `PART_OF` 4 / `TRANSITIONS_TO` 4，其余关系为 0。
 - 百科的 `chapter_path` 最多 1 层、EPUB 为空，没有可用的目录树；概念分类必须由标题语法重建。
 - 相关决策：ADR-0002（派生观察不可引用）、ADR-0003（图谱为扩展层而非打分通道）。
+
+## Comments
+
+Resolved on `feat/graph-expansion` at `0fb9f53` (tickets 01–05; 71 tests). Two-axis review and fixes: `.scratch/graph-expansion/code-review.md`. Regression outcome is recorded in `.scratch/graph-expansion/gold-regression.md`: graph-unique evidence supported, net recall gain falsified (net 0).
