@@ -100,6 +100,7 @@ def retrieve_evidence(
     acc: Mapping[str, dict[str, Any]] | None = None,
     expanded_concepts: Sequence[str] = (),
     prior_graph_evidence: Sequence[Mapping[str, Any]] = (),
+    expand_graph: bool = True,
 ) -> RetrievalResult:
     """Run one retrieval round over ``queries`` (max 6) and return partitions.
 
@@ -108,6 +109,11 @@ def retrieve_evidence(
     concepts already expanded, so a gap round only follows new ones.
     ``prior_graph_evidence`` is the graph block accumulated by earlier rounds;
     this round appends only new evidence ids and never drops it.
+
+    ``expand_graph=False`` turns the graph layer off for this round: no seed
+    query is submitted, nothing is expanded, ``graph_evidence`` stays empty,
+    and ``graph_stats["enabled"]`` is false. The text path is unchanged, so the
+    production-parity evaluation can subtract the two arms.
     """
     failures: list[str] = []
     seen: dict[str, dict[str, Any]] = dict(acc or {})
@@ -119,10 +125,18 @@ def retrieve_evidence(
             round_queries.append(q)
 
     # query concepts are seeded first and resolved while text recall runs;
-    # gap-round queries are included so a new concept can drive expansion
+    # gap-round queries are included so a new concept can drive expansion.
+    # With the graph layer off nothing is seeded, so the seed query is not
+    # submitted at all.
     query_seeds: list[str] = []
-    with ThreadPoolExecutor(max_workers=1) as pool:
-        seed_future = pool.submit(expansion.seed_concepts, " ".join(round_queries) or query)
+    pool: ThreadPoolExecutor | None = None
+    seed_future = None
+    if expand_graph:
+        pool = ThreadPoolExecutor(max_workers=1)
+        seed_future = pool.submit(
+            expansion.seed_concepts, " ".join(round_queries) or query
+        )
+    try:
         for q in round_queries[:6]:
             try:
                 for p in hybrid_search(q, top_k=40):
@@ -132,10 +146,14 @@ def retrieve_evidence(
                         seen[eid] = d
             except Exception as e:  # noqa: BLE001
                 failures.append(f"retrieve: {e}")
-        try:
-            query_seeds = seed_future.result()
-        except Exception as e:  # noqa: BLE001
-            failures.append(f"graph_seed: {e}")
+        if seed_future is not None:
+            try:
+                query_seeds = seed_future.result()
+            except Exception as e:  # noqa: BLE001
+                failures.append(f"graph_seed: {e}")
+    finally:
+        if pool is not None:
+            pool.shutdown()
 
     hits = sorted(seen.values(), key=lambda x: x.get("score") or 0.0, reverse=True)
     # cross-encoder rerank over the top candidates (falls back to RRF order)
@@ -203,47 +221,60 @@ def retrieve_evidence(
     seen_index = citation_binding(units)
 
     prior_expanded = list(dict.fromkeys(expanded_concepts))
-    new_seeds = expansion.select_new_seeds(
-        query_seeds=query_seeds,
-        text_units=hits,
-        expanded=prior_expanded,
-    )
-    graph_entries: list[dict[str, Any]] = []
-    graph_seen: set[str] = set()
-    for entry in prior_graph_evidence:
-        evidence_id = entry.get("evidence_id")
-        key = str(evidence_id) if evidence_id else None
-        if key is not None and key in graph_seen:
-            continue
-        graph_entries.append(dict(entry))
-        if key is not None:
-            graph_seen.add(key)
-
     base_stats = dict(expansion.PlannedContext().stats)
-    if new_seeds:
-        plan, graph_failures = expansion.expand(new_seeds, seen_index=seen_index)
-        failures.extend(graph_failures)
-        for entry in plan.entries:
-            key = str(entry.get("evidence_id"))
-            if key in graph_seen:
-                continue
-            graph_entries.append(entry)
-            graph_seen.add(key)
-        graph_stats = {
-            **plan.stats,
-            "seeds": len(new_seeds),
-            "accumulated": len(graph_entries),
-        }
-        prior_expanded = list(dict.fromkeys([*prior_expanded, *new_seeds]))
-    else:
-        # a round with no new concepts pays for nothing and must still report
-        # stats, so cache-hit calls do not look like missing instrumentation
+    graph_entries: list[dict[str, Any]] = []
+    if not expand_graph:
+        # the graph layer is off, not empty: no seeds, no expansion, no graph
+        # failures, and stats say so explicitly
         graph_stats = {
             **base_stats,
-            "selected": len(graph_entries),
+            "selected": 0,
             "seeds": 0,
-            "accumulated": len(graph_entries),
+            "accumulated": 0,
+            "enabled": False,
         }
+    else:
+        new_seeds = expansion.select_new_seeds(
+            query_seeds=query_seeds,
+            text_units=hits,
+            expanded=prior_expanded,
+        )
+        graph_seen: set[str] = set()
+        for entry in prior_graph_evidence:
+            evidence_id = entry.get("evidence_id")
+            key = str(evidence_id) if evidence_id else None
+            if key is not None and key in graph_seen:
+                continue
+            graph_entries.append(dict(entry))
+            if key is not None:
+                graph_seen.add(key)
+
+        if new_seeds:
+            plan, graph_failures = expansion.expand(new_seeds, seen_index=seen_index)
+            failures.extend(graph_failures)
+            for entry in plan.entries:
+                key = str(entry.get("evidence_id"))
+                if key in graph_seen:
+                    continue
+                graph_entries.append(entry)
+                graph_seen.add(key)
+            graph_stats = {
+                **plan.stats,
+                "seeds": len(new_seeds),
+                "accumulated": len(graph_entries),
+                "enabled": True,
+            }
+            prior_expanded = list(dict.fromkeys([*prior_expanded, *new_seeds]))
+        else:
+            # a round with no new concepts pays for nothing and must still report
+            # stats, so cache-hit calls do not look like missing instrumentation
+            graph_stats = {
+                **base_stats,
+                "selected": len(graph_entries),
+                "seeds": 0,
+                "accumulated": len(graph_entries),
+                "enabled": True,
+            }
 
     return RetrievalResult(
         text_hits=hits,

@@ -33,7 +33,7 @@ from paknow.retrieval.dictionary import find_terms
 
 MAX_SEED_CONCEPTS = 8
 MAX_EDGES = 32
-MAX_EVIDENCE = 8
+MAX_EVIDENCE = 14
 MAX_CONTEXT_TOKENS = 1200
 
 _WORD = re.compile(r"[A-Za-z0-9_]+")
