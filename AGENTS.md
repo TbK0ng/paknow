@@ -19,6 +19,16 @@ Operating notes for AI agents working in this repo.
 - The main agent synthesises the returned findings. It does not re-read the same files to "confirm" — that wastes the delegation.
 - Only if no subagent can be spawned (harness reports no model / spawn error): say so in one line, then run the same MCP-first procedure inline. Never silently fall back to blind file crawling.
 
+**Implementation work is graph-first too.** For call-chain, dependency, or impact questions while editing a spec, use `search_graph` / `trace_path` / `get_code_snippet` instead of hunting through files; `detect_changes` maps a diff to affected symbols. Reading an already-known path directly is fine and preferred over extra search hops — read that file, don't crawl the tree.
+
+## Retrieval and eval
+
+Commands, path overrides, and failure modes for retrieval/eval/taxonomy/alignment work: `docs/agents/retrieval-dev.md`. The embedded Qdrant is single-process — serialize runs against `data/objects`.
+
+## Concept identity
+
+Canonical concept ids live only in `configs/terms.yaml`. Resolve cross-module links through `paknow/graph/identity.py` (`canonical_for` / `resolved_canonical`); a `TermMatch.canonical` is a local match, not an identity. See `GLOSSARY.md` 概念身份.
+
 ## Agent skills
 
 ### Issue tracker
