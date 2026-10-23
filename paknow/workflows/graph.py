@@ -54,6 +54,7 @@ class QState(TypedDict, total=False):
     graph_evidence: list[dict[str, Any]]
     graph_stats: dict[str, Any]
     expanded_concepts: list[str]
+    expand_graph: bool
     citable_units: list[dict[str, Any]]
     citation_index: dict[str, int]
     toc_context: list[dict[str, Any]]
@@ -105,6 +106,7 @@ def _retrieve_node(state: QState) -> QState:
         acc=state.get("acc", {}),
         expanded_concepts=state.get("expanded_concepts", []),
         prior_graph_evidence=state.get("graph_evidence", []),
+        expand_graph=state.get("expand_graph", True),
     )
     state["acc"] = result.acc
     state["hits"] = result.text_hits
@@ -220,7 +222,18 @@ def build_graph():
 _graph = build_graph()
 
 
-def run_query(query: str, images: list[bytes] | None = None) -> dict[str, Any]:
+def run_query(
+    query: str,
+    images: list[bytes] | None = None,
+    *,
+    expand_graph: bool = True,
+) -> dict[str, Any]:
+    """Run the full production chain for one stateless question.
+
+    ``expand_graph=False`` is the text arm of the answer-level evaluation: the
+    flag reaches :func:`paknow.retrieval.pipeline.retrieve_evidence` unchanged
+    and every other parameter stays identical to the graph arm.
+    """
     state: QState = {
         "query": query,
         "images": images or [],
@@ -230,6 +243,7 @@ def run_query(query: str, images: list[bytes] | None = None) -> dict[str, Any]:
         "round": 0,
         "max_rounds": 3,
         "acc": {},
+        "expand_graph": expand_graph,
     }
     final = _graph.invoke(state)
     ans = final.get("answer") or {}
@@ -248,4 +262,9 @@ def run_query(query: str, images: list[bytes] | None = None) -> dict[str, Any]:
         "figures": figures,
         "barrefs": final.get("barrefs", []),
         "answer": final.get("answer"),
+        # exactly the evidence ids generation rendered as citable [n] units;
+        # derived observations never enter the citation binding
+        "citable_ids": list(final.get("citation_index", {})),
+        "rounds": final.get("round", 0),
+        "failures": final.get("failures", []),
     }

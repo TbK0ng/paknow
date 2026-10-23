@@ -97,6 +97,58 @@ PYTHONPATH=. E:/PAknow/.venv/Scripts/python.exe scripts/eval_gold.py --mode base
 - None of the modes calls the routing model; all load the embedding model and
   the Qdrant text collection. Run them one at a time (see below).
 
+### Answer-level evaluation (needs DB + objects + BGE-M3 + cloud key)
+
+`scripts/eval_answers.py` runs every v2 gold question through the full
+production chain twice — same question, same parameters, one flag apart:
+
+| Arm | `run_query` flag | Meaning |
+|---|---|---|
+| `text` | `expand_graph=False` | Production-parity text channel; graph layer off at the retrieval seam. |
+| `graph` | `expand_graph=True` | Shipped chain, graph evidence rendered as a non-citable understanding block. |
+
+Each (item, arm) is one stateless `run_query` call. Generation only sees the
+question and its own retrieval result; the runner never passes the expected
+evidence or the gold answer points into the chain. Routes, rounds, retrieval
+failures, the answer, cited ids, the citable set and the graph evidence ids are
+recorded per item. The deterministic checks are pure: every cited id must be in
+that answer's citable set, no graph-only evidence id may be cited (a graph entry
+that duplicates a citable text unit is still that text unit, not synthesis),
+and expected-evidence coverage (`covered / expected`, with the missing ids) is
+computed per item. Coverage is reported as a distribution, not folded into the
+hard verdict.
+
+Artifacts go to `.scratch/retrieval-eval-parity/answers/<UTC-timestamp>/`:
+`records.jsonl` (one small record per item/arm, no retrieved text),
+`summary.json` (per-arm summaries, paired graph-vs-text delta, wall time) and
+`checkpoint.jsonl`. The checkpoint is appended per (item, arm), so an
+interrupted run resumes without repeating completed arms; error records are
+retried. A failed item is recorded and the batch continues. Ticket 05's judge
+consumes `records.jsonl`.
+
+```bash
+# full batch: 60 items x 2 arms, sequential
+PAKNOW_DB_URL=sqlite:///E:/PAknow/data/paknow.db \
+OBJECTS_DIR=E:/PAknow/data/objects \
+PYTHONPATH=. E:/PAknow/.venv/Scripts/python.exe scripts/eval_answers.py
+
+# cheap smoke or limited slice
+PAKNOW_DB_URL=sqlite:///E:/PAknow/data/paknow.db \
+OBJECTS_DIR=E:/PAknow/data/objects \
+PYTHONPATH=. E:/PAknow/.venv/Scripts/python.exe scripts/eval_answers.py --limit 2
+
+# resume an interrupted batch (same --out directory)
+PAKNOW_DB_URL=sqlite:///E:/PAknow/data/paknow.db \
+OBJECTS_DIR=E:/PAknow/data/objects \
+PYTHONPATH=. E:/PAknow/.venv/Scripts/python.exe scripts/eval_answers.py \
+  --resume --out .scratch/retrieval-eval-parity/answers/<timestamp>
+```
+
+Budget: one chain call per (item, arm); the chain itself makes roughly 3–4
+`deepseek-flash` calls (route, up to two sufficiency checks, generate), so a
+full 60×2 batch stays within the spec's 600–900 calls. Run it in the same
+serialized window as the recall eval: embedded Qdrant is single-process.
+
 ### Taxonomy rebuild (needs DB)
 
 ```bash
@@ -163,6 +215,7 @@ server or copy the objects dir per worktree (large).
 
 ## Not runnable without infrastructure
 
-`eval_gold.py` (both modes), the taxonomy dry run/apply, the claim-alignment
-dry run/apply and all `smoke_*` scripts need the local corpus artifacts above.
-Only `--help` and the test suite run green without them.
+`eval_gold.py` (both modes), `eval_answers.py`, the taxonomy dry run/apply, the
+claim-alignment dry run/apply and all `smoke_*` scripts need the local corpus
+artifacts above (the answer runner additionally needs the cloud key). Only
+`--help` and the test suite run green without them.
