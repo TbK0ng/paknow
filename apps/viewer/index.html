@@ -18,6 +18,7 @@
   .a { white-space:pre-wrap; line-height:1.65; }
   .shot { display:block; max-width:100%; max-height:280px; border-radius:6px; margin:8px 0 4px; border:1px solid var(--border); }
   .meta { color:var(--muted); font-size:12px; margin-top:10px; }
+  .warn { color:#ffb454; border:1px solid currentColor; border-radius:4px; padding:1px 6px; font-size:12px; }
   .cite { display:block; color:var(--accent); font-size:12px; margin-top:4px; }
   .rewrite { color:var(--muted); font-size:12px; margin-bottom:8px; }
   .graphbox { margin-top:14px; border-top:1px dashed var(--border); padding-top:10px; }
@@ -187,6 +188,8 @@ function renderCard(q, d, shot, isImage) {
     }
   }
   html += '<div class="meta">' + (isImage ? '截图分析 · ' : '') +
+          (isImage && d.chart_read_status === 'unstructured'
+            ? '<span class="warn">未结构化读图</span> · ' : '') +
           '意图：' + escapeHtml(d.intent || '') +
           ' · 路由：' + escapeHtml((d.routes || []).join(', ') || '—') +
           ' · 轮次：' + escapeHtml(String(d.rounds ?? '—')) + '</div>';

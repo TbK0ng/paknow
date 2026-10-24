@@ -181,8 +181,9 @@ def generate(
     # chart questions read the picture once, first; the read is uncitable and
     # carries no [n], so the answer's citations still point at evidence only
     chart_read: dict[str, Any] | None = None
+    chart_read_failure: dict[str, str] | None = None
     if mode == "chart" and images:
-        read, _failure = read_chart(images)
+        read, chart_read_failure = read_chart(images)
         if read is not None:
             chart_read = read.model_dump()
             parts.append(
@@ -261,4 +262,5 @@ def generate(
         "uncertainty": ans.uncertainty,
         "chart_read": chart_read,
         "chart_read_status": "structured" if chart_read else "unstructured",
+        "chart_read_failure": chart_read_failure,
     }
