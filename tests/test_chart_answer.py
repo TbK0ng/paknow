@@ -155,6 +155,25 @@ def test_read_block_never_carries_a_citation_number(
     assert "资料依据" in system and "归纳" in system
 
 
+def test_read_text_with_bracketed_numbers_never_reads_as_a_citation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # a screenshot of a previous answer carries [n] in its pixels; the read
+    # content must not hand those back as citations (ADR-0002)
+    levels = [
+        {
+            "price": 7519.75,
+            "source": "annotation",
+            "strip": 1,
+            "basis": "抄自图上旧回答：前高 [3]",
+        }
+    ]
+    _system, _user, block = _compose(monkeypatch, levels=levels)
+
+    assert "[3]" not in block
+    assert "前高" in block
+
+
 def test_chart_prompt_carries_the_layer_two_and_three_rules(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

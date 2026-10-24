@@ -1,6 +1,7 @@
 """Evidence-grounded answer generation with citation binding (plan §7.3)."""
 from __future__ import annotations
 
+import re
 from typing import Any, Mapping
 
 from pydantic import BaseModel, Field
@@ -90,6 +91,13 @@ _MARKET_STATE = {
     "unclear": "不明",
 }
 _UNSET: Any = object()
+# read content can never read as a citation (ADR-0002), even when the screenshot
+# itself contains a previous answer with [n] markers in it
+_CITATION = re.compile(r"\s*\[\d+\]")
+
+
+def _plain(value: Any) -> str:
+    return _CITATION.sub("", str(value))
 
 
 def _fmt_price(price: float | None) -> str:
@@ -100,21 +108,21 @@ def _render_chart_read(read: Mapping[str, Any]) -> str:
     """Deterministic render: layer 1 is pre-numbered so the answer copies it
     instead of re-reading (or trimming) the levels list."""
     def printed(value: Any) -> str:
-        return "图上未标注" if value in (None, "") else str(value)
+        return "图上未标注" if value in (None, "") else _plain(value)
 
     lines = [
         f"品种：{printed(read.get('instrument'))} ｜ 周期：{printed(read.get('timeframe'))}"
         f" ｜ 市场状态：{_MARKET_STATE.get(read.get('market_state'), '不明')}"
-        f" ｜ 形态：{'、'.join(read.get('patterns') or []) or '图上未标注'}",
-        f"指标：{'、'.join(read.get('indicators') or []) or '图上未标注'}",
-        f"图上标注原文：{'；'.join(read.get('annotations') or []) or '图上未标注'}",
+        f" ｜ 形态：{'、'.join(_plain(p) for p in read.get('patterns') or []) or '图上未标注'}",
+        f"指标：{'、'.join(_plain(i) for i in read.get('indicators') or []) or '图上未标注'}",
+        f"图上标注原文：{'；'.join(_plain(a) for a in read.get('annotations') or []) or '图上未标注'}",
     ]
     if read.get("swings"):
         lines.append(
             "摆动高低点："
             + "；".join(
                 f"{'高' if s.get('kind') == 'high' else '低'} {_fmt_price(s.get('price'))}"
-                f"（条带 {s.get('strip', 1)}，{s.get('basis') or '图上未标注'}）"
+                f"（条带 {s.get('strip', 1)}，{_plain(s.get('basis')) if s.get('basis') else '图上未标注'}）"
                 for s in read["swings"]
             )
         )
@@ -124,22 +132,23 @@ def _render_chart_read(read: Mapping[str, Any]) -> str:
             f"可读位（共 {len(levels)} 条，按图上顺序；答案第一层必须逐条全列，不得按建议裁剪）："
         )
         for i, level in enumerate(levels, 1):
+            basis = level.get("basis")
             lines.append(
                 f"- {i}. {_fmt_price(level.get('price'))}"
                 f" ｜ 来源 {_LEVEL_SOURCE.get(level.get('source'), '不明')}"
                 f" ｜ 条带 {level.get('strip', 1)}"
-                f" ｜ 依据 {level.get('basis') or '图上未标注'}"
+                f" ｜ 依据 {_plain(basis) if basis else '图上未标注'}"
             )
     else:
         lines.append("可读位：图上没有可读价位，不要编造价位清单。")
     if read.get("focus"):
         lines.append(f"读图初筛（5–8 个，按固定优先级 {_CHART_PRIORITY}）：")
         lines.extend(
-            f"- {_fmt_price(f.get('price'))}：{f.get('why') or '图上标注'}"
+            f"- {_fmt_price(f.get('price'))}：{_plain(f.get('why')) if f.get('why') else '图上标注'}"
             for f in read["focus"]
         )
     if read.get("unreadable"):
-        lines.append("不确定项：" + "；".join(read["unreadable"]))
+        lines.append("不确定项：" + "；".join(_plain(u) for u in read["unreadable"]))
     return "图上读数（结构化，来自图片本身，不是可引用证据）：\n" + "\n".join(lines)
 
 
