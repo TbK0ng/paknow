@@ -181,6 +181,14 @@ def _generate_node(state: QState) -> QState:
             for f in state.get("figures", [])
         ],
     )
+    # a degraded read is a visible failure of this run, not a silent fallback
+    failure = state["answer"].pop("chart_read_failure", None)
+    if failure:
+        detail = failure.get("detail")
+        state.setdefault("failures", []).append(
+            f"chart_read: {failure.get('reason') or 'no_content'}"
+            + (f" ({detail})" if detail else "")
+        )
     return state
 
 

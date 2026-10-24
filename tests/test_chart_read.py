@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 import io
 import json
+from types import SimpleNamespace
 from typing import Any
 
 import pytest
@@ -13,8 +14,10 @@ from PIL import Image
 from apps.api import main
 from paknow import chart as chart_module
 from paknow.chart import ChartRead, read_chart
+from paknow.retrieval.pipeline import RetrievalResult
 from paknow.workflows import generate as generate_module
 from paknow.workflows import graph as graph_module
+from paknow.workflows.router import QueryPlan
 
 
 def _png(size: tuple[int, int]) -> bytes:
@@ -106,7 +109,49 @@ def test_read_call_uses_one_attempt_under_the_120s_budget() -> None:
     assert kwargs["images"]
 
 
-# --- read_chart: failures are classified, never raised -------------------- #
+# --- read_chart: every reported strip lands in 1..N ----------------------- #
+
+
+def test_out_of_range_strips_are_clamped_and_noted() -> None:
+    out = _read(
+        swings=[{"kind": "high", "price": 7526.75, "strip": 9, "basis": "箭头"}],
+        levels=[
+            {"price": None, "source": "unknown", "strip": 0, "basis": "被裁切"},
+            {"price": 7490.0, "source": "axis", "strip": -3, "basis": "轴"},
+        ],
+    )
+
+    result, failure = read_chart([_png((400, 4000))], client=FakeClient(out))  # 3 strips
+
+    assert failure is None
+    assert [s.strip for s in result.swings] == [3]
+    assert [level.strip for level in result.levels] == [1, 1]
+    assert result.levels[0].price is None  # clamping never invents a price
+    assert result.swings[0].price == 7526.75
+    assert any("条带" in note for note in result.unreadable)
+
+
+def test_single_strip_read_keeps_every_strip_at_one() -> None:
+    out = _read(
+        levels=[{"price": 1.0, "source": "axis", "strip": 4, "basis": "轴"}]
+    )
+
+    result, failure = read_chart([_png((800, 600))], client=FakeClient(out))
+
+    assert failure is None
+    assert [level.strip for level in result.levels] == [1]
+
+
+def test_in_range_strips_pass_through_unnoted() -> None:
+    out = _read(levels=[{"price": 1.0, "source": "axis", "strip": 2, "basis": "轴"}])
+
+    result, _ = read_chart([_png((400, 4000))], client=FakeClient(out))
+
+    assert result.levels[0].strip == 2
+    assert result.unreadable == []
+
+
+
 
 
 @pytest.mark.parametrize(
@@ -285,3 +330,94 @@ def test_text_query_endpoint_has_no_chart_fields(monkeypatch: pytest.MonkeyPatch
 def test_chart_module_exports_the_contract() -> None:
     for name in ("ChartRead", "Swing", "Level", "Focus", "read_chart", "CHART_READ_SYSTEM"):
         assert hasattr(chart_module, name)
+
+
+# --- run_query: a failed read degrades visibly, at no extra model call ---- #
+
+
+def _chart_chain(monkeypatch: pytest.MonkeyPatch, *, read, failures=()) -> dict[str, Any]:
+    """Run the real graph + real ``generate`` over stubbed retrieval and model."""
+    trace: dict[str, Any] = {"read_calls": 0, "answer_calls": 0}
+
+    monkeypatch.setattr(
+        graph_module,
+        "retrieve_evidence",
+        lambda query, queries, **kwargs: RetrievalResult(
+            failures=list(failures), graph_stats={"enabled": False}
+        ),
+    )
+    monkeypatch.setattr(
+        graph_module,
+        "route",
+        lambda query, images=None: QueryPlan(
+            intent="chart_analysis",
+            routes=["visual_page"],
+            evidence_needs=["key_levels"],
+            sub_queries=["sub"],
+            max_search_rounds=3,
+        ),
+    )
+    monkeypatch.setattr(graph_module, "select_sop", lambda intent: None)
+    monkeypatch.setattr(
+        graph_module,
+        "check_sufficiency",
+        lambda *a, **k: SimpleNamespace(
+            next_query=None, model_dump=lambda: {"sufficient": True, "next_query": None}
+        ),
+    )
+
+    def fake_read(images, **_kwargs):
+        trace["read_calls"] += 1
+        return read
+
+    monkeypatch.setattr(generate_module, "read_chart", fake_read)
+
+    def fake_answer(schema, messages, **kwargs):
+        trace["answer_calls"] += 1
+        trace["system"] = messages[0]["content"]
+        return generate_module.Answer(answer="图上 7519.75 是关键位。")
+
+    monkeypatch.setattr(generate_module.gateway, "chat_json", fake_answer)
+    monkeypatch.setattr(
+        graph_module,
+        "save_trace",
+        lambda run_id, query, **kwargs: trace.update(kwargs),
+    )
+    monkeypatch.setattr(graph_module, "_maybe_auto_optimize", lambda: None)
+    return trace
+
+
+@pytest.mark.parametrize("reason", ["timeout", "invalid_structure", "no_content"])
+def test_degraded_read_records_the_reason_and_keeps_chart_mode(
+    monkeypatch: pytest.MonkeyPatch, reason: str
+) -> None:
+    trace = _chart_chain(
+        monkeypatch,
+        read=(None, {"reason": reason, "detail": f"{reason} detail"}),
+        failures=["retrieve: qdrant down"],
+    )
+
+    result = graph_module.run_query("这张图上有哪些关键位？", images=[_png((800, 600))])
+
+    assert result["chart_read"] is None
+    assert result["chart_read_status"] == "unstructured"
+    assert result["answer"]["answer"]  # the answer is still produced
+    assert trace["system"] == generate_module._CHART_SYSTEM  # chart answer, not a concept essay
+    assert any(f"chart_read: {reason}" in f for f in result["failures"])
+    assert "retrieve: qdrant down" in result["failures"]  # other failures survive
+    assert trace["failures"] == result["failures"]  # and reach the run trace
+    assert (trace["read_calls"], trace["answer_calls"]) == (1, 1)
+
+
+def test_structured_read_records_no_failure_and_costs_the_same_calls(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    read = _read()
+    trace = _chart_chain(monkeypatch, read=(read, None))
+
+    result = graph_module.run_query("这张图上有哪些关键位？", images=[_png((800, 600))])
+
+    assert result["chart_read"] == read.model_dump()
+    assert result["chart_read_status"] == "structured"
+    assert result["failures"] == []
+    assert (trace["read_calls"], trace["answer_calls"]) == (1, 1)
