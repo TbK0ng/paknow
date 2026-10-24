@@ -6,7 +6,7 @@ Spec 与票 01–05 已实现、评审、合并。不要重开；本文件记录
 
 - 分支：已合并进 `main`（`8944bfb` 是 `main` 的祖先）；`feat/*` 分支已删除。
 - 票：`issues/01`…`05` 全部 resolved；spec `spec.md` 为 resolved。
-- 测试：`E:/PAknow/.venv/Scripts/python.exe -m pytest tests -q` → **323 passed**。
+- 测试：`E:/PAknow/.venv/Scripts/python.exe -m pytest tests -q` → 全绿。
 - Review：两轴结论与修复见 `.scratch/retrieval-eval-parity/spec.md` 的 Comments；修复提交 `68d0bcc`，合并 `8944bfb`。
 - 工作树 `E:/PAknow-wt/*` 与 `ticket/*` 分支已在收尾时删除。
 

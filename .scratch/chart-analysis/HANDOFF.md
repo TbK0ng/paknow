@@ -6,7 +6,7 @@ Spec 与票 01–08 已实现、评审、合并进 `main`。不要重开；本�
 
 - 分支：`main`（`feat/chart-analysis` 已合并，工作树与 `ticket/*` 分支已删除）。
 - 票：`issues/01`…`08` 全部 `resolved`；`spec.md` 与 `00-decisions.md` 为 `resolved`。
-- 测试：`E:/PAknow/.venv/Scripts/python.exe -m pytest tests -q` → **323 passed**。
+- 测试：`E:/PAknow/.venv/Scripts/python.exe -m pytest tests -q` → 全绿。
 - `python scripts/check_scratch.py` → OK。
 - Review base `2f412e6`；两轴复审结论见 `.scratch/chart-analysis/spec.md` 的 Comments。
 
@@ -41,12 +41,12 @@ chart-10 首跑 `JSONDecodeError: Unterminated string ... char 10`——偏移�
 ## Verification
 
 ```bash
-E:/PAknow/.venv/Scripts/python.exe -m pytest tests -q          # 323 passed
+E:/PAknow/.venv/Scripts/python.exe -m pytest tests -q          # 全部通过
 E:/PAknow/.venv/Scripts/python.exe scripts/check_scratch.py    # OK
 
 # 单题冒烟（改完答案上限后跑过：chart-01 62.4s，ok）
 PAKNOW_DB_URL=sqlite:///E:/PAknow/data/paknow.db OBJECTS_DIR=E:/PAknow/data/objects PYTHONPATH=. \
-  python scripts/eval_chart.py --limit 1 --out .scratch/chart-analysis/eval/smoke-guard
+  python scripts/eval_chart.py --limit 1 --out .scratch/chart-analysis/eval/<ts>   # 冒烟跑完即删，不入库
 ```
 
 ## Open items
