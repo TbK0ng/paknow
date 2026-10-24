@@ -5,6 +5,12 @@ or the gold evaluation. Commands assume the main repo at `E:/PAknow`; run them
 from the directory named in each block. Python is the shared venv
 `E:/PAknow/.venv/Scripts/python.exe`.
 
+Eval assets live in three places with different tracked status — check which one
+you mean before citing a number: datasets in `evals/gold/` (tracked, with
+`.sha256`), harnesses in `scripts/eval_*.py` (tracked), run records in
+`.scratch/<feature>/` (also tracked: per-item `records.jsonl` and `summary.json`).
+Only `data/paknow.db` and `data/objects/` are gitignored.
+
 ## Paths and overrides
 
 | Thing | Default | Override |

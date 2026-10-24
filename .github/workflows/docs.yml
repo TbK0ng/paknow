@@ -26,7 +26,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install MkDocs
-        run: pip install "mkdocs==1.6.1" "mkdocs-material==9.7.7" "pymdown-extensions==12.3"
+        run: pip install "mkdocs>=1.6.1,<2" "mkdocs-material>=9.7.7,<10" "pymdown-extensions>=12.3,<13"
       - name: Build and publish to gh-pages
         run: |
           git config user.name "github-actions[bot]"

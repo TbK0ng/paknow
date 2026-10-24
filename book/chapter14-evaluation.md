@@ -73,7 +73,7 @@ description: "3 个冻结数据集、4 个 harness、宽度消融、答案双臂
 
 ## 4. 答案层：先过硬约束，再看覆盖率
 
-`scripts/eval_answers.py` 对每个臂跑完整生产链，逐题产出三件事（`eval_answers.py:84-131`）：
+`scripts/eval_answers.py` 对每个臂跑完整生产链，逐题产出三件事（`scripts/eval_answers.py:84-131`）：
 
 1. **硬约束** `hard_pass`：所有被引用的 id 必须在本次渲染的可引用集合里，且**不能是图谱
    独有证据**。图谱条目如果同时是文本证据，会渲染成 `已见 [n]`——引它等于引原文，允许；

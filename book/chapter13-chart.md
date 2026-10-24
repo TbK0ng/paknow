@@ -65,7 +65,7 @@ out = client.chat_json(
 - **`max_tokens=8192`。** 推理 token 与输出共享预算，密集图在出 JSON 之前就烧掉约 5k；
   4096 稳定截断成非法 JSON。
 - **失败不抛。** `read_chart` 返回 `(None, {"reason", "detail"})`，`_read_node` 把
-  `chart_read: <reason>` 写进 `failures`，检索照常走纯文本路径（`graph.py:89-110`）。
+  `chart_read: <reason>` 写进 `failures`，检索照常走纯文本路径（`paknow/workflows/graph.py:89-110`）。
   一张读不懂的图不该让整个问答挂掉。
 
 失败分类只有三种：`timeout` / `invalid_structure` / `no_content`，前端与 trace 看到的是
@@ -90,14 +90,14 @@ out = client.chat_json(
 | `focus` 价位（拼接） | `"7519.75 7488 关键位 支撑 阻力"` | 让"这个位为什么重要"有原文支撑 |
 | `annotations`（≤160 字符） | `"2 @ 7519.75 图上标注 含义"` | 图上手写标注的术语解释 |
 
-它们被插在 `plan_queries[0]` 之后，与计划查询**共享 6 条上限**（`graph.py:112-135`）。
+它们被插在 `plan_queries[0]` 之后，与计划查询**共享 6 条上限**（`paknow/workflows/graph.py:112-135`）。
 这意味着读图查询优先于多数量化改写，但不会挤掉用户原问题。
 
 `levels` 为空时 `chart_queries` 直接返回空——非图表不产生任何检索扰动。
 
 ## 5. 生成：三层，引用只出现在第三层
 
-`_CHART_SYSTEM`（`generate.py:37-50`）把答案钉死成三层：
+`_CHART_SYSTEM`（`paknow/workflows/generate.py:37-50`）把答案钉死成三层：
 
 | 层 | 内容 | 是否可引用 |
 |---|---|---|
