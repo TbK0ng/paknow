@@ -1,10 +1,12 @@
 """Evidence-grounded answer generation with citation binding (plan §7.3)."""
 from __future__ import annotations
 
+import json
 from typing import Any, Mapping
 
 from pydantic import BaseModel, Field
 
+from paknow.chart import read_chart
 from paknow.gateway import gateway
 from paknow.retrieval.pipeline import citation_binding
 
@@ -176,6 +178,17 @@ def generate(
     index = dict(citation_index) if citation_index is not None else citation_binding(evidence)
     context = build_context(evidence, index)
     parts = [f"问题：{query}"]
+    # chart questions read the picture once, first; the read is uncitable and
+    # carries no [n], so the answer's citations still point at evidence only
+    chart_read: dict[str, Any] | None = None
+    if mode == "chart" and images:
+        read, _failure = read_chart(images)
+        if read is not None:
+            chart_read = read.model_dump()
+            parts.append(
+                "图上读数（结构化，来自图片本身，不是可引用证据）：\n"
+                + json.dumps(chart_read, ensure_ascii=False)
+            )
     if toc_context:
         parts.append(
             "目录框架（相关章节，用于定位知识范围，不直接引用编号）：\n"
@@ -246,4 +259,6 @@ def generate(
         "evidence_ids": evidence_ids,
         "figure_ids": ans.figure_ids,
         "uncertainty": ans.uncertainty,
+        "chart_read": chart_read,
+        "chart_read_status": "structured" if chart_read else "unstructured",
     }

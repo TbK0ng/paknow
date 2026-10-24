@@ -202,7 +202,13 @@ async def charts(query: str, file: UploadFile, cutoff: float = 0.0) -> dict[str,
         raise HTTPException(400, "upload is not a readable image") from None
     if cutoff > 0:
         data = mask_right_bytes(data, cutoff)
-    return _resolve_answer(run_query(query, images=[data]))
+    result = run_query(query, images=[data])
+    payload = _resolve_answer(result)
+    # the structured read is audit data for the chart surface only; /query keeps
+    # its text-answer shape
+    payload["chart_read"] = result.get("chart_read")
+    payload["chart_read_status"] = result.get("chart_read_status", "unstructured")
+    return payload
 
 
 @app.get("/evidence/{evidence_id}")
