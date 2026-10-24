@@ -151,10 +151,13 @@ def chart_queries(read: dict[str, Any] | None) -> list[str]:
     )
     if prices:
         out.append(f"{prices} 关键位 支撑 阻力")
-    # single-character annotations are axis/tool labels, not terms
+    # annotations are verbatim chart text: keep short terms (labels, prices),
+    # drop single-char tool labels and whole title/axis blocks
     annotations = " ".join(
-        a for a in read.get("annotations") or [] if len(a.strip()) > 1
-    ).strip()[:200]
+        a.strip()
+        for a in read.get("annotations") or []
+        if 1 < len(a.strip()) <= 60
+    )[:160]
     if annotations:
         out.append(f"{annotations} 图上标注 含义")
     return out[:3]

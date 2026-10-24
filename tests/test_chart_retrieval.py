@@ -270,6 +270,13 @@ def test_chart_queries_are_bounded_and_skip_empty_reads() -> None:
         "图上标注" in q
         for q in chart_queries(_read(annotations=["2"]).model_dump())
     )
+    # nor is a whole chart-title block
+    assert not any(
+        "图上标注" in q
+        for q in chart_queries(
+            _read(annotations=["TradeStation Chart Analysis - ESM08.D - 3 min [CME] E-mini S&P 500"]).model_dump()
+        )
+    )
 
 
 def test_chart_queries_are_empty_when_every_field_is() -> None:

@@ -104,6 +104,8 @@ def test_read_call_uses_one_attempt_under_the_120s_budget() -> None:
     assert kwargs["timeout"] == 120
     assert kwargs["attempts"] == 1
     assert kwargs["images"]
+    # reasoning tokens share max_tokens; 4096 truncated every dense page
+    assert kwargs["max_tokens"] == 8192
 
 
 # --- read_chart: failures are classified, never raised -------------------- #
