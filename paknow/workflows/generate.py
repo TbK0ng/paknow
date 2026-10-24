@@ -262,12 +262,13 @@ def generate(
     index = dict(citation_index) if citation_index is not None else citation_binding(evidence)
     context = build_context(evidence, index)
     parts = [f"问题：{query}"]
-    chart_read_failure: dict[str, str] | None = None
-    # chart questions answer from a structured read made before the answer; the
-    # read is uncitable and carries no [n], so citations still point at evidence
+    # chart questions answer from the structured read the graph made upstream;
+    # the read is uncitable and carries no [n], so citations still point at
+    # evidence. A direct caller that supplies no read still gets one (failures
+    # are the graph's read node's job, so the reason is not reported here).
     if chart_read is _UNSET:  # the graph may already have read the picture
         if mode == "chart" and images:
-            read, chart_read_failure = read_chart(images)
+            read, _ = read_chart(images)
             chart_read = read.model_dump() if read is not None else None
         else:
             chart_read = None
@@ -348,5 +349,4 @@ def generate(
         "uncertainty": ans.uncertainty,
         "chart_read": chart_read,
         "chart_read_status": "structured" if chart_read else "unstructured",
-        "chart_read_failure": chart_read_failure,
     }

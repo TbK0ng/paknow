@@ -83,6 +83,7 @@ def _stub_chain(
     intent: str = "chart_analysis",
     read_result: tuple[ChartRead | None, dict[str, str] | None] | None = None,
     checks: tuple[bool, ...] = (True,),
+    units: int = 0,
 ) -> tuple[list[list[bytes]], list[dict[str, Any]], list[dict[str, Any]]]:
     reads: list[list[bytes]] = []
     retrievals: list[dict[str, Any]] = []
@@ -96,7 +97,19 @@ def _stub_chain(
 
     def fake_retrieve(query, queries, **kwargs):
         retrievals.append({"query": query, "queries": list(queries), **kwargs})
+        found = [
+            {
+                "evidence_id": f"e{i}",
+                "doc_id": "d1",
+                "text": f"paragraph {i}",
+                "provenance": "native_text",
+            }
+            for i in range(units)
+        ]
         return RetrievalResult(
+            text_hits=found,
+            citable_units=[dict(u) for u in found],
+            citation_index={u["evidence_id"]: i for i, u in enumerate(found)},
             acc={},
             graph_stats={"enabled": kwargs.get("expand_graph", True)},
         )
@@ -253,9 +266,36 @@ def test_failed_read_continues_and_records_the_reason(
     assert len(reads) == 1
     assert result["chart_read"] is None
     assert result["chart_read_status"] == "unstructured"
-    assert "chart_read: timeout" in result["failures"]
+    # one entry, ticket 05's wording: reason plus detail
+    assert [f for f in result["failures"] if f.startswith("chart_read:")] == [
+        "chart_read: timeout (timed out)"
+    ]
     assert result["answer"]["answer"] == "答"
     assert retrievals and generated
+
+
+def test_non_chart_read_caps_retrieval_through_the_graph(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    non_chart = _read(
+        market_state="unclear",
+        levels=[],
+        focus=[],
+        swings=[],
+        patterns=[],
+        annotations=["第 3 章 市场结构"],
+    )
+    _reads, _retrievals, generated = _stub_chain(
+        monkeypatch,
+        read_result=(non_chart, None),
+        units=4,
+    )
+
+    result = graph_module.run_query(QUESTION, images=[_png()])
+
+    # ticket 06's cap is reachable now that the read precedes retrieval
+    assert result["citable_ids"] == ["e0"]
+    assert len(generated[0]["args"][1]) == 1
 
 
 # --- the derivation itself -------------------------------------------------- #

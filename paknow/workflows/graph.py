@@ -1,4 +1,4 @@
-"""LangGraph query state machine: route -> retrieve -> check -> (retry) -> generate -> record.
+"""LangGraph query state machine: route -> read -> retrieve -> check -> (retry) -> generate -> record.
 
 Routing now also performs query construction (step-back + multi-query + HyDE)
 via ``QueryPlan``; framework questions get synthesis generation.
@@ -90,8 +90,9 @@ def _read_node(state: QState) -> QState:
     """One structured read, before retrieval: the sub-queries need it.
 
     Only a chart question with an upload has something to read; every other
-    state passes through without a model call. A failed read is classified,
-    never raised, so retrieval falls back to the text path.
+    state passes through without a model call. A failed read is recorded here
+    (the only place that appends it) and never raised, so retrieval falls back
+    to the text path.
     """
     state["chart_read"] = None
     if state.get("intent") != "chart_analysis" or not state.get("images"):
@@ -99,7 +100,10 @@ def _read_node(state: QState) -> QState:
     read, failure = read_chart(state["images"])
     if read is None:
         reason = (failure or {}).get("reason") or "no_content"
-        state.setdefault("failures", []).append(f"chart_read: {reason}")
+        detail = (failure or {}).get("detail")
+        state.setdefault("failures", []).append(
+            f"chart_read: {reason}" + (f" ({detail})" if detail else "")
+        )
         return state
     state["chart_read"] = read.model_dump()
     return state
@@ -217,14 +221,6 @@ def _generate_node(state: QState) -> QState:
         ],
         chart_read=state.get("chart_read"),
     )
-    # a degraded read is a visible failure of this run, not a silent fallback
-    failure = state["answer"].pop("chart_read_failure", None)
-    if failure:
-        detail = failure.get("detail")
-        state.setdefault("failures", []).append(
-            f"chart_read: {failure.get('reason') or 'no_content'}"
-            + (f" ({detail})" if detail else "")
-        )
     return state
 
 

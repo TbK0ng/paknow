@@ -399,7 +399,8 @@ def test_degraded_read_records_the_reason_and_keeps_chart_mode(
     assert result["chart_read_status"] == "unstructured"
     assert result["answer"]["answer"]  # the answer is still produced
     assert trace["system"] == generate_module._CHART_SYSTEM  # chart answer, not a concept essay
-    assert any(f"chart_read: {reason}" in f for f in result["failures"])
+    read_failures = [f for f in result["failures"] if f.startswith("chart_read:")]
+    assert read_failures == [f"chart_read: {reason} ({reason} detail)"]  # exactly one
     assert "retrieve: qdrant down" in result["failures"]  # other failures survive
     assert trace["failures"] == result["failures"]  # and reach the run trace
     assert (trace["read_calls"], trace["answer_calls"]) == (1, 1)
