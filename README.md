@@ -6,7 +6,7 @@
 **可追溯出处**的知识问答、上传图表分析，并保留程序性记忆（SOP）的生命周期。
 
 > 技术文档站：<https://tbk0ng.github.io/paknow/>（源码 `book/`，MkDocs Material）。
-> 回测/行情统计按实施决策暂缓；质量评测已起步，但还没有回归门槛（见下文“评测”）。
+> 回测/行情统计按实施决策暂缓；质量评测已起步，回归门槛只覆盖确定性记录（见下文“评测”）。
 
 ## 能力
 
@@ -70,7 +70,9 @@
 
 ## 未闭环 / 未接线
 
-- **评测没有门槛**：harness 与数据集已有，CI 不跑；数字变差不会阻塞合入。
+- **评测门槛只覆盖确定性部分**：`tests/test_eval_artifacts.py` 守住数据集↔旁车↔运行记录↔
+  [评测](book/chapter14-evaluation.md) 的数字；检索与生成要有索引和 API key 才跑得起来，
+  所以质量变差仍不会阻塞合入。
 - **SOP 8 个操作名里 5 个空转**：只有 `expand_terms` 与 `check_evidence` 生效；
   `step_back` / `multi_query` / `hyde` / `expand_figures` / `rerank` 只写状态，`hybrid_search`
   是空操作，`stop` 无人消费。
@@ -204,7 +206,7 @@ at the same price"，并区分 micro double bottom bear flag 反例，`uncertain
 ## 未完成 / 待补
 
 - 真实行情数据 + 回测（暂缓）。
-- 评测回归门槛、SOP 对照回放、机制题检索——三件按顺序解锁。
+- 生产链回归门槛、SOP 对照回放、机制题检索——三件按顺序解锁。
 - 视觉观察覆盖 927 张图资产（观察式索引，非图像相似检索）。
 
 ## 视觉方案说明（Blackwell 适配）

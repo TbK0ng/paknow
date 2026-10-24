@@ -245,7 +245,7 @@ Docker，且 Qdrant 的命名向量刚好满足“同点 dense+sparse + RRF”�
 | Ragas（Faithfulness / AnswerRelevancy / ContextPrecision / ContextRecall） | 未使用 | **未实现** | 与自建口径重叠，接入前先要有回归门槛 |
 | Phoenix / OpenTelemetry 追踪 | 未使用；`RunTrace` 记录请求/路由/证据/失败/耗时/版本快照 | 部分替代 | 有可观测性，没有可视化/漂移分析 |
 | 金标准数据集 | 3 个冻结集：20 题（v1）、60 题 4 层（v2）、10 张图（chart）；均带 SHA-256 | 已采用 | v2 覆盖检索 + 答案两层，chart 集只做确定性判定 |
-| 回归门槛 / 消融 B0–B7 | 召回宽度 14/20 × 文本/图谱 2×2 消融；答案双臂；图表价位分桶 | 部分采用 | 有 harness 与数字，**没有 CI 门槛**；重排/toc/邻接仍无消融 |
+| 回归门槛 / 消融 B0–B7 | 召回宽度 14/20 × 文本/图谱 2×2 消融；答案双臂；图表价位分桶 | 部分采用 | 有 harness 与数字；CI 只守确定性一致性（`tests/test_eval_artifacts.py`），生产链无门槛；重排/toc/邻接仍无消融 |
 | 程序化 trace 信号 | `retrieval_error/no_evidence/low_evidence/no_answer` 按意图分组 | 已采用（局部） | 只服务 SOP 蒸馏，不是质量评测 |
 | SOP 对照回放 | 未实现；`record_replay` 有接口，无数据 | **接线缺口** | `active` 晋升因此关闭 |
 
@@ -380,7 +380,7 @@ Docker，且 Qdrant 的命名向量刚好满足“同点 dense+sparse + RRF”�
 
 | 优先级 | 事项 | 为什么现在做 |
 |---|---|---|
-| P0 | 评测回归门槛（把已有 harness 接进 CI） | 数据集与数字都有了，但没有一条会阻塞合入 |
+| P0 | 生产链评测门槛（让检索+生成也进 CI） | 确定性一致性已进 CI；生产链仍需要一台能跑索引与模型的 runner |
 | P0 | SOP 对照回放 + 五个操作接线 | 回放是 `active` 晋升的唯一证据；不接线则 SOP 只剩两个操作有效 |
 | P0 | 接线 `QueryPlan.metadata` 到 Qdrant filter；实现或删除 `visual_page`/`numeric` | 消除“计划字段装饰化”，让路由输出可信 |
 | P1 | 机制题检索（20 题覆盖率 ≈0） | 这是分层评测暴露出的设计缺口，不是调参 |
