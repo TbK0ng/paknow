@@ -1,4 +1,4 @@
-**Status:** ready-for-agent
+**Status:** resolved
 **Review base:** 2f412e6
 
 # 图表读图：结构化 `chart_read` 与图表评测
@@ -183,4 +183,10 @@
 
 ## Comments
 
-（待补）
+实现于 `feat/chart-analysis`（integration branch），8 张 ticket 全部 `resolved`；`**Review base:** 2f412e6` 之后共 32 个提交。
+
+- 最终链路：`route → read → retrieve → check → generate`；读图一次、失败可见、非行情图拒答、图表问题关图谱。
+- 两轴复审后的修复：降级路径改回单阶段图表提示（`_CHART_FALLBACK_SYSTEM`）、读图禁用 SDK 内部重试（120s 才是硬上限）、删除 `generate()` 里隐藏的第二次读图、`judge_levels` 先精确匹配再配漂移、`eval_chart.py` 补进 `docs/agents/retrieval-dev.md`。
+- 离线套件 253 passed；`python scripts/check_scratch.py` OK。
+- 真实长截图实跑：读图 28–30 条价位（含 `2 @ 7519.75`），答案第一层条数与读图一致，读图部分无引用编号。
+- 未收口：`evals/gold/chart_v1.json` 的期望值由一次模型读图得出，需人工对照原图确认；带图 10 题全量评测尚未跑过。

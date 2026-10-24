@@ -4,10 +4,18 @@
 
 **Blocked by:** 01
 
-**Status:** needs-triage
+**Status:** resolved
 
 - [ ] 非行情截图的第一句明确说明这不是行情图表，而不是硬凑价位
 - [ ] `chart_read.levels` 与 `focus` 为空，`market_state` 为 `unclear`
 - [ ] 检索最多保留 1 条证据，不出现多段教科书概念讲解
 - [ ] 图上的可见文字（标题、按钮、正文片段）能在答案里被摘出，且不推断图上没有的结论
 - [ ] 行情图表走原路径：同样的输入类别判别不会把正常图表误判成非行情图（用 01 的真实截图回归）
+
+## Comments
+
+**Resolved** in `a26b329`, merged as `8ac572a`.
+
+- 读图提示要求非行情图返回 `market_state="unclear"`、`levels/focus/swings` 全空、可见文字进 `annotations`；`is_non_chart()` 是唯一判据。
+- 仅非行情图追加 `_NON_CHART_SYSTEM`（首句「这不是行情图表」+ 只转述可见文字/版式），检索收敛到 1 条证据；正常图表不加这段、不设上限。
+- 实跑（书的前言页）：`levels=0`，首句「这不是行情图表…」，正文只摘图上文字；同批次图表页仍有 26 条价位、13 个摆动点。

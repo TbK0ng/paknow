@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [ ] 图表问题在有图时先走一次读图调用，产出结构化 `chart_read`；读图阶段不接收证据块，因此结构上不产生引用编号
 - [ ] `chart_read.levels` 逐条带 `source` 与 `basis`（图上依据），`price` 在任一位不确定时为 `null`，不按刻度推算
@@ -14,3 +14,12 @@
 - [ ] 读图调用恰好一次；读图内部失败时 `chart_read` 为 `null` 而流水线不中断
 - [ ] 用真实截图人工核对：`levels` 中至少 10 条价位与图上标注一致（含末位），且标注原文（如 `2 @ 7519.75`）出现在 `annotations` 里
 - [ ] 答案里没有任何引用编号指向读图内容（ADR-0002）
+
+## Comments
+
+**Resolved** in `fa272c3`, merged as `0ed6577`.
+
+- `paknow/chart.py` 提供 `ChartRead`/`Swing`/`Level`/`Focus` 与 `read_chart`（一次调用、`timeout=120`、读图提示无证据块）。
+- `generate()` 返回 `chart_read` + `chart_read_status`，`run_query` 透出；`/charts` 带这两个字段，`/query` 不带；`/runs/{id}` 的 `output` 直接可查（JSON 列，无迁移）。
+- 真实截图（`aaa.png`，1516×5543，8 条带）实跑：`structured`，28–30 条 `levels`，含 `2 @ 7519.75`，`annotations` 保留标注原文；答案读图部分无 `[n]`。
+- 已知：同一张长图偶发 `invalid_structure`（模型返回空 JSON），降级路径由 05 覆盖。

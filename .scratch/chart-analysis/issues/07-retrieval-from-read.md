@@ -4,10 +4,20 @@
 
 **Blocked by:** 01
 
-**Status:** needs-triage
+**Status:** resolved
 
 - [ ] 读图成功时，检索子查询包含由 `market_state`、`patterns`、`focus` 派生的表述；子查询条数仍受现有上限约束
 - [ ] 同一张图、同一句问题的证据条目里，出现与图上结构相关的单元（可用改动前后的条目对比作为验证材料）
 - [ ] 读图缺失或 `levels` 为空时，检索行为与今天逐条一致（不额外增加子查询）
 - [ ] 图表问题依然关闭图谱扩展，`graph_stats.enabled` 为 false
 - [ ] 文本知识问答的查询改写与检索结果不变（60 题口径不受影响）
+
+## Comments
+
+**Resolved** in `b78268f` + `9dbc3be`, merged as `0ab41ef`.
+
+- 读图从 `generate()` 移到图节点（`route → read → retrieve`），每次图表运行恰好一次；`generate` 只接收结果，不再读图。
+- 检索子查询由 `market_state`/`patterns`/`focus` 价位/`annotations` 术语合成（`chart_queries`，≤3 条），总数仍受 6 条上限约束；无读图或 `levels` 为空时与原逻辑逐字一致。
+- 同一图同一题：读图前 6 条全是教科书式问法，读图后为结构问法与价位清单；证据新增「急跌后的交易区间」「强下跌趋势中的小幅回调形态」等。
+- 图表问题 `graph_stats.enabled` 仍为 false；文本问答不读图、不改写。
+- 附带修复：读图 `max_tokens` 4096 → 8192（原值下推理 token 占满，长图读图每次都被截断）。

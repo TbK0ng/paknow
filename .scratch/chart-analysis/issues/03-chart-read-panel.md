@@ -4,10 +4,18 @@
 
 **Blocked by:** 01
 
-**Status:** needs-triage
+**Status:** resolved
 
 - [ ] 图表回答下方出现可折叠面板，默认折叠，展开后显示全部 `levels`（不截断）与 `unreadable`
 - [ ] 面板价格列对 `null` 显示「看不清」，不显示 0 或空字符串
 - [ ] 面板内容与响应里的 `chart_read` 一致，不重新调用模型
 - [ ] 响应没有 `chart_read`（文本问答、降级失败）时不出现该面板，也不留空壳
 - [ ] 页面的截图回显、引用出处、图谱块在图表与文本两种回答下都不受影响
+
+## Comments
+
+**Resolved** in `bc10e2e`, merged as `5e26757`.
+
+- `renderCard` 在元信息行之后加默认折叠的「读图数据」面板（复用 `.graphbox`/`.gitem`），列出全部 `levels`（`null` → 看不清）与 `unreadable`；`d.chart_read` 为空时不渲染，不留空壳。
+- `tests/test_api_chat.py` 固定 `/charts` 带字段、`/query` 无字段（共用 `_resolve_answer` 白名单，靠端点单独追加防泄漏）。
+- 渲染证据：浏览器里以合成 payload 调 `renderCard`，折叠态、行内容与 `null` 呈现符合；文本/降级卡片无面板。

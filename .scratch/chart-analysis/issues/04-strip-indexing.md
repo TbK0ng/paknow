@@ -4,10 +4,19 @@
 
 **Blocked by:** 01
 
-**Status:** needs-triage
+**Status:** resolved
 
 - [ ] 条带数量与预处理实际切出的条带数一致（提示词里的 N 不是硬编码）
 - [ ] `levels` 与 `swings` 的 `strip` 恒在 `1..N`，面板按条带分组时每条价位都能归组
 - [ ] 一张条带的普通图表（高度小于阈值）不出现分组噪音，`strip` 恒为 1
 - [ ] 图片预处理暴露条带序号，切分不丢行、不改变宽度（现有切条带单测继续通过）
 - [ ] 不在图片像素上烧字，条带编号只经提示词传递
+
+## Comments
+
+**Resolved** in `693ba47`, merged as `897474b`.
+
+- `gateway.strip_count()` 只读文件头算条带数，`chart.py` 不再为计数重新编码；`_prepare_image` 行为不变（宽度保留、行数不丢）。
+- `swings`/`levels` 的 `strip` 夹在 `1..N`，越界时追加一条 `unreadable`，价格不推算。
+- 面板只在出现多于一个条带时按 `条带 N` 分组；单条带图表无分组噪音。
+- 条带编号仍只走提示词，像素上不烧字。
