@@ -1,0 +1,1744 @@
+
+<!doctype html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="3 个冻结数据集、4 个 harness、宽度消融、答案双臂、盲评与分层结果——把「看起来能用」变成数字。">
+      
+      
+        <meta name="author" content="TbK0ng">
+      
+      
+        <link rel="canonical" href="https://tbk0ng.github.io/paknow/chapter14-evaluation/">
+      
+      
+        <link rel="prev" href="../chapter12-allinrag-comparison/">
+      
+      
+        <link rel="next" href="../chapter9-status/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/logo.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>评测 - PAknow 技术文档</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+    
+    
+      <link rel="stylesheet" href="../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  <meta property="og:type" content="website">
+<meta property="og:site_name" content="PAknow 技术文档">
+<meta property="og:title" content="评测 - PAknow 技术文档">
+<meta property="og:description" content="3 个冻结数据集、4 个 harness、宽度消融、答案双臂、盲评与分层结果——把「看起来能用」变成数字。">
+<meta property="og:url" content="https://tbk0ng.github.io/paknow/chapter14-evaluation/">
+<meta property="og:image" content="https://tbk0ng.github.io/paknow/assets/images/og/chapter14-evaluation.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="评测 - PAknow 技术文档">
+<meta name="twitter:description" content="3 个冻结数据集、4 个 harness、宽度消融、答案双臂、盲评与分层结果——把「看起来能用」变成数字。">
+<meta name="twitter:image" content="https://tbk0ng.github.io/paknow/assets/images/og/chapter14-evaluation.png">
+</head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#_1" class="md-skip">
+          跳转至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="页眉">
+    <a href=".." title="PAknow 技术文档" class="md-header__button md-logo" aria-label="PAknow 技术文档" data-md-component="logo">
+      
+  <img src="../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            PAknow 技术文档
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              评测
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="teal"  aria-label="切换到深色模式"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="切换到深色模式" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="teal"  aria-label="切换到浅色模式"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="切换到浅色模式" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜索" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="查找">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="分享" aria-label="分享" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="清空当前内容" aria-label="清空当前内容" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜索引擎
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/TbK0ng/paknow" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    TbK0ng/paknow
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="标签" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  首页
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../chapter0-architecture/" class="md-tabs__link">
+          
+  
+  
+  设计流程
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
+          
+  
+  
+  验证与结果
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="导航栏" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="PAknow 技术文档" class="md-nav__button md-logo" aria-label="PAknow 技术文档" data-md-component="logo">
+      
+  <img src="../assets/logo.svg" alt="logo">
+
+    </a>
+    PAknow 技术文档
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/TbK0ng/paknow" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    TbK0ng/paknow
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    首页
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    设计流程
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    设计流程
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter0-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0. 系统架构与设计原则
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter1-corpus/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1. 资料审计与证据单元
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter2-multimodal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2. 多模态证据构建
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter3-index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3. 索引构建
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter4-retrieval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4. 检索优化
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter5-query/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5. 查询构建与改写
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter6-generation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6. 证据核验与生成
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter7-memory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7. SOP 记忆与自动优化
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter8-service/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8. 服务与工程化
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter13-chart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    结构化读图
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter12-allinrag-comparison/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    All-in-RAG 全链路对照
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    验证与结果
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    验证与结果
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    评测
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    评测
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. 为什么不是"跑个榜单"
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. 三个冻结数据集
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-vs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. 检索层：并集探针 vs 生产同口径
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. 答案层：先过硬约束，再看覆盖率
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. 质量层：盲评，且只给诊断
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. 分层看：机制题是真正的短板
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. 图表评测
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. 这些数字从哪来
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. 诚实边界
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter9-status/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    已完成与待补充
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter10-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    运行示例
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter11-ai-review/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AI 评价
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. 为什么不是"跑个榜单"
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. 三个冻结数据集
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-vs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. 检索层：并集探针 vs 生产同口径
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. 答案层：先过硬约束，再看覆盖率
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. 质量层：盲评，且只给诊断
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. 分层看：机制题是真正的短板
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. 图表评测
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. 这些数字从哪来
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. 诚实边界
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/TbK0ng/paknow/edit/main/book/chapter14-evaluation.md" title="编辑此页" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="_1">评测：把"看起来能用"变成数字<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>这一页回答"你怎么知道它有用"。原则只有一条：<strong>先造尺子，再谈优化</strong>。
+数据集在 <code>evals/gold/</code>（含 SHA-256），四个 harness 在 <code>scripts/eval_*.py</code>，
+产物在 <code>.scratch/</code>（随仓库提交）。数字口径见本文最后一节。
+本章是<strong>评测数字的唯一权威</strong>：其余章节引用的评测数字以这里为准，改动先改这里。</p>
+</blockquote>
+<h2 id="1">1. 为什么不是"跑个榜单"<a class="headerlink" href="#1" title="Permanent link">&para;</a></h2>
+<p>通用 RAG 评测（RAG Triad、Ragas、Recall@k）默认你有一个"相关文档"的标注集。这里没有：</p>
+<ul>
+<li>语料是 7 本中文交易书，判断"这段证据够不够"需要领域判断，不是标题匹配；</li>
+<li>同一问题在不同书里有<strong>不同措辞的同一结论</strong>，按文档 id 算 precision 会被版本差异污染；</li>
+<li>真正要证明的不是"模型答得像不像"，而是<strong>引用是否落在原文、条件有没有被丢掉</strong>。</li>
+</ul>
+<p>所以这里的评测拆成三层，每层用能确定性判定的东西，只有最后一层允许模型参与：</p>
+<table>
+<thead>
+<tr>
+<th>层</th>
+<th>判什么</th>
+<th>谁判</th>
+<th>为什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>检索</td>
+<td>期望证据有没有进入可引用集合</td>
+<td>规则</td>
+<td>可复现、无模型</td>
+</tr>
+<tr>
+<td>答案</td>
+<td>引用是否合法、是否引用了图谱独有证据</td>
+<td>规则</td>
+<td>硬约束，二元</td>
+</tr>
+<tr>
+<td>质量</td>
+<td>结论/条件/引用支撑是否到位</td>
+<td>盲评模型</td>
+<td>只能靠语义判断，但它<strong>不能改判</strong>上面两层</td>
+</tr>
+</tbody>
+</table>
+<h2 id="2">2. 三个冻结数据集<a class="headerlink" href="#2" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>文件</th>
+<th style="text-align: right;">题数</th>
+<th>构成</th>
+<th>冻结</th>
+<th>协议</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>evals/gold/graph_expansion.json</code></td>
+<td style="text-align: right;">20</td>
+<td>百科 10 / 机制 10</td>
+<td>2026-10-23</td>
+<td>每题 6 条冻结扩展查询，<code>hybrid_search(top_k=20)</code> 取并集；无路由、无重排</td>
+</tr>
+<tr>
+<td><code>evals/gold/graph_expansion_v2.json</code></td>
+<td style="text-align: right;">60</td>
+<td>百科 20 / 机制 20 / 例外或失效 10 / 带条件主张 10</td>
+<td>2026-10-23</td>
+<td>每题 6 条冻结查询；答案评测跑<strong>生产链</strong>（两个臂只差 <code>expand_graph</code>）</td>
+</tr>
+<tr>
+<td><code>evals/gold/chart_v1.json</code></td>
+<td style="text-align: right;">10</td>
+<td>10 张行情截图</td>
+<td>2026-10-24</td>
+<td>图片字节 → 生产链；<strong>只做确定性判定</strong>，不用 judge</td>
+</tr>
+</tbody>
+</table>
+<p>每个数据集都有 <code>.sha256</code> 旁车文件，但校验强度不同：<code>eval_gold.py</code> 在运行前强制校验
+（缺失或不匹配即失败），<code>eval_answers.py</code> 只把本次文件的 SHA-256 记进 <code>summary.json</code>，
+<code>eval_chart.py</code> 逐图校验 <code>image_sha256</code>。引用旧产物时要先对哈希，别假设"跑过就是同一版数据"。</p>
+<p>一个真实的例子：答案评测（<code>answers/20261023T104318Z</code>）记录的 <code>dataset_sha256</code> 是
+<code>f635cb2d…</code>，而当前 <code>graph_expansion_v2.json</code> 与旁车是 <code>7cf35d94…</code>——那次运行用的是补
+<code>expected_points</code> 之前的修订。题目、扩展查询、期望证据都没变（见 <code>width-ablation.md</code>），
+但"同一文件"这句话必须以哈希为准。v2 相对 v1 只补了
+<code>expected_points</code>（盲评输入），也是"两次结果可比"的前提。</p>
+<h2 id="3-vs">3. 检索层：并集探针 vs 生产同口径<a class="headerlink" href="#3-vs" title="Permanent link">&para;</a></h2>
+<p>"并集探针"回答的是<strong>召回上限</strong>：把每题 6 条扩展查询的 top-20 全部并起来，期望证据在不在？
+它不代表线上，只说明"检索器能不能找到"。</p>
+<p>生产口径则跑真实链路：混合召回 → RRF → 重排 → 多样性截断到 14 条。两者的差就是链路本身
+的损耗。</p>
+<p>宽度消融（v2，60 题 / 123 个期望证据点）：</p>
+<table>
+<thead>
+<tr>
+<th>运行</th>
+<th>模式</th>
+<th style="text-align: right;">宽度</th>
+<th style="text-align: right;">命中 / 期望</th>
+<th style="text-align: right;">其中文本</th>
+<th style="text-align: right;">其中图谱</th>
+<th style="text-align: right;">净增益</th>
+<th style="text-align: right;">完全命中题</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>并集探针</td>
+<td>baseline</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">73 / 123</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">39 / 60</td>
+</tr>
+<tr>
+<td><code>text-w14</code></td>
+<td>文本臂</td>
+<td style="text-align: right;">14</td>
+<td style="text-align: right;">41 / 123</td>
+<td style="text-align: right;">41</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">20 / 60</td>
+</tr>
+<tr>
+<td><code>text-w20</code></td>
+<td>文本臂</td>
+<td style="text-align: right;">20</td>
+<td style="text-align: right;">42 / 123</td>
+<td style="text-align: right;">42</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">20 / 60</td>
+</tr>
+<tr>
+<td><code>graph-w14</code></td>
+<td>图谱臂</td>
+<td style="text-align: right;">14</td>
+<td style="text-align: right;">55 / 123</td>
+<td style="text-align: right;">41</td>
+<td style="text-align: right;">18</td>
+<td style="text-align: right;"><strong>+14</strong></td>
+<td style="text-align: right;">—</td>
+</tr>
+<tr>
+<td><code>graph-w20</code></td>
+<td>图谱臂</td>
+<td style="text-align: right;">20</td>
+<td style="text-align: right;">55 / 123</td>
+<td style="text-align: right;">42</td>
+<td style="text-align: right;">18</td>
+<td style="text-align: right;">+13</td>
+<td style="text-align: right;">—</td>
+</tr>
+</tbody>
+</table>
+<p>四个运行全部 0 失败；60/60 题都先撞到"证据 ≤14 条"的截断，边 ≤32 与 token ≤1,200 从未
+触顶——<strong>截断发生在条数上，不是图上</strong>。</p>
+<p>读法：</p>
+<ul>
+<li>图谱扩展在<strong>同宽度</strong>下把命中从 41 拉到 55（+14），这是它真实的价值；</li>
+<li>宽度 14 → 20 只多召回 1 条，还把 graph-only 从 14 压到 13（同一条证据被文本臂先拿到了）。
+  所以生产宽度保持 14：加宽买不到召回，只增加提示词体积；</li>
+<li>但并集探针 73 对生产 55，说明<strong>链路损耗 18 条</strong>。这是比"图谱有没有用"更值得追的问题。</li>
+</ul>
+<h2 id="4">4. 答案层：先过硬约束，再看覆盖率<a class="headerlink" href="#4" title="Permanent link">&para;</a></h2>
+<p><code>scripts/eval_answers.py</code> 对每个臂跑完整生产链，逐题产出三件事（<code>eval_answers.py:84-131</code>）：</p>
+<ol>
+<li><strong>硬约束</strong> <code>hard_pass</code>：所有被引用的 id 必须在本次渲染的可引用集合里，且<strong>不能是图谱
+   独有证据</strong>。图谱条目如果同时是文本证据，会渲染成 <code>已见 [n]</code>——引它等于引原文，允许；
+   只在图谱里存在的 id，引用即失败。这一条把 ADR-0002 从文档变成断言。</li>
+<li><strong>覆盖率</strong> <code>coverage</code>：期望证据里有多少进入了可引用集合。它是<strong>检索侧</strong>指标，不是
+   答案正确率。</li>
+<li><strong>轮数</strong>与<strong>引用数</strong>：成本与行为的代理量。</li>
+</ol>
+<p>v2 全量结果（60 题 × 2 臂，2026-10-23，串行，embedded Qdrant 单进程）：</p>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th style="text-align: right;">文本臂</th>
+<th style="text-align: right;">图谱臂</th>
+<th style="text-align: right;">Δ</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>完成题数</td>
+<td style="text-align: right;">60</td>
+<td style="text-align: right;">60</td>
+<td style="text-align: right;">—</td>
+</tr>
+<tr>
+<td>硬约束通过</td>
+<td style="text-align: right;">60</td>
+<td style="text-align: right;">60</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>覆盖率均值</td>
+<td style="text-align: right;">0.2333</td>
+<td style="text-align: right;">0.2500</td>
+<td style="text-align: right;"><strong>+0.0167</strong></td>
+</tr>
+<tr>
+<td>完全覆盖题</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">13</td>
+<td style="text-align: right;">+1</td>
+</tr>
+<tr>
+<td>引用总数</td>
+<td style="text-align: right;">573</td>
+<td style="text-align: right;">553</td>
+<td style="text-align: right;">−20</td>
+</tr>
+<tr>
+<td>平均轮数</td>
+<td style="text-align: right;">1.10</td>
+<td style="text-align: right;">1.18</td>
+<td style="text-align: right;">+0.08</td>
+</tr>
+<tr>
+<td>耗时</td>
+<td style="text-align: right;">2,308.0 s</td>
+<td style="text-align: right;">2,397.6 s</td>
+<td style="text-align: right;">+89.6 s</td>
+</tr>
+</tbody>
+</table>
+<p>配对比较：3 题变好、2 题变差、55 题持平。</p>
+<p><strong>没有一题硬约束失败</strong>，这本身是重要结论：引用绑定（模型只输出 <code>cited_indices</code>，后端映射
+到它渲染过的那份列表）在 120 次真实调用里没有出过错。</p>
+<h2 id="5">5. 质量层：盲评，且只给诊断<a class="headerlink" href="#5" title="Permanent link">&para;</a></h2>
+<p><code>scripts/eval_judge.py</code> 的设计约束比分数更重要：</p>
+<ul>
+<li><strong>盲</strong>：judge 的输入里没有臂名、没有题号、没有分层标签，顺序也被打散；它只看到题面、
+  期望要点、待判答案、以及被引用的证据文本。</li>
+<li><strong>schema 化</strong>：输出只有三个 0–2 的整数分（correctness / condition_preservation /
+  citation_support）加 <code>unsupported_claims</code> 列表，<code>additionalProperties: false</code>。</li>
+<li><strong>不改判</strong>：确定性结论（hard_pass、coverage）先算好并冻结；judge 的分数只是诊断，
+  永远不会覆盖它们。这是"不把模型自评当裁判"的实际执行方式——judge 可以<strong>描述</strong>质量，
+  不能<strong>决定</strong>通过与否。</li>
+</ul>
+<p>120 条记录（60 题 × 2 臂）结果：</p>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th style="text-align: right;">文本臂</th>
+<th style="text-align: right;">图谱臂</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>correctness（0–2）</td>
+<td style="text-align: right;">1.183</td>
+<td style="text-align: right;">1.250</td>
+</tr>
+<tr>
+<td>condition_preservation</td>
+<td style="text-align: right;">1.300</td>
+<td style="text-align: right;">1.233</td>
+</tr>
+<tr>
+<td>citation_support</td>
+<td style="text-align: right;">1.300</td>
+<td style="text-align: right;">1.250</td>
+</tr>
+<tr>
+<td>无支撑主张总数</td>
+<td style="text-align: right;">146</td>
+<td style="text-align: right;">119</td>
+</tr>
+<tr>
+<td>含无支撑主张的记录</td>
+<td style="text-align: right;">39 / 60</td>
+<td style="text-align: right;">43 / 60</td>
+</tr>
+</tbody>
+</table>
+<p>配对胜负：10 好 / 6 差 / 44 平。这是对冻结 v2 的<strong>单次</strong>判定（<code>judgements/20261023T141041Z</code>）：
+同一数据集上没有第二次重复判定，无法估计 judge 自身的抖动，因此 10/6/44 只能读作方向，
+不能读作显著差异。</p>
+<p>读法要克制：图谱臂在"结论正确"上略好（+0.067），在"条件保留"和"引用支撑"上略差
+（各 −0.067 / −0.05），无支撑主张更少（146 → 119）但分布更集中。<strong>这些差异都在噪声量级</strong>，
+不足以支撑"图谱让答案更好"的结论，只足以支撑"图谱没有让答案变差"。</p>
+<h2 id="6">6. 分层看：机制题是真正的短板<a class="headerlink" href="#6" title="Permanent link">&para;</a></h2>
+<p>60 题按层拆开，覆盖率（文本臂 / 图谱臂）：</p>
+<table>
+<thead>
+<tr>
+<th>分层</th>
+<th style="text-align: right;">题数</th>
+<th>覆盖率</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>百科（概念定义）</td>
+<td style="text-align: right;">20</td>
+<td>0.350 / 0.333</td>
+<td>词典与标题层级覆盖得好</td>
+</tr>
+<tr>
+<td>机制（因果链）</td>
+<td style="text-align: right;">20</td>
+<td><strong>0.000 / 0.017</strong></td>
+<td>期望证据几乎从不进入可引用集合</td>
+</tr>
+<tr>
+<td>例外或失效</td>
+<td style="text-align: right;">10</td>
+<td>0.200 / 0.300</td>
+<td>图谱扩展在这里最有用</td>
+</tr>
+<tr>
+<td>带条件主张</td>
+<td style="text-align: right;">10</td>
+<td>0.500 / 0.500</td>
+<td>条件化主张表发挥作用</td>
+</tr>
+</tbody>
+</table>
+<p>机制题接近零覆盖是最值得写下来的结果。它说明：<strong>沿边扩展能补概念，补不了论证链</strong>。
+期望证据描述的是"三步因果"，而检索仍按单段相似度打分；这是下一步要正面解决的设计问题，
+不是调参问题。</p>
+<h2 id="7">7. 图表评测<a class="headerlink" href="#7" title="Permanent link">&para;</a></h2>
+<p>读图用完全确定性的价位分桶（命中 / 漏读 / 多读 / 漂移），判据与结果见
+<a href="../chapter13-chart/">结构化读图</a> §8。当前只跑了 2/10 题，miss 0.875，且漏读集中在密集轴
+标签——这个数字代表"读图精度不够"，不代表检索或生成有问题。</p>
+<h2 id="8">8. 这些数字从哪来<a class="headerlink" href="#8" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>类别</th>
+<th>来源</th>
+<th>是否入库</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>语料/图谱规模</td>
+<td><code>data/paknow.db</code>（SQLite，本地快照 2026-10-24）</td>
+<td>否（<code>.gitignore</code>，121.7 MB）</td>
+</tr>
+<tr>
+<td>检索与答案评测</td>
+<td><code>.scratch/retrieval-eval-parity/*.json</code></td>
+<td><strong>是</strong>（含逐题 <code>records.jsonl</code>）</td>
+</tr>
+<tr>
+<td>盲评</td>
+<td><code>.scratch/retrieval-eval-parity/judgements/*/summary.json</code></td>
+<td><strong>是</strong>（两次全量 + 两次 spot）</td>
+</tr>
+<tr>
+<td>图表评测</td>
+<td><code>.scratch/chart-analysis/eval/dev/summary.json</code></td>
+<td><strong>是</strong></td>
+</tr>
+<tr>
+<td>数据集本身</td>
+<td><code>evals/gold/*.json</code> + <code>.sha256</code></td>
+<td><strong>是</strong></td>
+</tr>
+</tbody>
+</table>
+<p>也就是说：数据集与结果产物都在仓库里，只有 121.7 MB 的库文件例外。读者可以打开
+<code>records.jsonl</code> 逐题核对，也可以按下面的口径自己重算规模数字。盲评有四次运行记录，
+本文只引用 <code>judgements/20261023T141041Z</code>（对冻结 v2 的唯一一次全量）：更早的
+<code>20261023T124500Z</code> 用的是补 <code>expected_points</code> 之前的修订，判分输入的"期望要点"残缺，
+结论方向都相反，不能混用。</p>
+<p>规模数字可以自己重算：</p>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>-<span class="w"> </span><span class="s">&lt;&lt;'EOF'</span>
+<span class="s">import sqlite3</span>
+<span class="s">c = sqlite3.connect("data/paknow.db")</span>
+<span class="s">for t in ("documents", "evidence_units", "figure_assets", "claims", "graph_edges", "bar_refs"):</span>
+<span class="s">    print(t, c.execute(f'select count(*) from "{t}"').fetchone()[0])</span>
+<span class="s">EOF</span>
+</code></pre></div>
+<p>CI 里守的是其中确定性的一环：<code>tests/test_eval_artifacts.py</code> 断言数据集与旁车哈希一致、
+消融记录能由逐题数据重算、本章引用的数字等于记录里的数字。任何一环对不上就红；它不跑
+生产链，所以"答案变差"不会被它发现。</p>
+<h2 id="9">9. 诚实边界<a class="headerlink" href="#9" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>边界</th>
+<th>现状</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>回归门槛</td>
+<td>确定性部分已进 CI（<code>tests/test_eval_artifacts.py</code>）；生产链要索引与模型，CI 不跑，所以质量变差仍不会红</td>
+</tr>
+<tr>
+<td>图表评测</td>
+<td>10 题只跑 2 题；金标准是一次模型初读，<strong>尚未人工确认</strong></td>
+</tr>
+<tr>
+<td>分层覆盖</td>
+<td>机制题 ≈0，是已定位但未解决的问题</td>
+</tr>
+<tr>
+<td>judge</td>
+<td>与被测模型同家族（<code>deepseek-flash</code>）；温度 0、盲化，但仍不是独立裁判</td>
+</tr>
+<tr>
+<td>延迟/成本</td>
+<td>有单次运行耗时（约 39 min / 120 次问答），没有分位数与成本预算</td>
+</tr>
+<tr>
+<td>SOP 回放</td>
+<td><code>record_replay</code> 有接口、无数据，所以 SOP 仍停在 <code>shadow</code></td>
+</tr>
+<tr>
+<td>RAG Triad / Ragas / B−B 消融</td>
+<td>未接；当前指标是自建口径，不与公开榜单可比</td>
+</tr>
+</tbody>
+</table>
+<p>一句话：<strong>评测已经能区分"有没有用"，并守住了"记录与数字不再说谎"；还不能阻止"链路变差"。</strong>
+下一步不是加指标，是让这道自动门覆盖生产链——它需要一台能跑索引与模型的 runner。</p>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  回到页面顶部
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="页脚" >
+        
+          
+          <a href="../chapter12-allinrag-comparison/" class="md-footer__link md-footer__link--prev" aria-label="上一页: All-in-RAG 全链路对照">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                上一页
+              </span>
+              <div class="md-ellipsis">
+                All-in-RAG 全链路对照
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../chapter9-status/" class="md-footer__link md-footer__link--next" aria-label="下一页: 已完成与待补充">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                下一页
+              </span>
+              <div class="md-ellipsis">
+                已完成与待补充
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      PAknow · 可追溯的多模态 RAG 与可验证 SOP 记忆
+
+    </div>
+  
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top", "navigation.tracking", "navigation.instant", "navigation.footer", "toc.follow", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.action.edit"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u5df2\u590d\u5236", "clipboard.copy": "\u590d\u5236", "search.result.more.one": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.other": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 # \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.term.missing": "\u7f3a\u5c11", "select.version": "\u9009\u62e9\u5f53\u524d\u7248\u672c"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>
