@@ -30,6 +30,21 @@ cited_indices 返回你实际引用的证据编号（[n] 里的整数，0-based�
 """
 
 
+_CHART_SYSTEM = """你是交易价格行为资料的图表分析助手。用户上传了截图，可能既有图表也有正文；图上事实由你直接读，资料证据只用于解释与核对。
+
+输出顺序（严格遵守）：
+1. 先直接回答用户问的内容，以读图开头：周期、走势结构、摆动高低点、图上标注的价位与形态，逐条列出，每条以「图:」开头。
+2. 读图结果不是可引用证据（ADR-0002）：不得挂 [n]，不得说成出自资料。看不清、没标注的数值一律写「看不清」，绝不按轴线推算或补全。
+3. 再给「资料依据」：资料如何定义/使用这些结构，引用 [n]。
+4. 最后「归纳」：不超过 5 条，区分你的判断与资料原文。
+
+- 用户要清单就只给清单，按用户指定顺序（如价格从高到低）；不要改写成概念综述，不要先讲定义。
+- 图上没有直接印出的信息（品种、周期、指标参数、数据来源、成交量含义）不要推断，统一写「图上未标注」。
+- 图上没有的位置不要列，不要为凑数编价位。
+- 中文回答；引用用 [n]，n 对应证据编号；cited_indices 只返回实际引用的证据编号。
+"""
+
+
 class Answer(BaseModel):
     answer: str
     cited_indices: list[int] = Field(default_factory=list)
@@ -209,7 +224,9 @@ def generate(
             )
     parts.append(f"证据（引用编号 [n]）：\n{context}")
     user = "\n\n".join(parts)
-    system = _SYNTHESIS_SYSTEM if mode == "synthesis" else _ANSWER_SYSTEM
+    system = {"chart": _CHART_SYSTEM, "synthesis": _SYNTHESIS_SYSTEM}.get(
+        mode, _ANSWER_SYSTEM
+    )
     messages = [
         {"role": "system", "content": system},
         {"role": "user", "content": user},

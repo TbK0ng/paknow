@@ -60,7 +60,11 @@ def route(query: str, images: list[bytes] | None = None) -> QueryPlan:
         {"role": "user", "content": user},
     ]
     try:
-        plan = gateway.chat_json(QueryPlan, messages, images=images, max_tokens=2048)
+        # reasoning tokens count against the budget; images make the model think
+        # far longer, and a truncated reply degrades the whole run to a text answer
+        plan = gateway.chat_json(
+            QueryPlan, messages, images=images, max_tokens=4096 if images else 2048
+        )
         # drop anything outside the scored-channel vocabulary, including the
         # retired graph_local label; never leave the retrieval seam route-less
         plan.routes = [r for r in plan.routes if r in ROUTE_VOCAB]
@@ -68,7 +72,15 @@ def route(query: str, images: list[bytes] | None = None) -> QueryPlan:
             plan.routes = ["hybrid_text"]
         return plan
     except Exception:
-        # fail-safe: degrade to a plain knowledge_qa plan
+        # fail-safe: degrade to a plain plan, but never forget that the user
+        # attached a picture — an image question answered as knowledge_qa is
+        # exactly the "concept survey instead of a reading" failure
+        if images:
+            return QueryPlan(
+                intent="chart_analysis",
+                routes=["visual_page", "hybrid_text"],
+                evidence_needs=["figure", "context"],
+            )
         return QueryPlan(
             intent="knowledge_qa",
             is_framework=False,

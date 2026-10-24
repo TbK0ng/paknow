@@ -7,18 +7,42 @@ local model can be substituted without touching call sites.
 from __future__ import annotations
 
 import base64
+import io
 import json
 import time
 from typing import Any
 
 from openai import OpenAI
+from PIL import Image
 from pydantic import BaseModel
 
 from paknow.config import settings
 
+_MAX_SIDE = 1568  # vision encoder keeps this much detail; larger is waste
+_MAX_TILES = 8  # strips per upload, so one image cannot flood the prompt
+_JPEG_QUALITY = 90
 
-def _encode_image(data: bytes) -> str:
-    return "data:image/png;base64," + base64.b64encode(data).decode()
+
+def _prepare_image(data: bytes) -> list[str]:
+    """One upload -> the data URIs the model should see.
+
+    Phone screenshots run thousands of pixels tall; downscaling one to a single
+    encoder frame erases the price labels, so tall images are cut into
+    full-resolution strips instead. Everything is re-encoded as JPEG: a raw
+    RGBA PNG of the same chart exceeds the provider's 32 MB per-image limit.
+    """
+    img = Image.open(io.BytesIO(data)).convert("RGB")
+    w, h = img.size
+    step = max(_MAX_SIDE, -(-h // _MAX_TILES))  # ceil, so no strip is dropped
+    uris: list[str] = []
+    for y in range(0, h, step):
+        strip = img.crop((0, y, w, min(h, y + step)))
+        if max(strip.size) > _MAX_SIDE:
+            strip.thumbnail((_MAX_SIDE, _MAX_SIDE), Image.LANCZOS)
+        buf = io.BytesIO()
+        strip.save(buf, "JPEG", quality=_JPEG_QUALITY)
+        uris.append("data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode())
+    return uris
 
 
 class ModelGateway:
@@ -120,8 +144,9 @@ class ModelGateway:
                 text = out[i]["content"]
                 parts: list[dict[str, Any]] = [{"type": "text", "text": text}]
                 for img in images:
-                    parts.append(
-                        {"type": "image_url", "image_url": {"url": _encode_image(img)}}
+                    parts.extend(
+                        {"type": "image_url", "image_url": {"url": uri}}
+                        for uri in _prepare_image(img)
                     )
                 out[i] = {"role": "user", "content": parts}
                 break

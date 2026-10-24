@@ -1,12 +1,14 @@
 """FastAPI service (plan §12.2)."""
 from __future__ import annotations
 
+import io
 import mimetypes
 from pathlib import Path
 from typing import Any, Literal
 
 from fastapi import FastAPI, HTTPException, UploadFile
 from fastapi.responses import FileResponse, Response
+from PIL import Image
 from pydantic import BaseModel, Field
 from qdrant_client.models import FieldCondition, Filter, MatchValue
 
@@ -194,6 +196,10 @@ async def charts(query: str, file: UploadFile, cutoff: float = 0.0) -> dict[str,
     """Chart upload analysis. ``cutoff`` (0..1) masks the rightmost fraction
     of the image so bars after the analysis point are invisible (plan §8.4)."""
     data = await file.read()
+    try:
+        Image.open(io.BytesIO(data)).verify()
+    except Exception:
+        raise HTTPException(400, "upload is not a readable image") from None
     if cutoff > 0:
         data = mask_right_bytes(data, cutoff)
     return _resolve_answer(run_query(query, images=[data]))

@@ -106,7 +106,11 @@ def _retrieve_node(state: QState) -> QState:
         acc=state.get("acc", {}),
         expanded_concepts=state.get("expanded_concepts", []),
         prior_graph_evidence=state.get("graph_evidence", []),
-        expand_graph=state.get("expand_graph", True),
+        # a chart question's evidence is the image; concept expansion only
+        # pads the prompt with taxonomy the picture already answers
+        expand_graph=(
+            state.get("expand_graph", True) and state.get("intent") != "chart_analysis"
+        ),
     )
     state["acc"] = result.acc
     state["hits"] = result.text_hits
@@ -149,7 +153,13 @@ def _after_check(state: QState) -> str:
 
 
 def _generate_node(state: QState) -> QState:
-    mode = "synthesis" if state.get("is_framework") else "extractive"
+    intent = state.get("intent")
+    # a chart question is answered from the image first; the book supplies the
+    # criteria, not the answer (ADR-0002 keeps the read uncitable either way)
+    if intent == "chart_analysis":
+        mode = "chart"
+    else:
+        mode = "synthesis" if state.get("is_framework") else "extractive"
     # graph expansion stays a separate understanding aid: it is rendered in its
     # own prompt block and never joins the citable units / cited indices
     units = state.get("citable_units")
