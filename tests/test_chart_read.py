@@ -106,7 +106,49 @@ def test_read_call_uses_one_attempt_under_the_120s_budget() -> None:
     assert kwargs["images"]
 
 
-# --- read_chart: failures are classified, never raised -------------------- #
+# --- read_chart: every reported strip lands in 1..N ----------------------- #
+
+
+def test_out_of_range_strips_are_clamped_and_noted() -> None:
+    out = _read(
+        swings=[{"kind": "high", "price": 7526.75, "strip": 9, "basis": "箭头"}],
+        levels=[
+            {"price": None, "source": "unknown", "strip": 0, "basis": "被裁切"},
+            {"price": 7490.0, "source": "axis", "strip": -3, "basis": "轴"},
+        ],
+    )
+
+    result, failure = read_chart([_png((400, 4000))], client=FakeClient(out))  # 3 strips
+
+    assert failure is None
+    assert [s.strip for s in result.swings] == [3]
+    assert [level.strip for level in result.levels] == [1, 1]
+    assert result.levels[0].price is None  # clamping never invents a price
+    assert result.swings[0].price == 7526.75
+    assert any("条带" in note for note in result.unreadable)
+
+
+def test_single_strip_read_keeps_every_strip_at_one() -> None:
+    out = _read(
+        levels=[{"price": 1.0, "source": "axis", "strip": 4, "basis": "轴"}]
+    )
+
+    result, failure = read_chart([_png((800, 600))], client=FakeClient(out))
+
+    assert failure is None
+    assert [level.strip for level in result.levels] == [1]
+
+
+def test_in_range_strips_pass_through_unnoted() -> None:
+    out = _read(levels=[{"price": 1.0, "source": "axis", "strip": 2, "basis": "轴"}])
+
+    result, _ = read_chart([_png((400, 4000))], client=FakeClient(out))
+
+    assert result.levels[0].strip == 2
+    assert result.unreadable == []
+
+
+
 
 
 @pytest.mark.parametrize(

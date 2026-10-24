@@ -23,6 +23,16 @@ _MAX_TILES = 8  # strips per upload, so one image cannot flood the prompt
 _JPEG_QUALITY = 90
 
 
+def _strip_step(height: int) -> int:
+    return max(_MAX_SIDE, -(-height // _MAX_TILES))  # ceil, so no strip is dropped
+
+
+def _strip_count(data: bytes) -> int:
+    """Strips :func:`_prepare_image` would cut from this upload, without encoding."""
+    _w, h = Image.open(io.BytesIO(data)).size
+    return -(-h // _strip_step(h))
+
+
 def _prepare_image(data: bytes) -> list[str]:
     """One upload -> the data URIs the model should see.
 
@@ -33,7 +43,7 @@ def _prepare_image(data: bytes) -> list[str]:
     """
     img = Image.open(io.BytesIO(data)).convert("RGB")
     w, h = img.size
-    step = max(_MAX_SIDE, -(-h // _MAX_TILES))  # ceil, so no strip is dropped
+    step = _strip_step(h)
     uris: list[str] = []
     for y in range(0, h, step):
         strip = img.crop((0, y, w, min(h, y + step)))
