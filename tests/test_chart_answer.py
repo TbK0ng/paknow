@@ -67,3 +67,165 @@ def test_router_fallback_keeps_the_picture_in_play(monkeypatch: pytest.MonkeyPat
     assert with_image.intent == "chart_analysis"
     assert "visual_page" in with_image.routes
     assert text_only.intent == "knowledge_qa"
+
+
+# --- layered answer: full level list, converged suggestions, cited evidence -- #
+
+_LEVELS = [
+    {"price": 7519.75, "source": "annotation", "strip": 2, "basis": "「2 @ 7519.75」箭头指向该位"},
+    {"price": 7499.25, "source": "swing", "strip": 2, "basis": "前高转折处"},
+    {"price": None, "source": "axis", "strip": 1, "basis": "右侧刻度被裁掉"},
+    {"price": 7489.15, "source": "unknown", "strip": 3, "basis": "横线，未见标注"},
+]
+
+_PRIORITY = "图上标注 > 前高/前低 > ONH/ONL > 区间边缘/平台 > 均线"
+
+
+def _read(levels: list[dict[str, Any]] | None = None) -> Any:
+    from paknow.chart import ChartRead
+
+    return ChartRead(
+        instrument="ES",
+        timeframe="5m",
+        market_state="trading_range",
+        swings=[],
+        levels=_LEVELS if levels is None else levels,
+        # one focus only: layer 1 must still list every read level
+        focus=[{"price": 7519.75, "why": "图上标注"}],
+        patterns=["trading range"],
+        annotations=["2 @ 7519.75"],
+        indicators=["均线（参数未知）"],
+        unreadable=["7499.75 与 7499.25 冲突，保留更极端的 7499.25"],
+    )
+
+
+def _compose(
+    monkeypatch: pytest.MonkeyPatch,
+    *,
+    levels: list[dict[str, Any]] | None = None,
+    mode: str = "chart",
+) -> tuple[str, str, str]:
+    read = _read(levels)
+    monkeypatch.setattr(generate_module, "read_chart", lambda images, **_k: (read, None))
+    seen: dict[str, Any] = {}
+
+    def fake_answer(schema: Any, messages: list[dict[str, Any]], **_kwargs: Any) -> Any:
+        seen["messages"] = messages
+        return generate_module.Answer(answer="答")
+
+    monkeypatch.setattr(generate_module.gateway, "chat_json", fake_answer)
+    images = [b"png"] if mode == "chart" else None
+    generate_module.generate("这张图上哪些价位是关键位？", [], images, mode=mode)
+    system = seen["messages"][0]["content"]
+    user = seen["messages"][1]["content"]
+    block = ""
+    if "图上读数（结构化" in user:
+        block = user.split("图上读数（结构化")[1].split("证据（引用编号")[0]
+    return system, user, block
+
+
+def test_composed_chart_prompt_lists_every_read_level(monkeypatch: pytest.MonkeyPatch) -> None:
+    _system, _user, block = _compose(monkeypatch)
+
+    level_lines = [line for line in block.splitlines() if line.startswith("- ") and ". " in line]
+    assert len(level_lines) == len(_LEVELS)
+    for level in _LEVELS:
+        price = "看不清" if level["price"] is None else f"{level['price']:g}"
+        assert f" {price} " in block
+        assert level["basis"] in block
+        assert f"条带 {level['strip']} " in block
+
+
+def test_composed_chart_prompt_states_the_fixed_priority(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    system, user, _block = _compose(monkeypatch)
+
+    assert _PRIORITY in system
+    assert _PRIORITY in user  # the read block repeats it next to the focus list
+
+
+def test_read_block_never_carries_a_citation_number(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    system, user, block = _compose(monkeypatch)
+
+    assert "[n]" not in block
+    assert "证据（引用编号 [n]）" in user  # 资料依据 stays its own block
+    assert "资料依据" in system and "归纳" in system
+
+
+def test_chart_prompt_carries_the_layer_two_and_three_rules(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    system, _user, _block = _compose(monkeypatch)
+
+    assert "5–8" in system
+    assert "从高到低" in system  # user-asked order is honoured
+    assert "保留更极端" in system  # numeric conflict keeps the extreme value
+    assert "参数未知时不给具体价位" in system  # moving average: existence only
+    assert "只给清单" in system
+
+
+def test_chart_without_readable_levels_does_not_fabricate_a_list(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _system, _user, block = _compose(monkeypatch, levels=[])
+
+    assert "不要编造价位清单" in block
+    assert not [line for line in block.splitlines() if line.startswith("- ") and ". " in line]
+
+
+def test_text_prompts_do_not_grow_a_chart_layer() -> None:
+    for system in (generate_module._ANSWER_SYSTEM, generate_module._SYNTHESIS_SYSTEM):
+        assert "建议关注位" not in system
+        assert "可读位" not in system
+
+
+def test_extractive_composition_keeps_no_chart_block(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _system, user, _block = _compose(monkeypatch, mode="extractive")
+
+    assert "可读位" not in user
+    assert "建议关注位" not in user
+    assert "证据（引用编号 [n]）" in user
+
+
+def test_a_supplied_read_is_used_without_reading_the_image_again(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def boom(*_args: Any, **_kwargs: Any) -> Any:
+        raise AssertionError("a supplied chart_read must not be read again")
+
+    monkeypatch.setattr(generate_module, "read_chart", boom)
+    seen: dict[str, Any] = {}
+
+    def fake_answer(schema: Any, messages: list[dict[str, Any]], **_kwargs: Any) -> Any:
+        seen["user"] = messages[-1]["content"]
+        return generate_module.Answer(answer="答")
+
+    monkeypatch.setattr(generate_module.gateway, "chat_json", fake_answer)
+    out = generate_module.generate(
+        "哪些价位关键？", [], [b"png"], mode="chart", chart_read=_read().model_dump()
+    )
+
+    assert out["chart_read_status"] == "structured"
+    assert "7519.75" in seen["user"]
+
+
+def test_a_failed_read_passed_in_is_not_retried(monkeypatch: pytest.MonkeyPatch) -> None:
+    def boom(*_args: Any, **_kwargs: Any) -> Any:
+        raise AssertionError("an explicit None read means the read already failed")
+
+    monkeypatch.setattr(generate_module, "read_chart", boom)
+    monkeypatch.setattr(
+        generate_module.gateway,
+        "chat_json",
+        lambda schema, messages, **_kwargs: generate_module.Answer(answer="降级回答"),
+    )
+
+    out = generate_module.generate("哪些价位关键？", [], [b"png"], mode="chart", chart_read=None)
+
+    assert out["chart_read"] is None
+    assert out["chart_read_status"] == "unstructured"

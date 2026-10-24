@@ -1,7 +1,6 @@
 """Evidence-grounded answer generation with citation binding (plan §7.3)."""
 from __future__ import annotations
 
-import json
 from typing import Any, Mapping
 
 from pydantic import BaseModel, Field
@@ -32,15 +31,17 @@ cited_indices 返回你实际引用的证据编号（[n] 里的整数，0-based�
 """
 
 
-_CHART_SYSTEM = """你是交易价格行为资料的图表分析助手。用户上传了截图，可能既有图表也有正文；图上事实由你直接读，资料证据只用于解释与核对。
+_CHART_PRIORITY = "图上标注 > 前高/前低 > ONH/ONL > 区间边缘/平台 > 均线"
 
-输出顺序（严格遵守）：
-1. 先直接回答用户问的内容，以读图开头：周期、走势结构、摆动高低点、图上标注的价位与形态，逐条列出，每条以「图:」开头。
-2. 读图结果不是可引用证据（ADR-0002）：不得挂 [n]，不得说成出自资料。看不清、没标注的数值一律写「看不清」，绝不按轴线推算或补全。
-3. 再给「资料依据」：资料如何定义/使用这些结构，引用 [n]。
-4. 最后「归纳」：不超过 5 条，区分你的判断与资料原文。
+_CHART_SYSTEM = f"""你是交易价格行为资料的图表分析助手。用户上传了截图，可能既有图表也有正文；图上事实由前置读图给出，资料证据只用于解释与核对。
 
-- 用户要清单就只给清单，按用户指定顺序（如价格从高到低）；不要改写成概念综述，不要先讲定义。
+输出三层，顺序严格：
+一、图上可读位（完整清单）：把「可读位」区逐条全列，条数必须与给定条数完全一致；每条写出价位、来源、条带、依据；价位为「看不清」的照写「看不清」，不推算、不补全、不合并、不按建议裁剪。用户指定排序（如价格从高到低）就按用户顺序重排，未指定时保持给定顺序。这些行以「图:」开头，不得挂 [n]（ADR-0002）。
+二、建议关注位（5–8 个）：从第一层收敛，每个给一句理由，理由体现固定优先级 {_CHART_PRIORITY}。两个价位数值冲突时保留更极端的那个，另一条写进「不确定」，第一层与第二层都不得再把被舍弃的数值当成可读位。均线类指标只说明存在，参数未知时不给具体价位。
+三、资料依据 + 归纳：资料如何定义/使用这些结构，引用 [n]；归纳不超过 5 条，区分你的判断与资料原文。只有本层可以出现 [n]。
+
+- 用户要求「只给清单」：只输出第一层，第二层最多一句话，不写第三层。
+- 看不清、没标注的数值一律写「看不清」，绝不按轴线推算或补全。
 - 图上没有直接印出的信息（品种、周期、指标参数、数据来源、成交量含义）不要推断，统一写「图上未标注」。
 - 图上没有的位置不要列，不要为凑数编价位。
 - 中文回答；引用用 [n]，n 对应证据编号；cited_indices 只返回实际引用的证据编号。
@@ -74,6 +75,72 @@ def _render_unit(i: int, u: dict[str, Any]) -> str:
         tags.append("视觉观察·非原文")
     tag = f"（{'/'.join(tags)}）" if tags else ""
     return f"[{i}] ({src}){tag} {u['text']}"
+
+
+_LEVEL_SOURCE = {
+    "annotation": "图上标注",
+    "swing": "前高/前低",
+    "axis": "轴刻度",
+    "unknown": "不明",
+}
+_MARKET_STATE = {
+    "trend_up": "上行趋势",
+    "trend_down": "下行趋势",
+    "trading_range": "区间震荡",
+    "unclear": "不明",
+}
+_UNSET: Any = object()
+
+
+def _fmt_price(price: float | None) -> str:
+    return "看不清" if price is None else f"{price:g}"
+
+
+def _render_chart_read(read: Mapping[str, Any]) -> str:
+    """Deterministic render: layer 1 is pre-numbered so the answer copies it
+    instead of re-reading (or trimming) the levels list."""
+    def printed(value: Any) -> str:
+        return "图上未标注" if value in (None, "") else str(value)
+
+    lines = [
+        f"品种：{printed(read.get('instrument'))} ｜ 周期：{printed(read.get('timeframe'))}"
+        f" ｜ 市场状态：{_MARKET_STATE.get(read.get('market_state'), '不明')}"
+        f" ｜ 形态：{'、'.join(read.get('patterns') or []) or '图上未标注'}",
+        f"指标：{'、'.join(read.get('indicators') or []) or '图上未标注'}",
+        f"图上标注原文：{'；'.join(read.get('annotations') or []) or '图上未标注'}",
+    ]
+    if read.get("swings"):
+        lines.append(
+            "摆动高低点："
+            + "；".join(
+                f"{'高' if s.get('kind') == 'high' else '低'} {_fmt_price(s.get('price'))}"
+                f"（条带 {s.get('strip', 1)}，{s.get('basis') or '图上未标注'}）"
+                for s in read["swings"]
+            )
+        )
+    levels = read.get("levels") or []
+    if levels:
+        lines.append(
+            f"可读位（共 {len(levels)} 条，按图上顺序；答案第一层必须逐条全列，不得按建议裁剪）："
+        )
+        for i, level in enumerate(levels, 1):
+            lines.append(
+                f"- {i}. {_fmt_price(level.get('price'))}"
+                f" ｜ 来源 {_LEVEL_SOURCE.get(level.get('source'), '不明')}"
+                f" ｜ 条带 {level.get('strip', 1)}"
+                f" ｜ 依据 {level.get('basis') or '图上未标注'}"
+            )
+    else:
+        lines.append("可读位：图上没有可读价位，不要编造价位清单。")
+    if read.get("focus"):
+        lines.append(f"读图初筛（5–8 个，按固定优先级 {_CHART_PRIORITY}）：")
+        lines.extend(
+            f"- {_fmt_price(f.get('price'))}：{f.get('why') or '图上标注'}"
+            for f in read["focus"]
+        )
+    if read.get("unreadable"):
+        lines.append("不确定项：" + "；".join(read["unreadable"]))
+    return "图上读数（结构化，来自图片本身，不是可引用证据）：\n" + "\n".join(lines)
 
 
 def build_context(
@@ -170,6 +237,7 @@ def generate(
     barrefs: list[dict[str, Any]] | None = None,
     wants_examples: bool = False,
     figure_catalog: list[dict[str, Any]] | None = None,
+    chart_read: Any = _UNSET,
 ) -> dict[str, Any]:
     # derived visual observations are understanding aids, NOT citable evidence:
     # they go into an unnumbered block so citation indices stay consistent
@@ -178,17 +246,16 @@ def generate(
     index = dict(citation_index) if citation_index is not None else citation_binding(evidence)
     context = build_context(evidence, index)
     parts = [f"问题：{query}"]
-    # chart questions read the picture once, first; the read is uncitable and
-    # carries no [n], so the answer's citations still point at evidence only
-    chart_read: dict[str, Any] | None = None
-    if mode == "chart" and images:
-        read, _failure = read_chart(images)
-        if read is not None:
-            chart_read = read.model_dump()
-            parts.append(
-                "图上读数（结构化，来自图片本身，不是可引用证据）：\n"
-                + json.dumps(chart_read, ensure_ascii=False)
-            )
+    # chart questions answer from a structured read made before the answer; the
+    # read is uncitable and carries no [n], so citations still point at evidence
+    if chart_read is _UNSET:  # the graph may already have read the picture
+        if mode == "chart" and images:
+            read, _failure = read_chart(images)
+            chart_read = read.model_dump() if read is not None else None
+        else:
+            chart_read = None
+    if mode == "chart" and chart_read:
+        parts.append(_render_chart_read(chart_read))
     if toc_context:
         parts.append(
             "目录框架（相关章节，用于定位知识范围，不直接引用编号）：\n"
