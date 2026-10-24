@@ -61,10 +61,10 @@ class ModelGateway:
             )
         return self._client
 
-    def _create(self, **kwargs: Any) -> Any:
-        """Completion call with one retry for transient failures."""
+    def _create(self, *, attempts: int = 2, **kwargs: Any) -> Any:
+        """Completion call with an optional retry budget (default: one retry)."""
         last: Exception | None = None
-        for attempt in range(2):
+        for attempt in range(attempts):
             try:
                 return self.client.chat.completions.create(**kwargs)
             except Exception as e:  # noqa: BLE001
@@ -102,6 +102,8 @@ class ModelGateway:
         *,
         max_tokens: int = 4096,
         temperature: float = 0.0,
+        timeout: float | None = None,
+        attempts: int = 2,
     ) -> BaseModel:
         """Structured output validated against a Pydantic schema."""
         msgs = self._attach_images(messages, images)
@@ -124,7 +126,9 @@ class ModelGateway:
         )
         if self.effort:
             kwargs["extra_body"] = {"effort": self.effort}
-        resp = self._create(**kwargs)
+        if timeout is not None:
+            kwargs["timeout"] = timeout
+        resp = self._create(attempts=attempts, **kwargs)
         raw = resp.choices[0].message.content or "{}"
         data = json.loads(raw)
         return schema.model_validate(data)

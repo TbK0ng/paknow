@@ -272,6 +272,8 @@ def run_query(
         "figures": figures,
         "barrefs": final.get("barrefs", []),
         "answer": final.get("answer"),
+        "chart_read": ans.get("chart_read"),
+        "chart_read_status": ans.get("chart_read_status", "unstructured"),
         # exactly the evidence ids generation rendered as citable [n] units;
         # derived observations never enter the citation binding
         "citable_ids": list(final.get("citation_index", {})),
