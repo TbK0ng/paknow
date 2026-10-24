@@ -191,6 +191,29 @@ function renderCard(q, d, shot, isImage) {
           ' · 路由：' + escapeHtml((d.routes || []).join(', ') || '—') +
           ' · 轮次：' + escapeHtml(String(d.rounds ?? '—')) + '</div>';
 
+  if (d.chart_read) {
+    const cr = d.chart_read;
+    const levels = cr.levels || [];
+    const unreadable = cr.unreadable || [];
+    // One strip means every level is strip 1: group headers would be noise.
+    const grouped = new Set(levels.map((l) => l.strip)).size > 1;
+    html += '<details class="graphbox"><summary>读图数据 · ' + levels.length + ' 个价位</summary>';
+    let strip = null;
+    for (const l of [...levels].sort((a, b) => (a.strip ?? 0) - (b.strip ?? 0))) {
+      if (grouped && l.strip !== strip) {
+        strip = l.strip;
+        html += '<div class="gitem"><b>条带 ' + escapeHtml(String(strip ?? '—')) + '</b></div>';
+      }
+      html += '<div class="gitem"><b>' + (l.price == null ? '看不清' : escapeHtml(String(l.price))) + '</b>' +
+        ' [' + escapeHtml(l.source || '—') + '] 条带 ' + escapeHtml(String(l.strip ?? '—')) +
+        ' · ' + escapeHtml(l.basis || '') + '</div>';
+    }
+    for (const u of unreadable) {
+      html += '<div class="gitem">不确定：' + escapeHtml(u) + '</div>';
+    }
+    html += '</details>';
+  }
+
   const g = d.graph_stats || {};
   if (g.enabled) {
     const entries = d.graph || [];

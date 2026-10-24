@@ -12,7 +12,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ValidationError
 
-from paknow.gateway import _prepare_image, gateway
+from paknow.gateway import _strip_count, gateway
 
 #: Total budget for the read call; the SDK timeout is the only deadline owner.
 READ_TIMEOUT_S = 120
@@ -73,6 +73,22 @@ def _failure_reason(exc: Exception) -> str:
     return "no_content"
 
 
+def _clamp_strips(read: ChartRead, strip_count: int) -> ChartRead:
+    """A strip outside 1..N is a reading error, not a new location.
+
+    Snap to the nearest real strip and say so; the price is left untouched.
+    """
+    moved = 0
+    for item in (*read.swings, *read.levels):
+        strip = min(max(item.strip, 1), strip_count)
+        if strip != item.strip:
+            item.strip = strip
+            moved += 1
+    if moved:
+        read.unreadable.append(f"条带序号越界 {moved} 处，已归到最近的条带")
+    return read
+
+
 def read_chart(
     images: list[bytes], *, client=None
 ) -> tuple[ChartRead | None, dict[str, str] | None]:
@@ -86,7 +102,7 @@ def read_chart(
     if not images:
         return None, {"reason": "no_content", "detail": "没有可读的图片"}
     try:
-        strip_count = sum(len(_prepare_image(data)) for data in images)
+        strip_count = sum(_strip_count(data) for data in images)
     except Exception as exc:  # noqa: BLE001 - an unreadable upload is a read failure
         return None, {"reason": "no_content", "detail": f"{type(exc).__name__}: {exc}"}
     messages = [
@@ -109,4 +125,4 @@ def read_chart(
         if isinstance(exc, json.JSONDecodeError):
             detail = f"invalid JSON: {detail}"
         return None, {"reason": _failure_reason(exc), "detail": detail[:300]}
-    return out, None
+    return _clamp_strips(out, strip_count), None
