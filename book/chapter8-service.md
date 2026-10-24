@@ -1,31 +1,85 @@
+---
+description: "12 个 API 路由、多轮对话契约、MCP 适配器、存储选型、截点遮罩、性能观察与 CI 部署。"
+---
+
 # 8. 服务与工程化
 
 > 一个 RAG 系统能不能用，最后取决于工程细节：接口是否稳定、失败是否可见、部署是否可迁移。
 
 ## 1. 接口
 
-| 接口 | 作用 | 关键设计 |
+**12 个路由，全部在 `apps/api/main.py`**（括号内为该路由装饰器所在行）：
+
+| 路由 | 作用 | 关键设计 |
 |---|---|---|
-| `POST /query` | 问答 | 返回 `intent/routes/wants_examples/hits/figures/barrefs/answer` |
-| `POST /charts` | 上传图表分析 | `cutoff` 参数遮罩未来数据 |
-| `GET /evidence/{id}` | 单条证据 | 完整定位与文本 |
-| `GET /sources/{doc_id}` | 来源信息 | 书、章节、页 |
-| `GET /sources/{doc_id}/page/{page}/image` | PDF 页渲染 | 查看器点引用即可看原页 |
-| `GET /runs/{run_id}` | 审计 trace | 失败、耗时、版本快照 |
-| `GET /sops` | SOP 列表与版本 | 记忆审计 |
-| `GET /` | 查看器 | 单页应用 |
+| `GET /health` (`:135`) | 存活探针 | 只回 `{"status": "ok"}`，不碰库、不碰模型 |
+| `POST /query` (`:140`) | 问答 | 支持多轮 `history`；返回引用、图、图谱扩展 |
+| `POST /search` (`:149`) | 只检索不生成 | 不路由、不生成，agent 可低成本查证据；支持 `doc_id` / `block_type` 过滤 |
+| `GET /documents` (`:174`) | 语料清单 | 书名、作者、译者、页数、条目数 |
+| `POST /charts` (`:194`) | 上传图表分析 | `cutoff` 参数遮罩未来数据；额外返回 `chart_read` |
+| `GET /evidence/{id}` (`:214`) | 单条证据 | 完整文本 + 定位 + 关联图 |
+| `GET /sources/{doc_id}` (`:244`) | 来源信息 | 书、章节、页、证据数、图数 |
+| `GET /runs/{run_id}` (`:266`) | 审计 trace | 意图、路由、证据、失败、耗时 |
+| `GET /sops` (`:283`) | SOP 列表与版本 | 记忆审计 |
+| `GET /` (`:288`) | 查看器 | 单页应用（`include_in_schema=False`） |
+| `GET /figures/{figure_id}/image` (`:293`) | 图资产 | 让远程 agent 客户端直接取图，不必自己解析本地路径 |
+| `GET /sources/{doc_id}/page/{page}/image` (`:309`) | PDF 页渲染 | 查看器点引用即可看原页 |
+
+### 1.1 `POST /query` 的真实契约
+
+请求体是 `QueryRequest`：`query` + `history`（`ChatTurn{role: "user"|"assistant", content}`，默认空列表）。
+
+- 带 `history` 时，服务先做一次**独立问句改写**调用（`apps/api/main.py:44-96`，只取最后 `MAX_HISTORY_TURNS = 8` 轮），把"那它呢"补成可独立检索的问句；改写失败回退原问题，对话不报错，只是丢掉上下文；
+- 因此这条路由比其他路由多两个响应字段：`query_used`（实际检索用的问句）与 `rewritten`（是否真的改写过）。
+
+响应键完整清单（`apps/api/main.py:114-131` + `:140-147`）：
+
+| 键 | 内容 |
+|---|---|
+| `run_id` | trace 锚点 |
+| `intent` / `is_framework` | 路由结果 |
+| `routes` | 实际用到的召回路径 |
+| `answer` | 答案正文（**字符串**，不是分段结构） |
+| `uncertainty` | 不确定性说明 |
+| `citations` | `[n]` 解析后的出处 |
+| `figures` | 答案实际选中的图 |
+| `rounds` | 补检索轮次 |
+| `graph_stats` | 图谱扩展规模 |
+| `graph` | 逐条扩展证据（文本截断到 240 字） |
+| `query_used` / `rewritten` | 仅当请求带 `history` 才有实际内容 |
+
+**接口不返回什么**：`hits`、`barrefs`、`wants_examples` 都只存在于内部 `run_query` 的返回 dict，接口层**没有透出**。要检索结果走 `POST /search`；`chart_read` 只挂在 `POST /charts` 上，`POST /query` 保持纯文本答案的形状。
 
 **为什么 `figures` 只返回答案选中的图**：查看器不再成为"图库"，而是"答案配图"。理解类问题返回空是正确行为。
 
+### 1.2 MCP 适配器（`integrations/paknow-mcp/`）
+
+仓库自带一个 MCP 服务器，把上面的 HTTP 接口包成 **11 个工具**：`paknow_ask` / `paknow_chart` / `paknow_search` / `paknow_evidence` / `paknow_documents` / `paknow_source` / `paknow_page_image` / `paknow_figure_image` / `paknow_run` / `paknow_sops` / `paknow_health`。
+
+- **不 import PAknow 内部**：适配器只走 HTTP。这不是洁癖——SQLite、嵌入式 Qdrant（一个索引路径只允许一个客户端）、本地模型都归 FastAPI 进程独占，第二个进程挤进去就会撞锁；
+- **两种传输**：`paknow-mcp` 走 stdio（Pi / Claude Desktop / Cursor），`paknow-mcp --transport streamable-http --port 8765` 走 HTTP；
+- **随包附带的技能**：`integrations/paknow-mcp/skills/paknow/SKILL.md` 规定"价格行为问题必须走 `paknow_ask`，服务不可用时不凭记忆回答"；
+- **打包走集成自己的脚本**：`integrations/paknow-mcp/scripts/build_release.py` 生成自带 wheel 与 `skill/paknow/SKILL.md` 的发布包（只构建、不发布）；发布是 `release.py`，验证是 `verify_release.py`；
+- **配置**：`PAKNOW_BASE_URL`（默认 `http://127.0.0.1:8000`）、`PAKNOW_TIMEOUT`（默认 300 秒；首次查询要加载本地模型）。
+
+**为什么单独一个进程而不是塞进 API 进程**：MCP 客户端的生命周期由编辑器/Agent 管，API 进程要长驻且独占模型与索引；分开以后客户端重启不打断服务，服务升级也不用重装客户端。
+
 ## 2. 存储
 
-| 数据 | 默认 | 生产 |
+| 数据 | 默认（`paknow/config.py:24-27`） | 生产 |
 |---|---|---|
-| 元数据/证据/图谱/记忆 | SQLite `data/paknow.db` | Postgres（URL 可配，schema 无 SQLite 专有类型） |
-| 向量 | Qdrant 嵌入式 `data/objects/qdrant` | Qdrant server（`QDRANT_URL`） |
+| 元数据/证据/图谱/记忆 | `PAKNOW_DB_URL=sqlite:///./data/paknow.db` | Postgres（URL 可配，schema 无 SQLite 专有类型） |
+| 向量 | `QDRANT_URL` 留空 = 嵌入式 `data/objects/qdrant` | `QDRANT_URL=http://localhost:6333` |
 | 图/页渲染等派生对象 | `data/objects/`（内容寻址） | 对象存储 |
 
-**为什么默认嵌入式**：开发环境没有 Docker/外网；嵌入式零启动成本。切换生产只改环境变量，不改代码。
+**默认值的两个坑，先说清楚**：
+
+- 嵌入式 Qdrant 的容量不是"理论上限"。本地库快照 2026-10-24 的 `evidence_text` 集合有 **81,809 points**，客户端一启动就打印 `Local mode is not recommended for collections with more than 20,000 points`（`data/link_log.txt:1`）——也就是说当前规模已经超出推荐值 4 倍，本地模式的性能与内存表现不再有任何保障；
+- `page_visual` 集合是**空的**：页面视觉检索只有代码路径，没有数据。
+
+**切服务端是唯一出路**：`docker-compose.yml` 起 `postgres:16-alpine` 与 `qdrant/qdrant:v1.12.4`，然后把 `PAKNOW_DB_URL`、`QDRANT_URL` 指过去。切换只改环境变量，不改代码——这是当初选这两个组件的主要理由。
+
+**为什么默认仍然用嵌入式**：开发环境没有 Docker/外网；嵌入式零启动成本。把它写进默认值，是承认"这是单机开发配置"，而不是宣称它能承载生产规模。
 
 ## 3. 上传图表与截点控制
 
@@ -52,10 +106,10 @@
 | 环节 | 实测 |
 |---|---|
 | 单次问答总耗时 | 20–60s（云端生成占大头） |
-| 路由 LLM 调用 | 1 次 |
+| 路由 LLM 调用 | 1 次；带 `history` 时 2 次（1 次独立问句改写 + 1 次路由） |
 | 混合召回 | 6 条查询 × 2 路 |
-| 重排 | 本地 GPU，首载 0.24s |
-| 证据核验 | 0–3 次 LLM 调用 |
+| 重排 | 本地 GPU 交叉编码器（`paknow/retrieval/pipeline.py:167-174`），首次调用含模型加载 |
+| 证据核验 | 0–3 次 LLM 调用（受 `QueryPlan.max_search_rounds` 约束） |
 | 生成 | 1 次 LLM 调用 |
 | 首次查询 | 额外包含 BGE-M3 加载 |
 
@@ -67,15 +121,17 @@
 # 服务
 .venv/Scripts/python.exe -m uvicorn apps.api.main:app --port 8000
 
-# 文档站（本地预览）
-.venv/Scripts/python.exe -m mkdocs serve
-# 构建静态站
-.venv/Scripts/python.exe -m mkdocs build
-# 发布到 GitHub Pages（需要已配置仓库 remote）
-.venv/Scripts/python.exe -m mkdocs gh-deploy
+# 文档站（本地预览）：必须换端口，默认的 8000 会和上面的 uvicorn 撞
+.venv/Scripts/python.exe -m mkdocs serve --dev-addr 127.0.0.1:8080
+# 构建静态站（`--strict` 会把坏链接/坏 nav 当错误）
+.venv/Scripts/python.exe -m mkdocs build --strict
+# 手动发布到 GitHub Pages（需要已配置仓库 remote）
+.venv/Scripts/python.exe -m mkdocs gh-deploy --force
 ```
 
-文档目录为 `book/`，站点配置在仓库根 `mkdocs.yml`。
+`mkdocs serve` 默认绑 `127.0.0.1:8000`，与本项目的 API 默认端口相同——不显式给 `--dev-addr` 就会出现"起得来但打不开"的假故障（端口被 uvicorn 占着），所以本地同时跑服务和文档站时固定用 8080。
+
+文档目录为 `book/`，站点配置在仓库根 `mkdocs.yml`。正式发布走 CI：`.github/workflows/docs.yml` 在 `main` 上改动 `book/**` 或 `mkdocs.yml` 时自动 `mkdocs gh-deploy --force --clean --strict`，所以文档不会再出现"代码更新了、站点还停在旧版本"的静默漂移。
 
 ## 7. 本章小结
 

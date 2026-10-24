@@ -26,7 +26,7 @@ q = "这张图是什么形态？下一步应该观察什么？"
 print("=" * 70, flush=True)
 print(f"CHART QUERY: {q}  (image {len(png)} bytes)", flush=True)
 result = run_query(q, images=[png])
-print(f"intents: {result['intents']}", flush=True)
+print(f"intents: {result['intent']}", flush=True)
 print(f"routes : {result['routes']}", flush=True)
 print(f"hits   : {len(result['hits'])}", flush=True)
 ans = result.get("answer") or {}

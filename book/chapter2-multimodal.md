@@ -1,6 +1,12 @@
+---
+description: "图资产提取、VLM 观察（派生材料）、视觉路线替换、观察污染事故、条件化主张、BarRef 与图文链接。"
+---
+
 # 2. 多模态证据构建
 
 > 这批资料的核心难点是图表。本章讲：图资产怎么管、视觉路线为什么被迫换方案、图谱与 K 线指代怎么构建、图文链接踩了什么坑。
+
+> **计数口径**：本章出现的规模类数字（图 927、单元 91,235、图谱 1,105 节点 / 3,753 边、`bar_refs` 674 等）都是**本地库快照 2026-10-24**（`data/paknow.db`，不入 git）的数；历史叙述里的数（如污染 725 条）标注了"当时"。
 
 ## 1. 图资产（FigureAsset）
 
@@ -58,7 +64,7 @@
 2. 重写 `text_hash`，重新做 dense+sparse 嵌入；
 3. 全部观察单元标记 `derived_observation`。
 
-实测结果：污染 725 → 0，派生标记 927。
+实测结果（当时）：污染 725 → 0，派生标记 927。现在按文本里含 `assistant` 模板残留在库里数，是 0 条。
 
 > 旧版脚本为什么没修好？它在 `with SessionLocal()` 之外调用 `commit()`，session 已关闭，清洗从未落库。这是"脚本跑完没有报错但什么也没发生"的典型。
 
@@ -68,10 +74,24 @@
 
 | 元素 | 数量 | 说明 |
 |---|---|---|
-| 概念节点 | 2,694 | 从标题/图注抽取 |
+| 节点总数 | 1,105 | 178 concept + 927 figure |
+| 概念节点 | 178 | 从标题/图注抽取 |
 | 图节点 | 927 | 与 `ILLUSTRATED_BY` 边相连 |
 | 主张（claim） | 1,888 | subject + predicate + **qualifiers** |
-| 边 | 3,425 | `ILLUSTRATED_BY` 1,529 / `SUPPORTED_BY` 1,888 / `PART_OF` 4 / `TRANSITIONS_TO` 4 |
+| 边总数 | 3,753 | 见下表 |
+
+边按关系拆开（本地库快照 2026-10-24）：
+
+| 关系 | 数量 | 来源 |
+|---|---|---|
+| `SUPPORTED_BY` | 1,888 | claim_extract |
+| `ILLUSTRATED_BY` | 1,529 | figure_extract |
+| `INVALIDATED_BY` | 181 | heading_parse |
+| `TRANSITIONS_TO` | 146 | heading_parse 142 + seed 4 |
+| `PART_OF` | 7 | heading_parse 3 + seed 4 |
+| `EXCEPTION_TO` | 2 | heading_parse |
+
+**口径说明**：概念节点只有 178 个，不是几千——图节点反而占了 84%。这张图是"图目录 + 少量概念与主张"，规模在拍数时以 edge 为主，别拿节点数当知识量。
 
 ### 4.2 为什么主张必须带条件
 
@@ -80,11 +100,13 @@
  "qualifiers": {"context": ["强趋势"], "modality": "usually"}}
 ```
 
-**为什么**：如果丢掉 `context`，图谱会得出"高二总是可靠"这种错误结论。检索时主张按 `subject 匹配 > predicate 匹配 > 条件匹配` 排序，让"与当前语境相同"的主张优先进入生成上下文。
+**为什么**：如果丢掉 `context`，图谱会得出"高二总是可靠"这种错误结论。所以 `qualifiers` 原样随主张进入生成上下文。
+
+**但要如实说清实现口径**：扩展代码读的是 `conditions` / `exceptions` 两个键（`paknow/graph/expansion.py:277-278`），而库里 1,888 条主张的 qualifiers 只有 `context` / `modality`——这两个键一条都没有。结论：条件现在是**透传**，不是**筛选**。主张进入上下文的真实顺序是 **种子概念顺序 → `extraction_confidence` 降序 → `claim_id`**（`paknow/graph/expansion.py:238-243`）；文档里曾经写的"主题匹配 > 谓词匹配 > 条件匹配"是策划稿，代码里不存在。
 
 ### 4.3 趋势生命周期：一个小而关键的种子
 
-`TRANSITIONS_TO` 只有 4 条边，却串起了一个环：
+`TRANSITIONS_TO` 共 146 条边（heading_parse 142 + seed 4），而有意思的是 seed 那 4 条，它串起了一个环：
 
 ```mermaid
 flowchart LR
@@ -101,7 +123,8 @@ flowchart LR
 `concept_aliases` 表设计用于双语概念对齐，但图谱抽取从未写入（0 行）。恢复方案：
 
 - 图检索不依赖该表，而是用 `terms.yaml` 词典做**桥接**：查询 → canonical → 中英别名 → 匹配概念节点标签；
-- 另写同步脚本把 233 个概念写入别名表（53 个手工 + 180 个从双语章标题提取）。
+- 词典本身：`configs/terms.yaml` 有 **236 个条目**，其中 **233 个不同的 canonical**——`load_terms()` 会把重复 canonical 的块合并成一条（当前重复的是 `auto_room_veto`、`auto_undershoot`、`broad_channel` 三条，`paknow/retrieval/dictionary.py:36-42`），所以"233"是合并后的概念数，不是文件行数；
+- 别名表本身：`concept_aliases` 当前 **2,703 行 `canonical_concept`、3,019 条别名**（本地库快照 2026-10-24），全部 `review_status=pending`；其中 178 个 `auto_*` 来自标题语法抽取。它和 `terms.yaml` 的 233 个词典概念不是同一口径：词典是检索桥，别名表是图谱侧的对齐记录，别互相当计数用。概念身份的唯一来源仍是 `configs/terms.yaml`（经 `paknow/graph/identity.py` 解析），别名表只是它的下游快照。
 
 ## 5. BarRef：K 线指代结构化
 
@@ -114,9 +137,9 @@ flowchart LR
 新表 `bar_refs`：`figure_id / evidence_id / bars / pattern / relation / snippet`。
 
 - 提取：对图注 + 图文关联单元做批量 LLM 提取（6 条/批，2400 tokens，失败重试一次）；
-- 幂等：`ref_id = sha1(doc:unit:bars:pattern)`，重跑不会重复；
+- 幂等：`ref_id = sha1(f"{doc_id}:{evidence_id}:{bars_key}:{pattern}").hexdigest()[:16]`，即 sha1 截断成 **16 个十六进制字符**（`scripts/extract_barrefs.py:112`），重跑落到同一个 `ref_id` 上（`merge` 覆盖），不会产生重复行；
 - 检索：`barref_lookup` 解析查询里的 `K线N`/`图N`，按编号交集 + 图号匹配；
-- 结果：674 条，覆盖 424/591 个候选单元；**明确编号的指代零遗漏**（剩余未覆盖单元只有弱线索，确无编号）。
+- 结果：`bar_refs` 现有 674 条（本地库快照 2026-10-24）。"覆盖 424/591 个候选单元"是当时提取跑批的统计口径，仓库里没有留下日志或复核脚本，**这两个数无法从当前数据复现**；能确认的只有 674 这个终点值。
 
 ### 5.3 为什么不做成"图像识别"
 
@@ -130,7 +153,7 @@ flowchart LR
 
 ### 6.1 发现
 
-`FigureAssetRow.caption_ids/explanation_ids` 全部为空；PDF 图注单元的 `figure_ids` 也为空（1,528 条有链接的单元主要来自 EPUB 与观察单元）。结果是"给我看图例"时，生成器拿不到任何真实 figure_id，只能编造"图4.4"这样的字符串。
+`FigureAssetRow.caption_ids/explanation_ids` 全部为空；PDF 图注单元的 `figure_ids` 也为空（修复前只有 1,528 条单元带链接，主要来自 EPUB 与观察单元）。结果是"给我看图例"时，生成器拿不到任何真实 figure_id，只能编造"图4.4"这样的字符串。
 
 ### 6.2 修复
 
@@ -140,6 +163,8 @@ flowchart LR
 2. **标签**：图注 "图4.4" → 图号 `4.4` 匹配（80 条）；并从图注回填 PDF 图的 `figure_label`（276 个）。
 
 同时同步 Qdrant payload 的 `figure_ids`（否则 caption 召回到的仍是空链接）。最终：单元侧 1,528 → 3,723；图侧 `caption_ids` 927 张、`explanation_ids` 907 张。
+
+**这四个数不是回忆，是有日志的**：`scripts/link_captions_to_figures.py` 跑完会打印 `geo=… label=… labels_set=… payload=…`，`data/link_log.txt:3` 记着一行 `geo=2244 label=80 labels_set=276 payload=2195`——即 2,244 条几何候选、80 条标签命中、276 个回填的图号、2,195 个同步了 payload 的单元。单元侧的 3,723 与图侧的 927/907 是同一快照（本地库快照 2026-10-24）里数出来的。要复核就重跑脚本对日志，而不是翻文档。
 
 ## 7. 本章小结
 

@@ -1,10 +1,15 @@
-# 12. 全链路对照：All-in-RAG 的方法清单与本项目取舍
+---
+description: "对照 All-in-RAG 教程逐环节复盘：哪些方法已采用、哪些权衡后替代、哪些想到但没接线。"
+---
+
+# 全链路对照：All-in-RAG 的方法清单与本项目取舍
 
 > 对照对象：Datawhale [All-in-RAG](https://datawhalechina.github.io/all-in-rag/)（教程站与
 > `datawhalechina/all-in-rag` 仓库，2026-10-19 快照）。
 >
-> 本项目：PAknow @ `44be784`。所有“当前实现”都能在仓库代码中找到对应；统计数字来自
-> `data/paknow.db` 与 Qdrant（`evidence_text` 81,809 点；`page_visual` 0 点）。
+> 本项目：PAknow @ `5886d95`。所有“当前实现”都能在仓库代码中找到对应；结构数字来自本地
+> `data/paknow.db` 快照（2026-10-24，`evidence_text` 81,809 点；`page_visual` 0 点），
+> 评测数字来自 `.scratch/` 下的运行产物（随仓库提交，含逐题记录），口径见 [评测](chapter14-evaluation.md)。
 >
 > 这一章不是“功能对齐清单”，而是一次逐环节复盘：教程介绍了哪些方法、实际怎么实现、
 > 当前选择是**没想到**、**权衡后替代**，还是**想到了但没接线**。
@@ -36,7 +41,7 @@
 | 检索 | 混合、RRF/加权、重排、压缩、校正、上下文扩展 | 主链路已采用；压缩/元数据过滤缺口 | RRF + cross-encoder + 邻接 + 有界补检索 |
 | 查询构建 | 多查询、Step-Back、HyDE、LLM/向量路由、Text2SQL/Cypher | 改写已采用；结构化查询未用 | 单次 QueryPlan 替代多步 Agent；metadata 未接线 |
 | 生成 | OutputParser/Pydantic、Function Calling、GRNF、引用 | 结构化输出与引用更强；工具调用缺口 | `chat_json` + Pydantic + `[n]` 后端绑定 |
-| 评估 | RAG Triad、Precision/Recall/MRR/MAP、Ragas、Phoenix | **最大缺口** | 只有程序化 trace 信号，没有质量评测 |
+| 评估 | RAG Triad、Precision/Recall/MRR/MAP、Ragas、Phoenix | 已起步，仍未形成门槛 | 自建三数据集 + 确定性硬约束 + 盲评；不接公开榜单 |
 | 图谱 | KG 构建、Neo4j/Cypher、GraphRAG/LightRAG/FRAG/GraphIRAG | 局部图检索已采用 | 条件化主张 + 有界沿边扩展；无社区摘要/全局 GraphRAG |
 | Agentic | Plan→Retrieve→Critique→Refine、工具生态、多 Agent | 受控采用 | 有核验-补检索；无自主工具选择/多 Agent |
 | 记忆/工程 | 教程仅 trace；PAknow 额外做 SOP | 超出教程 | SOP 生命周期 + git；active 被评测缺口卡住 |
@@ -89,7 +94,7 @@ PAknow 保留了 Critique/Refine，只去掉了自主工具选择。原因是当
 | Markdown 标题分块 | EPUB 原生标题树；PDF 按字号/目录推断 | 已采用等价 | 不依赖 Markdown 中间格式 |
 | Unstructured `basic` / `by_title` | 自定义块分类 + 章节路径 | 权衡替代 | 需要图注/页脚/bbox 的细粒度控制 |
 | SentenceWindowNodeParser | 检索后展开相邻单元（最多 4 条） | 已采用等价 | 教程用 metadata 窗口；PAknow 用阅读顺序邻接，避免索引膨胀 |
-| 父子块：小块检索、大块生成 | 子块 `parent_id` 指向原单元；但原单元未持久化，743/743 悬空 | **权衡替代 + 事故** | 实测父块不可解析，改为 81,809 条邻接回填 |
+| 父子块：小块检索、大块生成 | 子块 `parent_id` 指向原单元；但原单元未持久化，1,670/1,670 悬空 | **权衡替代 + 事故** | 实测父块不可解析，改为阅读顺序邻接（91,235 条全覆盖） |
 | 元数据注入（Header 1/2/3） | `chapter_path`、`figure_label`、`pdf_page`、`bbox`、`provenance` | 已采用且更强 | 引用与过滤都依赖这些字段 |
 | 智能去重 / 合并父文档 | 80 字归一化哈希 + 每书最多 5 条 | 已采用等价 | 不做 embedding 聚类；当前重复主要是同段/多版本 |
 | 多表递归检索 / PandasQueryEngine | 未使用 | 不适用 | 没有多工作表结构化数据；也有代码执行安全风险 |
@@ -106,9 +111,9 @@ PAknow 保留了 Critique/Refine，只去掉了自主工具选择。原因是当
 | All-in-RAG 方法 | PAknow 实现 | 判定 | 理由 |
 |---|---|---|---|
 | MTEB 榜单 + 私有评测集选型 | 未跑 MTEB/私有集；按多语言 + dense/sparse + 本地 GPU 选 BGE-M3 | 权衡替代（缺证据） | 需求先于榜单；但没有做同语料模型对比，是方法欠账 |
-| BGE-small-zh / bge-base-zh | BGE-M3（1024 维） | 已采用且更强 | 一个模型同时给 dense+sparse，中英多语 |
+| BGE-small-zh / bge-base-zh | BGE-M3（1024 维 dense）+ 自研 TF 稀疏 | 已采用且更强 | 单模型多语；稀疏侧没有用模型输出，见第 3 章 |
 | Dense + sparse 双向量 | Qdrant 同点命名向量 `dense`/`sparse` | 已采用 | 与教程第 4 章一致 |
-| BM25 | 未用 BM25；用 BGE-M3 sparse + 自定义 TF 分词 | 权衡替代（非等价） | 领域缩写/图号保护更关键；但没有 IDF/长度归一化 |
+| BM25 | 未用 BM25；用自研 TF 稀疏向量（BGE-M3 只出 dense）+ 领域分词 | 权衡替代（非等价） | 领域缩写/图号保护更关键；但没有 IDF/长度归一化 |
 | 对比学习 / 度量学习 / 领域微调 | 未微调 | 未实现 | 无标注正负对；7 本书不足以安全微调 |
 | CLIP / Visualized-BGE / bge-visualized-m3 | 未使用 | 权衡替代 | 需要联合图文向量；当前视觉路线改为 VLM 观察 |
 | ColPali / ColQwen2 页面多向量 | 尝试后失败：Blackwell CUDA 崩溃 / `colpali_engine` 依赖 transformers 4.x | 权衡替代 | 硬件/依赖约束，不是“没想到” |
@@ -168,7 +173,7 @@ Docker，且 Qdrant 的命名向量刚好满足“同点 dense+sparse + RRF”�
 | 句子窗口 / 父块上下文 | 邻接扩展（最多 4 条）；父块代码保留但数据无效 | 权衡替代 | 见 4 节；父块是失败后替代 |
 | 多样性 / 去重 | 近重复哈希 + 每书 5 条 | 已采用等价 | 针对同书/中英版本的重复 |
 | 目录召回 | `toc_recall`：章节路径词项重叠 | 超出教程 | 框架类问题的章节定位 |
-| 图谱召回 | `concept_lookup` / `transition_chains` / `expand_evidence_ids` | 超出教程 | 条件化主张与生命周期环 |
+| 图谱召回 | `seed_concepts` / `select_new_seeds` / `load_mechanism_candidates` / `load_taxonomy_candidates` / `expand` / `plan_context` | 超出教程 | 条件化主张与生命周期环 |
 | BarRef 召回 | `barref_lookup`：K线编号/图号 | 超出教程 | 解决“K线2/3构成什么”的结构化指代 |
 | caption 定向召回 | `caption_search` + 图例目录 | 超出教程 | 只有明确要例子才触发 |
 | 跨轮证据累积 | `acc` 字典跨轮保留 | 超出教程 | 修复“第二轮重复第一轮”的真实缺陷 |
@@ -216,7 +221,7 @@ Docker，且 Qdrant 的命名向量刚好满足“同点 dense+sparse + RRF”�
 | GBNF / 语法约束 | 未使用 | 不适用/未实现 | 使用云端模型，不做本地 grammar |
 | Function Calling / Tool Calling | 未使用 | **未实现** | 当前没有需要模型调用工具的已上线能力 |
 | 引用绑定 | `[n]` → `evidence_ids` → 书/章/图/页，后端渲染 | 已采用且更强 | 模型只返回下标，越界丢弃；页码由程序渲染 |
-| 两种生成模式 | `extractive` / `synthesis` | 超出教程 | 定义/规则 vs 机制/框架 |
+| 三种生成模式 | `extractive` / `synthesis` / `chart` | 超出教程 | 定义/规则 vs 机制/框架 vs 读图 |
 | 上下文分层 | 目录/图谱/BarRef/视觉观察不可引用；证据可引用 | 超出教程 | 派生材料不冒充原文 |
 | 分析优先 / 图例目录 | 默认分析；明确要例子才给图，`figure_ids` 只能从目录选 | 超出教程 | 修复模型编造图号的死循环 |
 | 证据不足处理 | 提示词要求“资料未说明”；`uncertainty` 字段 | 已采用且更强 | 不编造胜率/页码 |
@@ -232,22 +237,23 @@ Docker，且 Qdrant 的命名向量刚好满足“同点 dense+sparse + RRF”�
 
 | All-in-RAG 方法 | PAknow 实现 | 判定 | 理由 |
 |---|---|---|---|
-| RAG Triad：Context Relevance / Faithfulness / Answer Relevance | 未计算 | **未实现/暂缓** | 没有冻结评测集 |
-| 检索指标 Precision@k / Recall@k / F1 / MRR / MAP | 未计算 | **未实现** | 没有标注的相关文档 |
-| LLM-as-judge | 未使用 | **未实现** | 明确禁止“模型自评当裁判” |
+| RAG Triad：Context Relevance / Faithfulness / Answer Relevance | 未计算 | **未实现** | 三项都需要 judge 或标注；当前先用确定性硬约束 |
+| 检索指标 Precision@k / Recall@k / F1 / MRR / MAP | 用"期望证据命中率"替代：并集探针 + 生产同口径两套 | 权衡替代 | 书目没有相关文档标注；期望证据点更接近领域需求 |
+| LLM-as-judge | 盲评 `scripts/eval_judge.py`：三档分数 + 无支撑主张；只产出诊断，不覆盖确定性结论 | 已采用（受限） | 与"模型不自评当裁判"不冲突：它不参与通过与否 |
 | ROUGE / BLEU / METEOR | 未使用 | 未实现 | 生成是归纳式回答，n-gram 重叠意义有限 |
 | LlamaIndex Evaluation | 未使用 | 不适用 | 没有用 LlamaIndex |
-| Ragas（Faithfulness / AnswerRelevancy / ContextPrecision / ContextRecall） | 未使用 | **未实现** | 评测暂缓；这是最直接的补齐路径 |
-| Phoenix / OpenTelemetry 追踪 | 未使用；`RunTrace` 记录请求/路由/证据/失败/耗时/版本快照 | 部分替代 | 有可观测性，但没有可视化/漂移分析 |
-| 金标准数据集 | 20 条（百科 10、机制 10），每题 6 条冻结扩展查询；`scripts/eval_gold.py` | 已采用（小规模） | 只覆盖图谱扩展，不覆盖生成质量 |
-| 回归门槛 / 消融 B0–B7 | 图谱扩展的基线与回归对比 | 部分采用 | 只做了图谱一项；重排/toc/邻接仍无消融 |
+| Ragas（Faithfulness / AnswerRelevancy / ContextPrecision / ContextRecall） | 未使用 | **未实现** | 与自建口径重叠，接入前先要有回归门槛 |
+| Phoenix / OpenTelemetry 追踪 | 未使用；`RunTrace` 记录请求/路由/证据/失败/耗时/版本快照 | 部分替代 | 有可观测性，没有可视化/漂移分析 |
+| 金标准数据集 | 3 个冻结集：20 题（v1）、60 题 4 层（v2）、10 张图（chart）；均带 SHA-256 | 已采用 | v2 覆盖检索 + 答案两层，chart 集只做确定性判定 |
+| 回归门槛 / 消融 B0–B7 | 召回宽度 14/20 × 文本/图谱 2×2 消融；答案双臂；图表价位分桶 | 部分采用 | 有 harness 与数字，**没有 CI 门槛**；重排/toc/邻接仍无消融 |
 | 程序化 trace 信号 | `retrieval_error/no_evidence/low_evidence/no_answer` 按意图分组 | 已采用（局部） | 只服务 SOP 蒸馏，不是质量评测 |
 | SOP 对照回放 | 未实现；`record_replay` 有接口，无数据 | **接线缺口** | `active` 晋升因此关闭 |
 
-**复盘**：这是整份对照里最不能美化的一节。教程第 6 章给了完整的评估闭环；PAknow 只有
-“可观测性 + 程序化失败信号”，没有“质量指标”。没有金标准，就无法回答“重排有没有用、
-图谱有没有用、SOP 有没有用”。SOP 的 `active` 门槛被这个缺口卡住，不是流程设计问题，
-而是证据不足。
+**复盘**：教程第 6 章给的评估闭环（指标 → 门槛 → 回归）这里只完成了第一段。现在能回答
+"图谱扩展有没有用"（同宽度 +14 条期望证据）、"答案有没有变差"（配对 10 好 / 6 差 / 44 平）、
+"读图准不准"（miss 0.875，2 题），但**没有一条数字能阻止代码合入**。更关键的是分层结果：
+20 道机制题的覆盖率 ≈0——沿边扩展补得了概念，补不了论证链。这不是评测缺口，是检索设计
+缺口，评测只是把它照出来了。细节见 [评测](chapter14-evaluation.md)。
 
 ## 11. 图谱 / GraphRAG
 
@@ -256,28 +262,31 @@ Docker，且 Qdrant 的命名向量刚好满足“同点 dense+sparse + RRF”�
 | KG 构建：LLM/IE 抽取实体关系 | 对图注/图文关联的高价值子集抽取概念/主张/边 | 已采用（有界） | 全量 91k 单元成本高；先覆盖图注与解释 |
 | 实体对齐 / 别名归一 | `terms.yaml` 词典桥接 + `concept_aliases` 同步 | 部分采用 | 没有自动实体解析/去重 |
 | 质量控制 / 人工抽检 / 冲突消解 | `extraction_status=pending`；未做人工审核 | **未实现** | 候选主张可用但未审 |
-| Neo4j / 属性图 | 未使用；SQLite 表 + Python 有界 BFS | 权衡替代 | 当前 3,621 节点/3,425 边，专用图库运维收益低 |
+| Neo4j / 属性图 | 未使用；SQLite 表 + Python 有界 BFS | 权衡替代 | 当前 1,105 节点 / 3,753 边，专用图库运维收益低 |
 | Cypher / Text2Cypher | 未使用 | 不适用/权衡替代 | 查询是固定模式，不需要生成 Cypher |
-| 多跳 / 子图 / 路径检索 | 概念分类 1 跳、机制链 2 跳，回取证据 ≤8 | 部分采用 | 有界，避免“趋势/市场”高出度节点爆炸 |
+| 多跳 / 子图 / 路径检索 | 概念分类 1 跳、机制链 2 跳，回取证据 ≤14 | 部分采用 | 有界，避免“趋势/市场”高出度节点爆炸 |
 | GraphRAG（Microsoft）社区检测/Leiden/全局摘要 | 未实现 | **未实现** | 全局综述目前靠 toc + synthesis prompt |
 | LightRAG 双层检索 | 词典种子 + 主张/证据扩展是轻量双层 | 部分采用 | 没有 LightRAG 的完整图索引 |
 | FRAG 查询分流 | QueryPlan 路由 | 部分采用 | 固定路由，不是自适应复杂度分类 |
 | GraphIRAG 迭代检索 | 充分性检查 + 补检索 | 部分采用 | 有迭代，但不以“信息增益”为停止准则 |
 | 图检索指标（Context Precision/Recall/Citation） | 金标准 top-20 并集命中 + 「图独有」口径 | 部分采用 | 只有召回类指标；无 precision 与 citation 指标 |
-| 条件化主张 | `ClaimRow.qualifiers`（context/modality/polarity） | 超出教程 | 交易知识高度条件化；去掉条件会产出危险结论 |
+| 条件化主张 | 存储 `context` / `modality`（1,888/1,888）；渲染与扩展读 `conditions` / `exceptions`（库里 0 条） | **半接线** | 目标是不让条件句读成绝对规则，但消费端键名不匹配，当前只是透传 |
 | 图-文回填 | 图谱证据进入独立的「图谱扩展」提示区块 | 已采用 | 图谱结果必须回到原文；该区块不可引用，不进入 `evidence_ids` |
-| 图检索 bug | `.overlap()` 在 SQLite JSON 上抛错，且此前从未被调用 | 已修复 | 典型的“代码存在但主链路没接线” |
+| 图谱可重建性 | 每条边带 `EdgeOrigin`，重建只替换同一来源（标题语法 328 条），种子边不被冲掉 | 超出教程 | 重跑抽取是可预期操作，不能靠"重建一次就别再碰" |
 
 **复盘**：PAknow 的图谱不是教程第 7/9 章的缩小版，而是**为条件化交易知识定制**的：
-主张带 `context/modality/polarity`；图谱不作为独立打分路由，而是在文本召回后沿概念分类
+主张在库里带 `context` / `modality`（1,888/1,888），设计意图是把条件随主张带进上下文；
+但消费端读的是 `conditions` / `exceptions`（0 条），所以当前只是**透传**，还没做到"按条件筛选"。
+图谱不作为独立打分路由，而是在文本召回后沿概念分类
 （1 跳）与「概念 → 主张 → `SUPPORTED_BY` 证据」（2 跳）做有界扩展，预算为概念 ≤8、
-边 ≤32、回取证据 ≤8、图块 ≤1,200 tokens。扩展结果标记 `provenance=graph`、
+边 ≤32、回取证据 **≤14**、图块 ≤1,200 tokens。扩展结果标记 `provenance=graph`、
 `non_citable=True`，只作理解辅助，引用仍只指向原文证据（ADR-0002/0003）。
 
 代价是规模小、没有社区摘要、没有 Neo4j。全局综述目前靠目录 + `synthesis` 提示词，
-不是 GraphRAG 的全局摘要；这是明确的未实现项。金标准回归只支持一个窄结论：图谱能在
-5 道题上召回 6 条文本 top-20 并集外的期望证据；但新链路文本侧宽度差吃掉同样多的基线证据，
-净召回增量为 0（见第 4 章 §7.4）。这不是把扩展判死，而是说明文本宽度与图谱扩展必须一起评估。
+不是 GraphRAG 的全局摘要；这是明确的未实现项。v2 金标准的结论比 v1 清楚：同宽度下
+图谱扩展把期望证据命中从 41/123 拉到 55/123（+14），21 道题的期望证据只在图谱侧被召回；
+但 60 题全部撞到"证据 ≤14"的截断，且机制题覆盖率仍 ≈0（见 [评测](chapter14-evaluation.md)）。
+图谱有用，但只解决"概念在哪"，不解决"论证链怎么走"。
 
 ## 12. Agentic RAG
 
@@ -311,7 +320,9 @@ Docker，且 Qdrant 的命名向量刚好满足“同点 dense+sparse + RRF”�
 | 自动优化 | 未覆盖 | 评价→蒸馏→发布，自动到 `shadow` | 已实现（局部） |
 | 用户事实记忆 | 未覆盖 | `UserFactRow` 表存在，主链路未使用 | 接线缺口 |
 | 作业/重试 | 未覆盖 | `ImportJobRow` 契约存在，主链路未使用 | 接线缺口 |
-| API | 项目实战是 CLI | FastAPI `/query` `/charts` `/evidence` `/runs` `/sops` | 已采用且更强 |
+| API | 项目实战是 CLI | FastAPI 12 个路由：`/query` `/search` `/charts` `/evidence` `/documents` `/sources` `/figures` `/runs` `/sops` `/health` | 已采用且更强 |
+| 多轮对话 | 未覆盖 | `QueryRequest.history`（最近 8 轮）+ 独立问题改写，返回 `query_used` / `rewritten` | 超出教程 |
+| 外部集成 | 未覆盖 | MCP 适配器：11 个工具走 HTTP，不依赖内部包 | 超出教程 |
 | 查看器 | 无 | 单页查看器 + PDF 页渲染 + 引用跳转 | 超出教程 |
 | 截点遮罩 | 未覆盖 | `/charts?cutoff=` 右侧遮罩，模型看不到未来 K 线 | 超出教程 |
 | 索引缓存 | FAISS 本地缓存 | Qdrant 持久化；无启动缓存层 | 等价 |
@@ -346,10 +357,10 @@ Docker，且 Qdrant 的命名向量刚好满足“同点 dense+sparse + RRF”�
 | 项 | 替代方案 | 理由 |
 |---|---|---|
 | 固定/递归/语义分块 | 结构单元 + 句末切分 + 邻接 | 解析器已给语义边界；切分条件句风险高 |
-| 父子块 | 阅读顺序邻接 | 父块实测 743/743 悬空；邻接覆盖 81,809 条 |
+| 父子块 | 阅读顺序邻接 | 父块实测 1,670/1,670 悬空；邻接覆盖 91,235 条 |
 | ColPali/ColQwen2 | Qwen2.5-VL 观察式 | Blackwell CUDA 崩溃 / transformers 4.x 依赖 |
 | Milvus/FAISS/Chroma | Qdrant 嵌入式 | 无 Docker；命名向量 + 过滤 + 可切 server |
-| Neo4j/Cypher | SQLite 图表 + 有界 BFS | 3,621 节点规模；固定检索模式 |
+| Neo4j/Cypher | SQLite 图表 + 有界 BFS | 1,105 节点规模；固定检索模式 |
 | LLM 重排 / ColBERT | cross-encoder | 延迟/成本；late-interaction 索引不划算 |
 | 多步 Agent / 多 Agent | 单次 QueryPlan + 受控补检索 | 固定数据源；稳定性/延迟优先 |
 | GraphRAG 社区摘要 | toc + synthesis | 全局问题量少；社区检测成本高 |
@@ -369,11 +380,13 @@ Docker，且 Qdrant 的命名向量刚好满足“同点 dense+sparse + RRF”�
 
 | 优先级 | 事项 | 为什么现在做 |
 |---|---|---|
-| P0 | 冻结金标准 + RAG Triad/Ragas + Recall@k + 回归门槛 | 没有它，SOP `active` 永远关闭，所有“优化”无法证明 |
+| P0 | 评测回归门槛（把已有 harness 接进 CI） | 数据集与数字都有了，但没有一条会阻塞合入 |
+| P0 | SOP 对照回放 + 五个操作接线 | 回放是 `active` 晋升的唯一证据；不接线则 SOP 只剩两个操作有效 |
 | P0 | 接线 `QueryPlan.metadata` 到 Qdrant filter；实现或删除 `visual_page`/`numeric` | 消除“计划字段装饰化”，让路由输出可信 |
+| P1 | 机制题检索（20 题覆盖率 ≈0） | 这是分层评测暴露出的设计缺口，不是调参 |
 | P1 | 上下文压缩 + 证据窗口消融 | 当前靠 14 条截断，长文档可能带噪 |
-| P1 | HNSW/量化/索引参数基准 | 8 万点已接近嵌入式 Qdrant 的舒适区，需要数据决定是否切 server |
-| P1 | 流式输出 + 查询缓存 | 20–60s 的主要体验瓶颈 |
+| P1 | HNSW/量化/索引参数基准 | 8.1 万点已超嵌入式 Qdrant 建议值 4 倍，需要数据决定是否切 server |
+| P1 | 流式输出 + 查询缓存 | 单轮 20–60 s 的主要体验瓶颈 |
 | P2 | 表格抽取；Docling/MinerU 同页对照 | 只在扩语料时做，避免为 7 本书过度工程 |
 | P2 | GraphRAG 社区摘要 / LightRAG 对照 | 只在全局综述类问题有稳定需求时做 |
 | P2 | Function Calling / 数值工具 | 只有接入可信行情数据后才做 |
@@ -384,4 +397,5 @@ Docker，且 Qdrant 的命名向量刚好满足“同点 dense+sparse + RRF”�
 > 条件密集、需要逐项引用的交易书时，哪些零件必须换、哪些可以少、哪些不能假装有”。
 >
 > 当前系统的强项是**证据可追溯、派生材料边界、条件化图谱、SOP 可回滚**；
-> 最大缺口是**评测**，其次是**元数据过滤/压缩/索引调优**这三个工程欠账。
+> 评测已从"没有"走到"有数字"，但还没变成门槛；真正的欠账是**机制题检索**、
+> **SOP 回放**，以及元数据过滤/压缩/索引调优这三个工程项。

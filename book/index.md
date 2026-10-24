@@ -1,3 +1,7 @@
+---
+description: "PAknow：可追溯出处的多模态 RAG、条件化证据图谱与可版本化 SOP 记忆。面向 7 本中文价格行为资料，按 RAG 设计流程讲技术选型与实测结果。"
+---
+
 <div class="paknow-hero">
   <h1>PAknow</h1>
   <p class="paknow-sub">
@@ -7,34 +11,37 @@
   <div class="paknow-badges">
     <span class="paknow-badge">91,235 证据单元</span>
     <span class="paknow-badge">927 图资产</span>
-    <span class="paknow-badge">2,694 概念 · 1,888 主张</span>
+    <span class="paknow-badge">1,888 主张 · 3,753 边</span>
     <span class="paknow-badge">674 K 线指代</span>
-    <span class="paknow-badge">SOP 生命周期 + git</span>
+    <span class="paknow-badge">3 个冻结评测集</span>
   </div>
   <div class="paknow-cta">
     <a class="paknow-btn" href="chapter0-architecture/">开始阅读</a>
-    <a class="paknow-btn-ghost" href="chapter10-examples/">运行示例</a>
+    <a class="paknow-btn-ghost" href="chapter14-evaluation/">看评测数字</a>
     <a class="paknow-btn-ghost" href="https://github.com/TbK0ng/paknow">GitHub 仓库</a>
   </div>
 </div>
 
-<div class="paknow-features">
-  <div class="paknow-feature">
-    <div class="paknow-feature-icon">🔗</div>
-    <h3>可追溯</h3>
-    <p>每个 <code>[n]</code> 绑定证据编号，最终落到「书 → 章 → 图 → 页」。</p>
-  </div>
-  <div class="paknow-feature">
-    <div class="paknow-feature-icon">🧪</div>
-    <h3>可验证</h3>
-    <p>图谱主张带条件，视觉观察标记为派生材料，SOP 需要回放证据才能晋升。</p>
-  </div>
-  <div class="paknow-feature">
-    <div class="paknow-feature-icon">🕘</div>
-    <h3>可回滚</h3>
-    <p>记忆以 YAML + git 管理，每次变更可 diff、可 blame、可回退。</p>
-  </div>
-</div>
+## 三十秒版
+
+**它解决什么**：7 本图文混排的中文交易书，回答必须能落到"书 → 章 → 图 → 页"，而不是给一段听起来对的总结。
+
+**三个硬约束**（每条都有代码与 ADR 支撑）：
+
+- **出处可验证**：物理页、印刷页、章节路径、图号、bbox 分开存储，绝不互相推导（[ADR-0001](https://github.com/TbK0ng/paknow/blob/main/docs/adr/0001-separate-physical-and-printed-pages.md)）。
+- **派生材料不能冒充原文**：视觉观察、图谱主张、读图结果都可以影响理解，但进不了 `[n]` 引用集合（[ADR-0002](https://github.com/TbK0ng/paknow/blob/main/docs/adr/0002-derived-observations-are-not-citable-evidence.md) / [ADR-0003](https://github.com/TbK0ng/paknow/blob/main/docs/adr/0003-graph-is-an-expansion-layer-not-a-scored-route.md)）。
+- **记忆可回滚**：SOP 以 YAML + git 管理，版本指纹不匹配就不可被选中。
+
+**现在证明到哪一步**（都是可复现的数字，不吹）：
+
+| 能力 | 结论 |
+|---|---|
+| 检索 | 图谱扩展同宽度下把期望证据命中从 41/123 提到 55/123（+14）；全部 60 题撞到 ≤14 条截断 |
+| 答案 | 120 次真实问答硬约束 0 失败；配对盲评 10 好 / 6 差 / 44 平 |
+| 分层 | 百科与条件题覆盖尚可；**20 道机制题覆盖率 ≈0**——沿边扩展补不了论证链 |
+| 读图 | 价位确定性判定 miss 0.875（仅跑 2/10 题），瓶颈在读图精度 |
+
+细节与口径：[评测](chapter14-evaluation.md)。
 
 ## 设计流程
 
@@ -86,7 +93,7 @@
 
     ---
 
-    单次结构化计划、Step-Back / Multi-query / HyDE、双语对齐、分析 vs 举例分流。
+    结构化计划、Step-Back / Multi-query / HyDE、双语对齐、多轮改写、分析 vs 举例分流。
 
     [:octicons-arrow-right-24: 阅读](chapter5-query.md)
 
@@ -94,7 +101,7 @@
 
     ---
 
-    两种生成模式、有界补检索、引用绑定、上下文分层、分析优先与图例策略。
+    三种生成模式、有界补检索、引用绑定、上下文分层、分析优先与图例策略。
 
     [:octicons-arrow-right-24: 阅读](chapter6-generation.md)
 
@@ -102,7 +109,7 @@
 
     ---
 
-    运行轨迹、生命周期、git 版本管理、评价→蒸馏→发布闭环、生效方式与局限。
+    运行轨迹、生命周期、git 版本管理、评价→蒸馏→发布闭环、哪些操作真的生效。
 
     [:octicons-arrow-right-24: 阅读](chapter7-memory.md)
 
@@ -110,9 +117,17 @@
 
     ---
 
-    API、存储、截点遮罩、git 实践、性能实测、部署与文档站。
+    12 个 API 路由、多轮对话、MCP 适配器、存储、截点遮罩、性能与部署。
 
     [:octicons-arrow-right-24: 阅读](chapter8-service.md)
+
+-   :material-chart-candlestick:{ .lg .middle } **结构化读图**
+
+    ---
+
+    截图 → 类型化字段 → 读图子查询 → 三层答案；读图不是证据。
+
+    [:octicons-arrow-right-24: 阅读](chapter13-chart.md)
 
 -   :material-compare-horizontal:{ .lg .middle } **All-in-RAG 全链路对照**
 
@@ -125,9 +140,17 @@
 
 </div>
 
-## 状态与验证
+## 验证与结果
 
 <div class="grid cards" markdown>
+
+-   :material-chart-box-outline:{ .lg .middle } **评测：把"看起来能用"变成数字**
+
+    ---
+
+    3 个冻结数据集、4 个 harness、宽度消融、答案双臂、盲评，以及机制题 ≈0 的诚实结果。
+
+    [:octicons-arrow-right-24: 阅读](chapter14-evaluation.md)
 
 -   :material-check-decagram-outline:{ .lg .middle } **已完成与待补充**
 
@@ -155,6 +178,21 @@
 
 </div>
 
+## 代码地图
+
+| 想看什么 | 从哪读 | 入口 |
+|---|---|---|
+| 证据与出处契约 | `paknow/evidence/contracts.py` | 第 0、1 章 |
+| 摄入流水线 | `paknow/ingest/` | `scripts/ingest_all.py` |
+| 检索缝 | `paknow/retrieval/pipeline.py` | 第 4 章 |
+| 图谱扩展 | `paknow/graph/expansion.py` | 第 4、12 章 |
+| 读图 | `paknow/chart.py` | 第 13 章 |
+| 工作流状态机 | `paknow/workflows/graph.py` | 第 5、6 章 |
+| SOP 记忆 | `paknow/memory/` | 第 7 章 |
+| API 与查看器 | `apps/api/main.py`、`apps/viewer/` | 第 8 章 |
+| 评测 | `scripts/eval_*.py`、`evals/gold/` | 第 14 章 |
+| MCP 适配器 | `integrations/paknow-mcp/` | 第 8 章 |
+
 ## 快速开始
 
 ```bash
@@ -163,17 +201,21 @@ uv venv .venv
 uv pip install --python .venv --index-url https://download.pytorch.org/whl/cu128 "torch==2.9.1" "torchvision==0.24.1"
 uv pip install --python .venv -e ".[dev]"
 
-# 2) 配置（复制 .env.example 并填入 DEEPSEEK_API_KEY）
+# 2) 配置：填 DEEPSEEK_API_KEY；本地模式保持两个 URL 行注释（不要写成空值）
+#    PAKNOW_DB_URL → 默认 SQLite（data/paknow.db）
+#    QDRANT_URL    → 默认嵌入式 Qdrant（data/objects/qdrant）
 cp .env.example .env
 
-# 3) 摄入 + 索引
+# 3) 摄入 + 索引 + 图谱
 .venv/Scripts/python.exe scripts/ingest_all.py
 .venv/Scripts/python.exe scripts/index_visual.py
+.venv/Scripts/python.exe scripts/build_taxonomy.py --apply
 
-# 4) 启动服务
+# 4) 启动服务（8000 归 API；文档站用 8080）
 .venv/Scripts/python.exe -m uvicorn apps.api.main:app --port 8000
 ```
 
 !!! note "文档与代码的关系"
     本文档是**实施后的技术说明**，以实际代码、数据库计数与运行结果为准：
     记录实际发生了什么、为什么这么做、哪些坑踩过并修好了。设计过程中的讨论稿不随仓库发布。
+    所有规模数字来自本地库快照（2026-10-24），重算方法见 [评测](chapter14-evaluation.md) §8。

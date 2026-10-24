@@ -1,5 +1,6 @@
 site_name: PAknow 技术文档
 site_description: 多模态检索、证据图谱与可验证 SOP 记忆系统——按设计流程讲技术选型
+site_author: TbK0ng
 site_url: https://tbk0ng.github.io/paknow/
 docs_dir: book
 repo_url: https://github.com/TbK0ng/paknow
@@ -10,20 +11,22 @@ theme:
   language: zh
   logo: assets/logo.svg
   favicon: assets/logo.svg
+  # 字体走系统栈（extra.css），不依赖境外 CDN
   font: false
   features:
     - navigation.tabs
     - navigation.tabs.sticky
     - navigation.sections
-    - navigation.indexes
     - navigation.top
     - navigation.tracking
     - navigation.instant
+    - navigation.footer
     - toc.follow
     - search.suggest
     - search.highlight
     - search.share
     - content.code.copy
+    - content.action.edit
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
@@ -41,6 +44,8 @@ theme:
         name: 切换到浅色模式
 extra_css:
   - stylesheets/extra.css
+hooks:
+  - hooks/og.py
 nav:
   - 首页: index.md
   - 设计流程:
@@ -53,15 +58,16 @@ nav:
       - 6. 证据核验与生成: chapter6-generation.md
       - 7. SOP 记忆与自动优化: chapter7-memory.md
       - 8. 服务与工程化: chapter8-service.md
+      - 结构化读图: chapter13-chart.md
       - All-in-RAG 全链路对照: chapter12-allinrag-comparison.md
-  - 状态与验证:
+  - 验证与结果:
+      - 评测: chapter14-evaluation.md
       - 已完成与待补充: chapter9-status.md
       - 运行示例: chapter10-examples.md
       - AI 评价: chapter11-ai-review.md
 
 markdown_extensions:
   - admonition
-  - pymdownx.details
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid
@@ -70,8 +76,6 @@ markdown_extensions:
   - pymdownx.emoji:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
-  - pymdownx.tabbed:
-      alternate_style: true
   - tables
   - toc:
       permalink: true

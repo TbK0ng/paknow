@@ -1,3 +1,7 @@
+---
+description: "BGE-M3 dense + 自研 TF 稀疏的索引设计、领域分词与词边界事故、嵌入式 Qdrant 的容量边界与重索引策略。"
+---
+
 # 3. 索引构建
 
 > 索引决定"能不能被找到"。本章讲嵌入、稀疏分词、向量库、索引范围与重索引策略。
@@ -6,12 +10,12 @@
 
 | 方案 | dense | sparse | 多语言 | 结论 |
 |---|---|---|---|---|
-| BGE-M3 | ✅ 1024 维 | ✅ 同模型产出 | 中英等 100+ 语言 | ✅ 采用 |
+| BGE-M3 | ✅ 1024 维 | 不用其 sparse：稀疏侧是自研 TF 向量 | 中英多语（厂商口径：支持 100+ 语言，未在本项目实测） | ✅ 采用（只用 dense） |
 | bge-large-zh + BM25 | ✅ | 需另建 | ❌ / 分语言 | 两套模型两套维护 |
 | E5-large | ✅ | ❌ | 一般 | 中文领域词弱 |
 | OpenAI embedding | ✅ | ❌ | ✅ | 离线不可用、按量计费 |
 
-**为什么稀疏侧要自己做分词**：BGE-M3 的 sparse 权重来自其内置词表，但本项目有大量**领域缩写**（H2、L2、BTC、STC、MTR、DBBF）和**图号**（图4.5、EMA20）。这些 token 如果被切碎，稀疏检索就失去精度。
+**为什么稀疏侧要自己做**：BGE-M3 的 sparse 输出走它自己的词表，喂不进本项目的领域词。这里用的是自研 TF 向量（`paknow/retrieval/tokenize.py:53-73`：FNV-1a 哈希到 24-bit 桶，无 IDF、无长度归一化），因为本项目有大量**领域缩写**（H2、L2、BTC、STC、MTR、DBBF）和**图号**（图4.5、EMA20）。这些 token 如果被切碎，稀疏检索就失去精度。
 
 分词器（`paknow/retrieval/tokenize.py`）的结构：
 
@@ -53,7 +57,12 @@
 
 **为什么命名向量重要**：混合检索要在**同一个点**上同时查 dense 与 sparse，再用 RRF 融合。Qdrant 的 `prefetch + FusionQuery(RRF)` 一次请求完成；如果两个索引分开，就要自己对齐 ID 与分数。
 
-**离线模式限制**：嵌入式 Qdrant 单进程只允许一个 client 实例（已用 `lru_cache` 单例控制）。生产切 server 时无此限制。
+**离线模式的两个限制**：
+
+1. **单进程只有一个 client**：嵌入式 Qdrant 同一个 path 只允许一个实例，代码用 `lru_cache` 单例兜住（`paknow/retrieval/qdrant_store.py:25-31`）。
+2. **规模超过官方建议值，且没测过**：客户端自己会打警告原文——"Local mode is not recommended for collections with more than 20,000 points. Collection <evidence_text> contains 81809 points."（`data/link_log.txt:1`）。`evidence_text` 实有 81,809 点，约为建议上限的 **4 倍**；本项目**没有做过**该规模下的延迟/内存基准，所以不能宣称"能跑"就等于"性能可接受"。
+
+**切 server 的开关**：`settings.qdrant_url` 非空即走远程（`paknow/retrieval/qdrant_store.py:28-30`），环境变量 `QDRANT_URL`，配套 `docker-compose.yml` 里已有 `qdrant/qdrant:v1.12.4`（与 postgres 16 同文件）。默认值 `""` 表示嵌入式，与 `paknow/config.py:28-34` 一致。切 server 能解掉"单 client"限制，但**换不来已验证的性能结论**——那需要一次基准，不在这份文档里。
 
 ## 3. 索引范围与 payload
 
@@ -74,16 +83,16 @@ payload 字段：`evidence_id / doc_id / block_type / text / figure_ids / chapte
 
 | 不一致 | 检测方式 | 修复 |
 |---|---|---|
-| 观察单元存了提示词 | `text LIKE '%观察器%'` 计数 725 | 剥离 + 重嵌入 |
+| 观察单元存了提示词 | 按文本匹配计数（当时 725 条） | 剥离 + 重嵌入 |
 | 稀疏向量含子串污染 | 分词器变更后人工审计 | 全量 sparse 重索引 |
-| 单元 `figure_ids` 为空 | `json_array_length > 0` 计数 | 图文链接回填 + payload 同步 |
-| 邻接为空 | 邻接字段计数 0 | 阅读顺序回填 81,809 |
-| 父块悬空 | 解析率 0/743 | 改为邻接方案 |
+| 单元 `figure_ids` 为空 | 逐单元判空：`link_captions_to_figures.py` 把 caption/paragraph 全量拉到内存里按 `locator.bbox` 过滤（不是一条 SQL）；只有"取非空"那一步用到 SQL，在 `scripts/backfill_figure_links.py:22` 的 `func.json_array_length(...) > 0` | 图文链接回填 + payload 同步 |
+| 邻接为空 | 邻接字段逐条判空（Python 侧读 `adjacent_ids`） | 阅读顺序回填 81,809 |
+| 父块悬空 | 解析率 0 / 1,670 | 改为邻接方案 |
 
-> **经验**：每次改分词器、词典、链接规则，都要问一句"索引里的旧数据还一致吗"。
+> **经验**：每次改分词器、词典、链接规则，都要问一句"索引里的旧数据还一致吗"。另外注意上一行那类"检测方式"——库里存的是 JSON 数组，空数组和有元素在 SQL 里长得一样容易骗人，真正的判空是在 Python 里把 JSON 解析出来数的。
 
 ## 5. 本章小结
 
-- 单模型 dense+sparse 减少维护面，但稀疏侧必须自己处理领域词。
+- **dense 用单模型、稀疏侧自己分词**减少维护面，但领域词必须自己处理（BGE-M3 的 sparse 输出用不上）。
 - 索引不是"建一次就完"：分词/词典/链接的每次变更都要求对应的重索引策略。
-- 选择嵌入式 Qdrant 的核心收益是**命名向量 + 过滤 + 可切生产**三件事同时满足。
+- 选择嵌入式 Qdrant 的核心收益是**命名向量 + 过滤 + 可切 server** 三件事同时满足；但 81,809 点已超官方建议上限 4 倍，切 server 是"保留退路"，不是"当前规模已被证明没问题"。

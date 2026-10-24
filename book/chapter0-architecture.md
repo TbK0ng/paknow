@@ -1,3 +1,7 @@
+---
+description: "系统目标边界、四条设计原则（出处可验证、派生材料不可引用、记忆可回滚、失败可降级）、技术栈与明确不做的清单。"
+---
+
 # 0. 系统架构与设计原则
 
 > 本章先讲"这个系统为什么长这样"，后面每一章再展开一个环节。所有数字来自实际运行的数据库与索引，不是估算。
@@ -11,7 +15,7 @@
 | 知识问答（定义/规则/机制/数值口径） | ✅ 已实现 | 检索 + 引用 + 归纳 |
 | 上传图表分析 | ✅ 已实现 | 云端 vision + 截点遮罩 |
 | 历史回测/行情统计 | ⏸ 暂缓 | 需要真实行情数据与明确规则；这是实施阶段确定的边界 |
-| 人工金标准评测 | ⏸ 暂缓 | 评测集未冻结；这是当前唯一的"未闭合环节" |
+| 人工金标准评测 | 🟡 已起步 | 评测集**已冻结**：3 套数据集（20 / 60 / 10 条，附 SHA-256）+ 4 个 harness（召回、回答、盲评、图表）；缺的是回归门禁，不是数据集 |
 
 为什么先做前两类？因为它们**只依赖本地资料 + 云端模型**，能在离线环境（无 Docker、无外网行情源）跑通；回测依赖数据源与规则定义，草率接入只会产出不可信的数字。
 
@@ -37,7 +41,9 @@
 
 ### 2.3 条件化知识必须保留条件
 
-书中大量知识是条件式的："在强趋势中，回调是买入机会；在交易区间中，同样的回调常常是陷阱。" 系统用 `ClaimRow.qualifiers`（`context`/`modality`）保留条件，检索时按"主题匹配 > 谓词匹配 > 条件匹配"排序。
+书中大量知识是条件式的："在强趋势中，回调是买入机会；在交易区间中，同样的回调常常是陷阱。" 系统用 `ClaimRow.qualifiers` 保留条件：**实际入库的键只有 `context` / `modality`**（1,888 条主张里这两个键各出现 1,888 次），条件随主张原样进入生成上下文。
+
+需要说清口径：图谱扩展代码只读 `conditions` / `exceptions` 两个键（`paknow/graph/expansion.py:277-278`），而这两键当前在库里一条都没有——所以条件**不参与筛选或排序**，只是作为 `qualifiers` 字段整体带进上下文。主张真正被截断的顺序是 **种子概念顺序 → `extraction_confidence` 降序 → `claim_id`**（`paknow/graph/expansion.py:238-243`），没有"主题匹配 > 谓词匹配 > 条件匹配"这层逻辑。
 
 **为什么**：去掉条件的知识图谱会产出危险的建议。系统因此把条件作为主张的一等字段。
 
@@ -51,24 +57,26 @@ SOP（程序性记忆）不是"模型说过的好答案"，而是**带状态、�
 
 ```mermaid
 flowchart TB
-    subgraph 离线构建
+    subgraph "离线构建"
         A[PDF/EPUB 原件] --> B[解析器<br/>EPUB spine+NCX / PyMuPDF]
         B --> C[证据单元<br/>locator: 页/图号/bbox/章节]
         B --> D[图资产<br/>内容寻址 + 图注/解释链接]
-        C --> E[文本索引<br/>BGE-M3 dense+sparse]
+        C --> E[文本索引<br/>BGE-M3 dense + 自研 TF sparse]
         D --> F[视觉观察<br/>Qwen2.5-VL → 派生单元]
         F --> E
         C --> G[证据图谱<br/>概念/主张/边]
         C --> H[BarRef<br/>K线指代结构化]
     end
-    subgraph 在线问答
+    subgraph "在线问答"
         Q[用户问题] --> R[查询理解 QueryPlan<br/>意图/框架/StepBack/MultiQuery/HyDE]
-        R --> S[多路召回<br/>混合+重排+邻接+toc+图谱+BarRef]
+        R --> RD[结构化图读<br/>仅 chart_analysis + 有上传图]
+        RD --> S[多路召回<br/>混合+重排+邻接+toc+图谱+BarRef]
+        RD -.->|读失败 → 纯文本路径| S
         E --> S
         G --> S
         H --> S
         S --> T[证据核验<br/>有界补检索]
-        T --> U[生成<br/>extractive / synthesis]
+        T --> U[生成<br/>extractive / synthesis / chart]
         U --> V[引用绑定 + 查看器]
         U --> W[RunTrace]
     end
@@ -80,11 +88,11 @@ flowchart TB
 
 | 层 | 选择 | 关键理由 | 替代方案与不选原因 |
 |---|---|---|---|
-| 元数据存储 | SQLite（开发默认） | 零依赖、离线可用；schema 通过 SQLAlchemy 保持 DB 无关 | Postgres：需要服务/网络，当前环境不可行；生产可切换（已验证 schema 无 SQLite 专有类型） |
-| 向量库 | Qdrant 嵌入式 | 支持**命名向量**（dense+sparse 同点）、payload 过滤、可无缝切 server | FAISS：无 payload 过滤、混合检索要自己拼；Milvus：需要 Docker；`sqlite-vss`：生态弱 |
-| 嵌入 | BGE-M3 | 一个模型同时产出 dense+sparse、中英多语、1024 维 | 双模型（bge-large + BM25）：多一次加载与维护；E5：中文领域词表现不如 BGE-M3 |
+| 元数据存储 | SQLite（开发默认，`sqlite:///./data/paknow.db`） | 零依赖、离线可用；ORM 层用 SQLAlchemy | Postgres：需要服务/网络，当前不可行。`PAKNOW_DB_URL` 可指向 Postgres，但**切换未实测**——`scripts/backfill_figure_links.py:22` 直接调用 SQLite 的 `json_array_length`，所以"DB 无关"只在模型定义层成立 |
+| 向量库 | Qdrant 嵌入式（本地模式） | 支持**命名向量**（dense+sparse 同点）、payload 过滤、`QDRANT_URL` 一改即切 server | FAISS：无 payload 过滤、混合检索要自己拼；Milvus：需要 Docker；`sqlite-vss`：生态弱。**代价**：客户端自己警告"Local mode is not recommended for collections with more than 20,000 points"（`data/link_log.txt:1`），而 `evidence_text` 实测 81,809 点，约为建议上限的 4 倍，且未做性能基准 |
+| 嵌入 | BGE-M3（dense）+ 自研 TF 稀疏 | dense 1024 维、中英多语；稀疏侧自建（FNV 哈希 + jieba），见第 3 章 | 双模型（bge-large + BM25）：多一次加载与维护；E5：中文领域词表现不如 BGE-M3 |
 | 重排 | bge-reranker-v2-m3 | 本地 GPU、跨语言、延迟可控 | LLM rerank：每问多一次云端调用，延迟/成本翻倍；ColBERT：需要 late-interaction 索引，Qdrant 嵌入式支持成本高 |
-| 生成 | deepseek-flash（云端） | 中文强、支持图文、成本低；`ModelGateway` 可替换 | 本地 LLM：16GB 显存下质量与速度都不可接受；微调：资料版权与数据量都不支持 |
+| 生成 | `deepseek-flash`（云端，`paknow/config.py:18` 默认值） | 中文强、成本低；`ModelGateway` 可替换；三种生成模式 `extractive` / `synthesis` / `chart`（`paknow/workflows/graph.py:194-201`）。图表问答的"结构化图读"也走这个网关，需要 `deepseek_vision=True`；默认 `False` 时 `_attach_images` 直接抛错（`paknow/gateway.py:170-171`），图读失败、退回纯文本路径 | 本地 LLM：16GB 显存下质量与速度都不可接受；微调：资料版权与数据量都不支持 |
 | 编排 | LangGraph | 状态机 + 条件边，天然表达"检索→核验→补检索→生成" | 手写 while 循环：可读性差；LangChain Agent：对固定流程过重、不可控 |
 | 视觉 | Qwen2.5-VL-3B（观察式） | Blackwell sm_120 + transformers 5.x 可用 | ColPali/ColQwen2：实测崩溃/依赖冲突（见第 2 章） |
 | 记忆版本 | git（`sop_registry/`） | 每次变更可 diff、可回溯、可 blame | 数据库版本表：可回滚但不能 diff；对象存储：重 |
@@ -92,7 +100,7 @@ flowchart TB
 ## 5. 明确"不选"的设计
 
 - **不做多步 Agent 自主规划**：查询理解用**单次结构化调用**产出完整计划（意图、Step-Back、子查询、HyDE、证据需求、是否要举例）。多步 Agent 的灵活性换不来稳定性，且每多一步就多一次延迟与失败点。
-- **不做"父块检索"**：原计划是子块命中 → 展开父块。实测发现父块单元在切分后被丢弃，`parent_id` 悬空（743/743 不可解析），因此改为**阅读顺序邻接**回填（见第 1 章）。
+- **不做"父块检索"**：原计划是子块命中 → 展开父块。实测发现父块单元在切分后被丢弃，`parent_id` 悬空（本地库快照 2026-10-24：1,670/1,670 不可解析），因此改为**阅读顺序邻接**回填（见第 1 章）。
 - **不做 embedding 聚类去重**：近似重复抑制用"归一化前 80 字哈希 + 每书配额"即可覆盖主要重复（同一概念在多本书/多语言版本中出现），embedding 聚类的成本/收益不匹配。
 - **不让模型自评记忆**：SOP 晋升需要对照回放；自动闭环只到 `shadow`。
 
