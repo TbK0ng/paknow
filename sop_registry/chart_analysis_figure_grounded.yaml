@@ -1,0 +1,47 @@
+sop_id: chart_analysis_figure_grounded
+version: 1
+status: candidate
+intent_scope:
+- chart_analysis
+preconditions:
+- 问题涉及图表/走势形态识别或图中标注价位读取
+- 检索结果历史中缺少图像或图表对应证据（连续 no_evidence/retrieval_error）
+steps:
+- operation: expand_terms
+  note: 把口语化问题拆成图表检索词：走势形态、趋势线、支撑位、阻力位、关键价位、标注、坐标轴、时间区间
+- operation: multi_query
+  note: 分别用“形态识别类”和“价位标注类”两组查询并行检索，避免形态与价位证据互相挤占
+- operation: expand_figures
+  note: 优先召回带图表的文档页/图注/图表标题，扩展到图注与相邻正文
+- operation: check_evidence
+  note: 核验是否存在可定位的图（图号/标题）与图注中显式的形态名称与价位数值
+- operation: hybrid_search
+  note: 仅在图像证据命中但文本描述缺失时，用混合检索补齐形态与价格数值描述
+- operation: rerank
+  note: 按“同图同图注优先、含具体价位数值优先”重排，剔除仅泛泛谈形态的段落
+required_evidence:
+- 图表标识（图号或图表标题）
+- 形态名称的显式描述
+- 图上标注的关键价位数值（至少支撑/阻力之一）
+fallback: 若无法定位到具体图表证据，明确说明未检索到该图及标注价位，仅给出通用形态判读方法，不臆测具体价位
+stop: 当图注与正文同时给出形态名称和至少一个关键价位数值，或已确认无图表证据时停止
+failure_patterns:
+- retrieval_error
+- no_evidence
+- 仅召回泛化形态讲解而未命中对应图表
+- 把无图证据的通用描述当作该图标注价位
+compatible_versions:
+  corpus: a96ff4bfbbc2
+  graph: 1105n/3753e
+  embed_model: BAAI/bge-m3
+  rerank_model: BAAI/bge-reranker-v2-m3
+  visual_model: Qwen/Qwen2.5-VL-3B-Instruct
+  generator_model: deepseek-flash
+validation:
+  dataset: null
+  paired_runs: 0
+  wins: 0
+  losses: 0
+  ties: 0
+  approved: false
+  notes: null
