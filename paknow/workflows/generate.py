@@ -6,7 +6,7 @@ from typing import Any, Mapping
 
 from pydantic import BaseModel, Field
 
-from paknow.chart import read_chart
+from paknow.chart import is_non_chart, read_chart
 from paknow.gateway import gateway
 from paknow.retrieval.pipeline import citation_binding
 
@@ -42,11 +42,17 @@ _CHART_SYSTEM = f"""你是交易价格行为资料的图表分析助手。用户
 三、资料依据 + 归纳：资料如何定义/使用这些结构，引用 [n]；归纳不超过 5 条，区分你的判断与资料原文。只有本层可以出现 [n]。
 
 - 用户要求「只给清单」：只输出第一层，第二层最多一句话，不写第三层。
-- 图上没有可读价位（非行情截图）：直说这不是行情图表，只给可见文字摘要，不编价位清单。
 - 看不清、没标注的数值一律写「看不清」，绝不按轴线推算或补全。
 - 图上没有直接印出的信息（品种、周期、指标参数、数据来源、成交量含义）不要推断，统一写「图上未标注」。
 - 图上没有的位置不要列，不要为凑数编价位。
 - 中文回答；引用用 [n]，n 对应证据编号；cited_indices 只返回实际引用的证据编号。
+"""
+
+_NON_CHART_SYSTEM = """
+读图结论：这张图不是行情图表（market_state=unclear，没有可读位）。
+- 第一句直接说「这不是行情图表」，不要硬当成行情来分析。
+- 上面的三层输出不适用：之后只摘图上可见的文字与版式（标题、按钮、正文片段），说明这些文字写了什么；不推断图上没有印出的结论。
+- 不写「关键位」「可读位」清单，不展开资料依据或教科书概念讲解；证据区没有对应内容就不要硬引。
 """
 
 
@@ -318,6 +324,9 @@ def generate(
     system = {"chart": _CHART_SYSTEM, "synthesis": _SYNTHESIS_SYSTEM}.get(
         mode, _ANSWER_SYSTEM
     )
+    # only a non-chart read gets the refusal; a genuine chart keeps the layers
+    if mode == "chart" and is_non_chart(chart_read):
+        system += _NON_CHART_SYSTEM
     messages = [
         {"role": "system", "content": system},
         {"role": "user", "content": user},
