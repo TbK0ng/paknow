@@ -6,7 +6,7 @@ from typing import Any, Mapping
 
 from pydantic import BaseModel, Field
 
-from paknow.chart import is_non_chart, read_chart
+from paknow.chart import ChartRead, is_non_chart
 from paknow.gateway import gateway
 from paknow.retrieval.pipeline import citation_binding
 
@@ -45,6 +45,22 @@ _CHART_SYSTEM = f"""你是交易价格行为资料的图表分析助手。用户
 - 看不清、没标注的数值一律写「看不清」，绝不按轴线推算或补全。
 - 图上没有直接印出的信息（品种、周期、指标参数、数据来源、成交量含义）不要推断，统一写「图上未标注」。
 - 图上没有的位置不要列，不要为凑数编价位。
+- 中文回答；引用用 [n]，n 对应证据编号；cited_indices 只返回实际引用的证据编号。
+"""
+
+_CHART_FALLBACK_SYSTEM = """你是交易价格行为资料的图表分析助手。用户上传了截图，可能既有图表也有正文；这次没有结构化读图结果，图上事实由你直接看图得出，资料证据只用于解释与核对。
+
+输出顺序（严格遵守）：
+1. 先列出图上真正印出的价位（可读位），一条一行，每条以「图:」开头并写出它在图上的依据（标注原文、箭头/横线位置、哪根K线）；用户指定顺序（如价格从高到低）就按用户顺序，未指定时按图上从上到下。
+2. 这些行不可引用（ADR-0002）：不得挂 [n]，不得说成出自资料。
+3. 再给「资料依据」：资料如何定义/使用这些结构，引用 [n]。
+4. 最后「归纳」：不超过 5 条，区分你的判断与资料原文。
+
+- 看不清、没标注的数值一律写「看不清」，绝不按轴线推算或补全。
+- 用户要清单就只给清单，不要改写成概念综述，不要先讲定义。
+- 图上没有直接印出的信息（品种、周期、指标参数、数据来源、成交量含义）不要推断，统一写「图上未标注」。
+- 图上没有的位置不要列，不要为凑数编价位。
+- 如果这张图不是行情图表（纯文字页、产品界面、无关照片），第一句直接说明「这不是行情图表」，只摘图上可见的文字与版式，不列价位、不展开资料依据。
 - 中文回答；引用用 [n]，n 对应证据编号；cited_indices 只返回实际引用的证据编号。
 """
 
@@ -97,7 +113,6 @@ _MARKET_STATE = {
     "trading_range": "区间震荡",
     "unclear": "不明",
 }
-_UNSET: Any = object()
 # read content can never read as a citation (ADR-0002), even when the screenshot
 # itself contains a previous answer with [n] markers in it
 _CITATION = re.compile(r"\s*\[\d+\]")
@@ -253,7 +268,7 @@ def generate(
     barrefs: list[dict[str, Any]] | None = None,
     wants_examples: bool = False,
     figure_catalog: list[dict[str, Any]] | None = None,
-    chart_read: Any = _UNSET,
+    chart_read: ChartRead | dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     # derived visual observations are understanding aids, NOT citable evidence:
     # they go into an unnumbered block so citation indices stay consistent
@@ -264,14 +279,9 @@ def generate(
     parts = [f"问题：{query}"]
     # chart questions answer from the structured read the graph made upstream;
     # the read is uncitable and carries no [n], so citations still point at
-    # evidence. A direct caller that supplies no read still gets one (failures
-    # are the graph's read node's job, so the reason is not reported here).
-    if chart_read is _UNSET:  # the graph may already have read the picture
-        if mode == "chart" and images:
-            read, _ = read_chart(images)
-            chart_read = read.model_dump() if read is not None else None
-        else:
-            chart_read = None
+    # evidence. generate never reads the image: the graph's read node owns that.
+    if isinstance(chart_read, ChartRead):
+        chart_read = chart_read.model_dump()
     if mode == "chart" and chart_read:
         parts.append(_render_chart_read(chart_read))
     if toc_context:
@@ -322,9 +332,12 @@ def generate(
             )
     parts.append(f"证据（引用编号 [n]）：\n{context}")
     user = "\n\n".join(parts)
-    system = {"chart": _CHART_SYSTEM, "synthesis": _SYNTHESIS_SYSTEM}.get(
-        mode, _ANSWER_SYSTEM
-    )
+    # a structured read gets the layered prompt; no read falls back to the
+    # single-stage prompt that reads the picture directly
+    if mode == "chart":
+        system = _CHART_SYSTEM if chart_read else _CHART_FALLBACK_SYSTEM
+    else:
+        system = _SYNTHESIS_SYSTEM if mode == "synthesis" else _ANSWER_SYSTEM
     # only a non-chart read gets the refusal; a genuine chart keeps the layers
     if mode == "chart" and is_non_chart(chart_read):
         system += _NON_CHART_SYSTEM

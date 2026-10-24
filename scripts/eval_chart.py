@@ -62,7 +62,9 @@ def judge_levels(
 ) -> dict[str, Any]:
     """Three disjoint price buckets plus their rates and denominators.
 
-    Drift pairing is "same integer part, not equal" (the observed
+    Exact multiset matching runs before drift pairing: a surfaced level that
+    equals an expected level is a hit, never a drift candidate for another
+    expected level. Drift is then "same integer part, not equal" (the observed
     7499.25/7499.75 and 7489.15/7489.75 offsets); among several candidates the
     nearest unused one wins. Denominators differ per rate and are returned:
     miss = missed/expected, extra = extra/observed,
@@ -70,13 +72,16 @@ def judge_levels(
     """
     remaining = list(observed)
     matched: list[float] = []
-    missed: list[float] = []
-    drifted: list[dict[str, float]] = []
+    unmatched: list[float] = []
     for price in expected:
         if price in remaining:
             remaining.remove(price)
             matched.append(price)
-            continue
+        else:
+            unmatched.append(price)
+    missed: list[float] = []
+    drifted: list[dict[str, float]] = []
+    for price in unmatched:
         candidates = [o for o in remaining if math.floor(o) == math.floor(price)]
         if not candidates:
             missed.append(price)

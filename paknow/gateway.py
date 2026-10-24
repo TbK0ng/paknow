@@ -27,7 +27,7 @@ def _strip_step(height: int) -> int:
     return max(_MAX_SIDE, -(-height // _MAX_TILES))  # ceil, so no strip is dropped
 
 
-def _strip_count(data: bytes) -> int:
+def strip_count(data: bytes) -> int:
     """Strips :func:`_prepare_image` would cut from this upload, without encoding."""
     _w, h = Image.open(io.BytesIO(data)).size
     return -(-h // _strip_step(h))
@@ -61,22 +61,40 @@ class ModelGateway:
         self.effort = settings.deepseek_effort
         self.vision = settings.deepseek_vision
         self._client: OpenAI | None = None
+        self._no_retry: OpenAI | None = None
+
+    def _new_client(self, **kwargs: Any) -> OpenAI:
+        return OpenAI(
+            api_key=settings.deepseek_api_key,
+            base_url=settings.deepseek_base_url,
+            **kwargs,
+        )
 
     @property
     def client(self) -> OpenAI:
         """Lazily construct the SDK client so importing without a key is safe."""
         if self._client is None:
-            self._client = OpenAI(
-                api_key=settings.deepseek_api_key, base_url=settings.deepseek_base_url
-            )
+            self._client = self._new_client()
         return self._client
 
+    @property
+    def no_retry_client(self) -> OpenAI:
+        """SDK retries off: one attempt must cost one timeout, not three."""
+        if self._no_retry is None:
+            self._no_retry = self._new_client(max_retries=0)
+        return self._no_retry
+
     def _create(self, *, attempts: int = 2, **kwargs: Any) -> Any:
-        """Completion call with an optional retry budget (default: one retry)."""
+        """Completion call with an optional retry budget (default: one retry).
+
+        ``attempts=1`` uses a client with the SDK's internal retries disabled,
+        so a 120s timeout cannot be paid three times over.
+        """
+        client = self.no_retry_client if attempts == 1 else self.client
         last: Exception | None = None
         for attempt in range(attempts):
             try:
-                return self.client.chat.completions.create(**kwargs)
+                return client.chat.completions.create(**kwargs)
             except Exception as e:  # noqa: BLE001
                 last = e
                 if attempt == 0:

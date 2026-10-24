@@ -218,6 +218,64 @@ PAKNOW_DB_URL=sqlite:///E:/PAknow/data/paknow.db PYTHONPATH=. \
 and the cloud key but no Qdrant and no embedding model: it reads stored answers
 and evidence text only, so it does not take the embedded-Qdrant lock.
 
+### Chart evaluation (needs DB + objects + BGE-M3 + cloud key)
+
+`scripts/eval_chart.py` runs each image in the chart gold set through one
+`run_query(question, images=[data], expand_graph=False)` call — the highest
+behavioural seam, no new one — and judges the returned `chart_read` against the
+item's `expected_levels`. Ten items in `evals/gold/chart_v1.json`; each carries
+`image` (repo-relative), `image_sha256`, `expected_levels`, `expected_swings`
+and `expected_state`. The image is loaded only when the file exists **and** its
+SHA-256 matches; otherwise the item is recorded `skipped` and the chain is never
+called. Skipped items are excluded from every rate denominator and reported
+separately, so a checkout without the images still runs.
+
+Two-phase graph: the read node makes the structured `ChartRead` call (one
+attempt, 120 s budget) before retrieval, then the answer call. A failed read is
+recorded once (`chart_read: <reason> (<detail>)`) and the answer still comes back
+in chart mode through the single-stage prompt.
+
+Judgement is pure and deterministic — no model call. Exact multiset matching
+runs first; a surfaced price that equals an expected price is a hit. Then the
+three disjoint buckets:
+
+| Bucket | Meaning | Rate denominator |
+|---|---|---|
+| miss | expected price the read did not surface | `missed / expected levels` |
+| extra | read price with no expected counterpart | `extra / answered levels` |
+| drift | read price with the same integer part but a different last digit | `drifted / (matched + drifted)` — of the levels actually surfaced |
+
+No tolerance: a hit requires the full price. The buckets are disjoint, so a
+drift is never also a hit or a miss. `--limit N` runs the first N items;
+`--resume --out <dir>` reuses `<dir>/checkpoint.jsonl`, runs missing items and
+retries `error` records but never re-runs a `skipped` one.
+
+Artifacts go to `.scratch/chart-analysis/eval/<UTC-timestamp>/` (`--out`
+overrides): `records.jsonl` (per-item judgement and read status),
+`summary.json` (totals, the three rates, skip reasons, wall time) and
+`checkpoint.jsonl`.
+
+```bash
+# smoke slice, then the full set
+PAKNOW_DB_URL=sqlite:///E:/PAknow/data/paknow.db \
+OBJECTS_DIR=E:/PAknow/data/objects \
+PYTHONPATH=. E:/PAknow/.venv/Scripts/python.exe scripts/eval_chart.py --limit 2
+
+PAKNOW_DB_URL=sqlite:///E:/PAknow/data/paknow.db \
+OBJECTS_DIR=E:/PAknow/data/objects \
+PYTHONPATH=. E:/PAknow/.venv/Scripts/python.exe scripts/eval_chart.py
+
+# resume an interrupted run
+PAKNOW_DB_URL=sqlite:///E:/PAknow/data/paknow.db \
+OBJECTS_DIR=E:/PAknow/data/objects \
+PYTHONPATH=. E:/PAknow/.venv/Scripts/python.exe scripts/eval_chart.py \
+  --resume --out .scratch/chart-analysis/eval/<timestamp>
+```
+
+It holds the embedded-Qdrant lock during retrieval, so keep it in the same
+serialized window as the other evals. It calls the model (route, read, answer),
+so it also needs the cloud key.
+
 ### Taxonomy rebuild (needs DB)
 
 ```bash

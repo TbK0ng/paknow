@@ -6,7 +6,7 @@ import io
 
 from PIL import Image
 
-from paknow.gateway import _MAX_SIDE, _prepare_image, _strip_count
+from paknow.gateway import _MAX_SIDE, _prepare_image, strip_count
 
 
 def _png(size: tuple[int, int], mode: str = "RGBA") -> bytes:
@@ -49,16 +49,16 @@ def test_strip_count_matches_the_uris_without_encoding() -> None:
     data = _png((400, 4000))
     uris = _prepare_image(data)
 
-    assert _strip_count(data) == len(uris)
+    assert strip_count(data) == len(uris)
     assert sum(s.height for s in map(_decode, uris)) == 4000
     assert {s.width for s in map(_decode, uris)} == {400}
-    assert _strip_count(_png((800, 600))) == 1
+    assert strip_count(_png((800, 600))) == 1
 
 
 def test_extreme_tall_strip_count_stays_under_the_provider_cap() -> None:
     data = _png((1516, 9000))
     uris = _prepare_image(data)
 
-    assert _strip_count(data) == len(uris) > 1
+    assert strip_count(data) == len(uris) > 1
     assert all(len(u) < 32 * 1024 * 1024 for u in uris)
     assert sum(s.height for s in map(_decode, uris)) == 9000

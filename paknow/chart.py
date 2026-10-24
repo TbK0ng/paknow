@@ -12,7 +12,7 @@ from typing import Any, Literal, Mapping
 
 from pydantic import BaseModel, ValidationError
 
-from paknow.gateway import _strip_count, gateway
+from paknow.gateway import gateway, strip_count
 
 #: Total budget for the read call; the SDK timeout is the only deadline owner.
 READ_TIMEOUT_S = 120
@@ -50,7 +50,7 @@ class ChartRead(BaseModel):
     unreadable: list[str]
 
 
-CHART_READ_SYSTEM = """你是行情截图的读数器，只做一件事：把图上真正印出来的内容读成结构化数据。
+_CHART_READ_SYSTEM = """你是行情截图的读数器，只做一件事：把图上真正印出来的内容读成结构化数据。
 
 条带：共 {strip_count} 张，从上到下为条带 1..{strip_count}。每条 swing/level 的 strip 必须写它所在的条带序号；只有 1 张时 strip 一律为 1。
 
@@ -117,11 +117,11 @@ def read_chart(
     if not images:
         return None, {"reason": "no_content", "detail": "没有可读的图片"}
     try:
-        strip_count = sum(_strip_count(data) for data in images)
+        strip_total = sum(strip_count(data) for data in images)
     except Exception as exc:  # noqa: BLE001 - an unreadable upload is a read failure
         return None, {"reason": "no_content", "detail": f"{type(exc).__name__}: {exc}"}
     messages = [
-        {"role": "system", "content": CHART_READ_SYSTEM.format(strip_count=strip_count)},
+        {"role": "system", "content": _CHART_READ_SYSTEM.format(strip_count=strip_total)},
         {"role": "user", "content": "读取这张行情截图，输出结构化图表数据。"},
     ]
     try:
@@ -142,7 +142,7 @@ def read_chart(
         if isinstance(exc, json.JSONDecodeError):
             detail = f"invalid JSON: {detail}"
         return None, {"reason": _failure_reason(exc), "detail": detail[:300]}
-    return _clamp_strips(out, strip_count), None
+    return _clamp_strips(out, strip_total), None
 
 
 #: How a read market state is phrased for retrieval (book-side wording, not

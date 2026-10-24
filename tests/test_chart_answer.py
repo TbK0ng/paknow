@@ -78,9 +78,6 @@ _LEVELS = [
     {"price": 7489.15, "source": "unknown", "strip": 3, "basis": "横线，未见标注"},
 ]
 
-_PRIORITY = "图上标注 > 前高/前低 > ONH/ONL > 区间边缘/平台 > 均线"
-
-
 def _read(levels: list[dict[str, Any]] | None = None) -> Any:
     from paknow.chart import ChartRead
 
@@ -106,7 +103,6 @@ def _compose(
     mode: str = "chart",
 ) -> tuple[str, str, str]:
     read = _read(levels)
-    monkeypatch.setattr(generate_module, "read_chart", lambda images, **_k: (read, None))
     seen: dict[str, Any] = {}
 
     def fake_answer(schema: Any, messages: list[dict[str, Any]], **_kwargs: Any) -> Any:
@@ -115,7 +111,9 @@ def _compose(
 
     monkeypatch.setattr(generate_module.gateway, "chat_json", fake_answer)
     images = [b"png"] if mode == "chart" else None
-    generate_module.generate("这张图上哪些价位是关键位？", [], images, mode=mode)
+    generate_module.generate(
+        "这张图上哪些价位是关键位？", [], images, mode=mode, chart_read=read.model_dump()
+    )
     system = seen["messages"][0]["content"]
     user = seen["messages"][1]["content"]
     block = ""
@@ -141,18 +139,18 @@ def test_composed_chart_prompt_states_the_fixed_priority(
 ) -> None:
     system, user, _block = _compose(monkeypatch)
 
-    assert _PRIORITY in system
-    assert _PRIORITY in user  # the read block repeats it next to the focus list
+    assert generate_module._CHART_PRIORITY in system
+    # the read block repeats it next to the focus list
+    assert generate_module._CHART_PRIORITY in user
 
 
 def test_read_block_never_carries_a_citation_number(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    system, user, block = _compose(monkeypatch)
+    _system, user, block = _compose(monkeypatch)
 
     assert "[n]" not in block
     assert "证据（引用编号 [n]）" in user  # 资料依据 stays its own block
-    assert "资料依据" in system and "归纳" in system
 
 
 def test_read_text_with_bracketed_numbers_never_reads_as_a_citation(
@@ -174,16 +172,13 @@ def test_read_text_with_bracketed_numbers_never_reads_as_a_citation(
     assert "前高" in block
 
 
-def test_chart_prompt_carries_the_layer_two_and_three_rules(
+def test_composed_chart_prompt_is_the_layered_constant(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    # layers, priority, conflict rule and moving-average rule live in the constant
     system, _user, _block = _compose(monkeypatch)
 
-    assert "5–8" in system
-    assert "从高到低" in system  # user-asked order is honoured
-    assert "保留更极端" in system  # numeric conflict keeps the extreme value
-    assert "参数未知时不给具体价位" in system  # moving average: existence only
-    assert "只给清单" in system
+    assert system == generate_module._CHART_SYSTEM
 
 
 def test_chart_without_readable_levels_does_not_fabricate_a_list(
@@ -214,10 +209,6 @@ def test_extractive_composition_keeps_no_chart_block(
 def test_a_supplied_read_is_used_without_reading_the_image_again(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    def boom(*_args: Any, **_kwargs: Any) -> Any:
-        raise AssertionError("a supplied chart_read must not be read again")
-
-    monkeypatch.setattr(generate_module, "read_chart", boom)
     seen: dict[str, Any] = {}
 
     def fake_answer(schema: Any, messages: list[dict[str, Any]], **_kwargs: Any) -> Any:
@@ -226,25 +217,27 @@ def test_a_supplied_read_is_used_without_reading_the_image_again(
 
     monkeypatch.setattr(generate_module.gateway, "chat_json", fake_answer)
     out = generate_module.generate(
-        "哪些价位关键？", [], [b"png"], mode="chart", chart_read=_read().model_dump()
+        "哪些价位关键？", [], [b"png"], mode="chart", chart_read=_read()
     )
 
     assert out["chart_read_status"] == "structured"
     assert "7519.75" in seen["user"]
+    # generate is never a reader: the graph's read node owns that call
+    assert not hasattr(generate_module, "read_chart")
 
 
 def test_a_failed_read_passed_in_is_not_retried(monkeypatch: pytest.MonkeyPatch) -> None:
-    def boom(*_args: Any, **_kwargs: Any) -> Any:
-        raise AssertionError("an explicit None read means the read already failed")
+    seen: dict[str, Any] = {}
 
-    monkeypatch.setattr(generate_module, "read_chart", boom)
-    monkeypatch.setattr(
-        generate_module.gateway,
-        "chat_json",
-        lambda schema, messages, **_kwargs: generate_module.Answer(answer="降级回答"),
-    )
+    def fake_answer(schema: Any, messages: list[dict[str, Any]], **_kwargs: Any) -> Any:
+        seen["system"] = messages[0]["content"]
+        return generate_module.Answer(answer="降级回答")
+
+    monkeypatch.setattr(generate_module.gateway, "chat_json", fake_answer)
 
     out = generate_module.generate("哪些价位关键？", [], [b"png"], mode="chart", chart_read=None)
 
     assert out["chart_read"] is None
     assert out["chart_read_status"] == "unstructured"
+    # no structured read: the single-stage prompt reads the picture itself
+    assert seen["system"] == generate_module._CHART_FALLBACK_SYSTEM

@@ -66,6 +66,16 @@ def test_answered_price_without_expectation_is_extra():
     assert out["missed_levels"] == []
 
 
+def test_exact_hit_is_settled_before_drift_pairing():
+    # observed 185.14 exactly hits one expectation; it must not drift to 185.0
+    out = eval_chart.judge_levels([185.0, 185.14], [185.14])
+
+    assert out["matched_levels"] == [185.14]
+    assert out["missed_levels"] == [185.0]
+    assert out["extra_levels"] == []
+    assert out["drifted_levels"] == []
+
+
 def test_last_digit_offset_is_drift_exclusive_of_hit_miss_and_extra():
     out = eval_chart.judge_levels([7499.25, 7489.15], [7499.75, 7489.75])
 

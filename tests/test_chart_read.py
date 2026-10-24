@@ -13,6 +13,7 @@ from PIL import Image
 
 from apps.api import main
 from paknow import chart as chart_module
+from paknow import gateway as gateway_module
 from paknow.chart import ChartRead, read_chart
 from paknow.retrieval.pipeline import RetrievalResult
 from paknow.workflows import generate as generate_module
@@ -98,6 +99,17 @@ def test_read_prompt_carries_no_evidence_blocks() -> None:
     assert "资料依据" not in prompt
 
 
+def test_read_prompt_is_the_read_constant_with_the_live_strip_count() -> None:
+    # the non-chart rules live in the constant; the read only fills the count
+    client = FakeClient(out=_read())
+
+    read_chart([_png((800, 600))], client=client)
+
+    assert client.calls[0]["messages"][0]["content"] == chart_module._CHART_READ_SYSTEM.format(
+        strip_count=1
+    )
+
+
 def test_read_call_uses_one_attempt_under_the_120s_budget() -> None:
     client = FakeClient(out=_read())
 
@@ -109,6 +121,35 @@ def test_read_call_uses_one_attempt_under_the_120s_budget() -> None:
     assert kwargs["images"]
     # reasoning tokens share max_tokens; 4096 truncated every dense page
     assert kwargs["max_tokens"] == 8192
+
+
+def test_one_attempt_call_disables_the_sdk_retries(monkeypatch: pytest.MonkeyPatch) -> None:
+    # the SDK retries twice by default, which would turn a 120s timeout into 3x
+    built: list[dict[str, Any]] = []
+    calls: list[str] = []
+
+    class FakeClient:
+        def __init__(self, name: str) -> None:
+            self.name = name
+            self.chat = SimpleNamespace(
+                completions=SimpleNamespace(create=lambda **_: calls.append(name) or "ok")
+            )
+
+    def fake_openai(**kwargs: Any) -> FakeClient:
+        built.append(kwargs)
+        return FakeClient("retryless" if kwargs.get("max_retries") == 0 else "default")
+
+    monkeypatch.setattr(gateway_module, "OpenAI", fake_openai)
+    gw = gateway_module.ModelGateway()
+
+    assert gw._create(attempts=1, model="m") == "ok"  # what read_chart asks for
+    assert calls == ["retryless"]
+    assert built[0]["max_retries"] == 0
+    assert gw._client is None  # the retrying client was never built
+
+    assert gw._create(model="m") == "ok"  # other callers keep the SDK default
+    assert calls[-1] == "default"
+    assert "max_retries" not in built[-1]
 
 
 # --- read_chart: every reported strip lands in 1..N ----------------------- #
@@ -317,7 +358,7 @@ def test_text_query_endpoint_has_no_chart_fields(monkeypatch: pytest.MonkeyPatch
 
 
 def test_chart_module_exports_the_contract() -> None:
-    for name in ("ChartRead", "Swing", "Level", "Focus", "read_chart", "CHART_READ_SYSTEM"):
+    for name in ("ChartRead", "Swing", "Level", "Focus", "read_chart", "_CHART_READ_SYSTEM"):
         assert hasattr(chart_module, name)
 
 
@@ -359,14 +400,8 @@ def _chart_chain(monkeypatch: pytest.MonkeyPatch, *, read, failures=()) -> dict[
         trace["read_calls"] += 1
         return read
 
-    # the read now happens in the graph, before retrieval; the answer must not
-    # read the image a second time
+    # the read happens in the graph, before retrieval; generate never reads
     monkeypatch.setattr(graph_module, "read_chart", fake_read)
-    monkeypatch.setattr(
-        generate_module,
-        "read_chart",
-        lambda *_a, **_k: pytest.fail("generate must not read the image again"),
-    )
 
     def fake_answer(schema, messages, **kwargs):
         trace["answer_calls"] += 1
@@ -398,7 +433,8 @@ def test_degraded_read_records_the_reason_and_keeps_chart_mode(
     assert result["chart_read"] is None
     assert result["chart_read_status"] == "unstructured"
     assert result["answer"]["answer"]  # the answer is still produced
-    assert trace["system"] == generate_module._CHART_SYSTEM  # chart answer, not a concept essay
+    # chart answer, not a concept essay: no read -> the single-stage chart prompt
+    assert trace["system"] == generate_module._CHART_FALLBACK_SYSTEM
     read_failures = [f for f in result["failures"] if f.startswith("chart_read:")]
     assert read_failures == [f"chart_read: {reason} ({reason} detail)"]  # exactly one
     assert "retrieve: qdrant down" in result["failures"]  # other failures survive

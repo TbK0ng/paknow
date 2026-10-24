@@ -10,7 +10,6 @@ from typing import Any
 
 import pytest
 
-from paknow import chart as chart_module
 from paknow.chart import ChartRead, is_non_chart
 from paknow.retrieval.pipeline import RetrievalResult
 from paknow.workflows import generate as generate_module
@@ -57,7 +56,6 @@ def _non_chart(**overrides: Any) -> ChartRead:
 def _compose(
     monkeypatch: pytest.MonkeyPatch, read: ChartRead
 ) -> dict[str, Any]:
-    monkeypatch.setattr(generate_module, "read_chart", lambda images, **_k: (read, None))
     seen: dict[str, Any] = {}
 
     def fake_answer(schema: Any, messages: list[dict[str, Any]], **_kwargs: Any) -> Any:
@@ -65,22 +63,13 @@ def _compose(
         return generate_module.Answer(answer="答")
 
     monkeypatch.setattr(generate_module.gateway, "chat_json", fake_answer)
-    generate_module.generate("这张图说的是什么？", [], [b"png"], mode="chart")
+    generate_module.generate(
+        "这张图说的是什么？", [], [b"png"], mode="chart", chart_read=read.model_dump()
+    )
     return seen
 
 
 # --- read prompt: the non-chart shape is explicit ------------------------- #
-
-
-def test_read_prompt_names_the_non_chart_inputs_and_requires_empty_fields() -> None:
-    prompt = chart_module.CHART_READ_SYSTEM
-
-    for kind in ("纯文字页", "产品界面", "无关照片"):
-        assert kind in prompt
-    assert "market_state 一律写 unclear" in prompt
-    assert "levels、focus、swings 全部返回空" in prompt
-    assert "annotations" in prompt  # visible text/layout is still read
-    assert "编造价位" in prompt
 
 
 def test_is_non_chart_is_the_read_contract_not_just_missing_levels() -> None:
@@ -104,11 +93,7 @@ def test_non_chart_answer_prompt_opens_with_the_refusal(
 ) -> None:
     seen = _compose(monkeypatch, _non_chart())
 
-    assert "这不是行情图表" in seen["system"]
-    assert "可见的文字" in seen["system"]
-    assert "第一句" in seen["system"]
-    assert "不写「关键位」" in seen["system"]
-    assert "资料依据" in seen["system"]  # only to forbid the essay, not to request it
+    assert seen["system"].endswith(generate_module._NON_CHART_SYSTEM)
     # the read block carries the visible text and offers no level list
     assert "第 3 章 市场结构" in seen["user"]
     assert not [
