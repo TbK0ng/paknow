@@ -1,0 +1,1156 @@
+{
+  "version": 1,
+  "frozen_at": "2026-10-24",
+  "retrieval_protocol": "chart item = image bytes -> run_query(question, images=[data], expand_graph=False); judgement deterministic only, no blind judge",
+  "annotation": "shortcut: expected_levels/state are one chart_read@deepseek-flash output per page (pages 12/28/51/92/117/143/237/204/232/272 of Reading Price Charts Bar by Bar), so the golden is partially model-derived and the owner must confirm it against the pages; expected_swings is empty because no page printed a swing price (read as None, never extrapolated); unreadable lists what the read could not see. Images are gitignored under data/market/charts/.",
+  "items": [
+    {
+      "id": "chart-01",
+      "question": "这张图是什么走势形态？图上标了哪些关键价位？",
+      "image": "data/market/charts/chart-01.png",
+      "image_sha256": "8675019cbc3b49782fd38d0f5bb47d9b2e1dfce180a80325770ca8fb6997e142",
+      "expected_levels": [
+        {
+          "price": 188.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧刻度 188.00"
+        },
+        {
+          "price": 187.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧刻度 187.00"
+        },
+        {
+          "price": 186.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧刻度 186.00"
+        },
+        {
+          "price": 185.14,
+          "source": "annotation",
+          "strip": 1,
+          "basis": "右侧黑底价格标签 185.14"
+        },
+        {
+          "price": 185.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧刻度 185.00"
+        },
+        {
+          "price": 184.75,
+          "source": "annotation",
+          "strip": 1,
+          "basis": "标题栏 MAX 20 (20) 184.75"
+        },
+        {
+          "price": 184.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧刻度 184.00"
+        }
+      ],
+      "expected_swings": [],
+      "expected_state": "trading_range",
+      "unreadable": [
+        "各 swing 的具体成交价未在图上印出，按规则记 null",
+        "D 标记的确切数量无法逐根精确计数",
+        "条带 2 只有页脚文字（AI Brooks · 中文翻译重建版 / 5），没有行情图"
+      ]
+    },
+    {
+      "id": "chart-02",
+      "question": "这张图是什么走势形态？图上标了哪些关键价位？",
+      "image": "data/market/charts/chart-02.png",
+      "image_sha256": "2722e0d63ebd30e93c74d1d0b953923221c177fb2d7cb92cdbcce5c9350ea803",
+      "expected_levels": [
+        {
+          "price": 1301.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "左侧1分钟图纵轴刻度 1,301.00"
+        },
+        {
+          "price": 1300.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "左侧1分钟图纵轴刻度 1,300.00"
+        },
+        {
+          "price": 1299.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "左侧1分钟图纵轴刻度 1,299.00"
+        },
+        {
+          "price": 1298.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "左侧1分钟图纵轴刻度 1,298.00"
+        },
+        {
+          "price": 1297.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "左侧1分钟图纵轴刻度 1,297.00"
+        },
+        {
+          "price": 1296.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "左侧1分钟图纵轴刻度 1,296.00"
+        },
+        {
+          "price": 1295.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "左侧1分钟图纵轴刻度 1,295.00"
+        },
+        {
+          "price": 1294.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "左侧1分钟图纵轴刻度 1,294.00"
+        },
+        {
+          "price": 1293.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "左侧1分钟图纵轴刻度 1,293.00"
+        },
+        {
+          "price": 1292.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "左侧1分钟图纵轴刻度 1,292.00"
+        },
+        {
+          "price": 1291.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "左侧1分钟图纵轴刻度 1,291.00"
+        },
+        {
+          "price": 1309.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧5分钟图纵轴刻度 1,309.00"
+        },
+        {
+          "price": 1308.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧5分钟图纵轴刻度 1,308.00"
+        },
+        {
+          "price": 1307.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧5分钟图纵轴刻度 1,307.00"
+        },
+        {
+          "price": 1306.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧5分钟图纵轴刻度 1,306.00"
+        },
+        {
+          "price": 1305.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧5分钟图纵轴刻度 1,305.00"
+        },
+        {
+          "price": 1304.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧5分钟图纵轴刻度 1,304.00"
+        },
+        {
+          "price": 1303.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧5分钟图纵轴刻度 1,303.00"
+        },
+        {
+          "price": 1302.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧5分钟图纵轴刻度 1,302.00"
+        },
+        {
+          "price": 1301.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧5分钟图纵轴刻度 1,301.00"
+        },
+        {
+          "price": 1300.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧5分钟图纵轴刻度 1,300.00"
+        },
+        {
+          "price": 1299.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧5分钟图纵轴刻度 1,299.00"
+        },
+        {
+          "price": 1298.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧5分钟图纵轴刻度 1,298.00"
+        },
+        {
+          "price": 1297.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧5分钟图纵轴刻度 1,297.00"
+        },
+        {
+          "price": 1296.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧5分钟图纵轴刻度 1,296.00"
+        },
+        {
+          "price": 1295.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧5分钟图纵轴刻度 1,295.00"
+        },
+        {
+          "price": 1294.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧5分钟图纵轴刻度 1,294.00"
+        },
+        {
+          "price": 1293.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧5分钟图纵轴刻度 1,293.00"
+        },
+        {
+          "price": 1292.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧5分钟图纵轴刻度 1,292.00"
+        },
+        {
+          "price": 1291.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧5分钟图纵轴刻度 1,291.00"
+        },
+        {
+          "price": 1290.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧5分钟图纵轴刻度 1,290.00"
+        },
+        {
+          "price": 1423.0,
+          "source": "axis",
+          "strip": 2,
+          "basis": "5分钟图纵轴刻度 1,423.00"
+        },
+        {
+          "price": 1422.0,
+          "source": "axis",
+          "strip": 2,
+          "basis": "5分钟图纵轴刻度 1,422.00"
+        },
+        {
+          "price": 1421.0,
+          "source": "axis",
+          "strip": 2,
+          "basis": "5分钟图纵轴刻度 1,421.00"
+        },
+        {
+          "price": 1420.0,
+          "source": "axis",
+          "strip": 2,
+          "basis": "5分钟图纵轴刻度 1,420.00"
+        },
+        {
+          "price": 1419.0,
+          "source": "axis",
+          "strip": 2,
+          "basis": "5分钟图纵轴刻度 1,419.00"
+        },
+        {
+          "price": 1418.0,
+          "source": "axis",
+          "strip": 2,
+          "basis": "5分钟图纵轴刻度 1,418.00"
+        },
+        {
+          "price": 1417.0,
+          "source": "axis",
+          "strip": 2,
+          "basis": "5分钟图纵轴刻度 1,417.00"
+        },
+        {
+          "price": 1416.0,
+          "source": "axis",
+          "strip": 2,
+          "basis": "5分钟图纵轴刻度 1,416.00"
+        },
+        {
+          "price": 1415.0,
+          "source": "axis",
+          "strip": 2,
+          "basis": "5分钟图纵轴刻度 1,415.00"
+        },
+        {
+          "price": 1414.0,
+          "source": "axis",
+          "strip": 2,
+          "basis": "5分钟图纵轴刻度 1,414.00"
+        },
+        {
+          "price": 1413.0,
+          "source": "axis",
+          "strip": 2,
+          "basis": "5分钟图纵轴刻度 1,413.00"
+        },
+        {
+          "price": 1412.0,
+          "source": "axis",
+          "strip": 2,
+          "basis": "5分钟图纵轴刻度 1,412.00"
+        },
+        {
+          "price": 1411.0,
+          "source": "axis",
+          "strip": 2,
+          "basis": "5分钟图纵轴刻度 1,411.00"
+        },
+        {
+          "price": 1410.0,
+          "source": "axis",
+          "strip": 2,
+          "basis": "5分钟图纵轴刻度 1,410.00"
+        },
+        {
+          "price": 1409.0,
+          "source": "axis",
+          "strip": 2,
+          "basis": "5分钟图纵轴刻度 1,409.00"
+        },
+        {
+          "price": 1408.0,
+          "source": "axis",
+          "strip": 2,
+          "basis": "5分钟图纵轴刻度 1,408.00"
+        },
+        {
+          "price": 1407.0,
+          "source": "axis",
+          "strip": 2,
+          "basis": "5分钟图纵轴刻度 1,407.00"
+        },
+        {
+          "price": 1406.0,
+          "source": "axis",
+          "strip": 2,
+          "basis": "5分钟图纵轴刻度 1,406.00"
+        }
+      ],
+      "expected_swings": [],
+      "expected_state": "trend_down",
+      "unreadable": [
+        "图中两个面板周期不同（1 min 与 5 min），timeframe 无法用单一值表示，已并列书写",
+        "标注 1、2、3 处均未印具体价格，swing 价位无法读出",
+        "条带1左侧面板标题栏部分字符过小（如涨跌幅细节），未逐位确认",
+        "页面说明文字与图号（图1.13、图1.14）不属于图内行情数据，未计入 annotations"
+      ]
+    },
+    {
+      "id": "chart-03",
+      "question": "这张图是什么走势形态？图上标了哪些关键价位？",
+      "image": "data/market/charts/chart-03.png",
+      "image_sha256": "c37a87905d541483a567e66ab933c53fc6b903221f5ac7094cef16e786ee1fa7",
+      "expected_levels": [
+        {
+          "price": 1289.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 1,289.00"
+        },
+        {
+          "price": 1288.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 1,288.00"
+        },
+        {
+          "price": 1287.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 1,287.00"
+        },
+        {
+          "price": 1286.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 1,286.00"
+        },
+        {
+          "price": 1285.5,
+          "source": "annotation",
+          "strip": 1,
+          "basis": "右侧轴黑底白字价格框 1285.50"
+        },
+        {
+          "price": 1285.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 1,285.00"
+        },
+        {
+          "price": 1284.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 1,284.00"
+        },
+        {
+          "price": 1283.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 1,283.00"
+        },
+        {
+          "price": 1282.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 1,282.00"
+        },
+        {
+          "price": 1281.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 1,281.00"
+        },
+        {
+          "price": 1280.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 1,280.00"
+        },
+        {
+          "price": 1279.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 1,279.00"
+        },
+        {
+          "price": 1278.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 1,278.00"
+        },
+        {
+          "price": 191.0,
+          "source": "axis",
+          "strip": 2,
+          "basis": "右侧价格轴刻度 191.00"
+        },
+        {
+          "price": 190.0,
+          "source": "axis",
+          "strip": 2,
+          "basis": "右侧价格轴刻度 190.00"
+        },
+        {
+          "price": 189.0,
+          "source": "axis",
+          "strip": 2,
+          "basis": "右侧价格轴刻度 189.00"
+        },
+        {
+          "price": 188.0,
+          "source": "axis",
+          "strip": 2,
+          "basis": "右侧价格轴刻度 188.00"
+        },
+        {
+          "price": 187.0,
+          "source": "axis",
+          "strip": 2,
+          "basis": "右侧价格轴刻度 187.00"
+        },
+        {
+          "price": 186.0,
+          "source": "axis",
+          "strip": 2,
+          "basis": "右侧价格轴刻度 186.00"
+        },
+        {
+          "price": 185.0,
+          "source": "axis",
+          "strip": 2,
+          "basis": "右侧价格轴刻度 185.00"
+        },
+        {
+          "price": 184.0,
+          "source": "axis",
+          "strip": 2,
+          "basis": "右侧价格轴刻度 184.00"
+        },
+        {
+          "price": 183.0,
+          "source": "axis",
+          "strip": 2,
+          "basis": "右侧价格轴刻度 183.00"
+        }
+      ],
+      "expected_swings": [],
+      "expected_state": "trading_range",
+      "unreadable": [
+        "条带1 标注点 1、2、3、4 均未印出具体价格",
+        "条带2 标注点 1–8 均未印出具体价格",
+        "条带2 头部最新价 L=170.02 与右侧价格轴刻度 183.00–191.00 不一致",
+        "条带2 顶部水平虚线与倾斜趋势线未标注数值",
+        "均线参数仅显示 MAX 20 (20)，其余指标参数未印出",
+        "两个条带周期不同（1 min / 5 min），单张图无法给统一周期"
+      ]
+    },
+    {
+      "id": "chart-04",
+      "question": "这张图是什么走势形态？图上标了哪些关键价位？",
+      "image": "data/market/charts/chart-04.png",
+      "image_sha256": "f9445224870041d9ba6f94313483995167b387b47a5a2af102371325eb64892e",
+      "expected_levels": [
+        {
+          "price": 190.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 190.00"
+        },
+        {
+          "price": 189.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 189.00"
+        },
+        {
+          "price": 188.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 188.00"
+        },
+        {
+          "price": 187.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 187.00"
+        },
+        {
+          "price": 186.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 186.00"
+        },
+        {
+          "price": 185.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 185.00"
+        },
+        {
+          "price": 184.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 184.00"
+        },
+        {
+          "price": 183.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 183.00"
+        },
+        {
+          "price": 182.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 182.00"
+        }
+      ],
+      "expected_swings": [],
+      "expected_state": "trading_range",
+      "unreadable": [
+        "表头 L=172.35 与右侧价格轴 182.00-190.00 区间冲突，无法确定哪个是当前价，两者均只按原文记录",
+        "编号1-6各标注点未印出具体价格，swing 价格一律为 null",
+        "指标 MAX 20 (20) 的参数含义与所画均线周期图上未印明",
+        "图内未印出时间轴起止年月的完整日期，仅见 5/30、6/8 等片段"
+      ]
+    },
+    {
+      "id": "chart-05",
+      "question": "这张图是什么走势形态？图上标了哪些关键价位？",
+      "image": "data/market/charts/chart-05.png",
+      "image_sha256": "a3a64a621c34748c1612f9a5ba8a69b744fc8de00c62d958d86793ee243e4cb5",
+      "expected_levels": [
+        {
+          "price": 1392.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴最上端刻度原文 1,392.00"
+        },
+        {
+          "price": 1391.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度原文 1,391.00"
+        },
+        {
+          "price": 1390.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度原文 1,390.00"
+        },
+        {
+          "price": 1389.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度原文 1,389.00"
+        },
+        {
+          "price": 1388.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度原文 1,388.00"
+        },
+        {
+          "price": 1387.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度原文 1,387.00"
+        },
+        {
+          "price": 1386.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度原文 1,386.00"
+        },
+        {
+          "price": 1385.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度原文 1,385.00"
+        },
+        {
+          "price": 1384.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度原文 1,384.00"
+        },
+        {
+          "price": 1383.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度原文 1,383.00"
+        },
+        {
+          "price": 1382.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度原文 1,382.00"
+        },
+        {
+          "price": 1381.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度原文 1,381.00"
+        },
+        {
+          "price": 1380.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度原文 1,380.00"
+        },
+        {
+          "price": 1379.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度原文 1,379.00"
+        },
+        {
+          "price": 1378.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度原文 1,378.00"
+        },
+        {
+          "price": 1377.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度原文 1,377.00"
+        },
+        {
+          "price": 1376.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度原文 1,376.00"
+        },
+        {
+          "price": 1375.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度原文 1,375.00"
+        },
+        {
+          "price": 1374.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度原文 1,374.00"
+        },
+        {
+          "price": 1373.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度原文 1,373.00"
+        },
+        {
+          "price": 1372.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴最下端刻度原文 1,372.00"
+        }
+      ],
+      "expected_swings": [],
+      "expected_state": "trading_range",
+      "unreadable": [
+        "各标注 K 线（1–10）的具体价格均未印出，只有数字标号",
+        "标题栏 L=1400.75 与右侧轴线区间 1,372.00–1,392.00 冲突，无法判定哪一侧正确",
+        "均线参数 MAX 20 (20) 的完整含义与计算周期未在图上说明",
+        "时间轴仅部分时间标签可读（7:00–12:30、5/27、7:00），日期跨度未完整印出",
+        "图上未印出成交量、指标副图或其他参数"
+      ]
+    },
+    {
+      "id": "chart-06",
+      "question": "这张图是什么走势形态？图上标了哪些关键价位？",
+      "image": "data/market/charts/chart-06.png",
+      "image_sha256": "d4a79d61058886d06133831f278b22ea3a4b82be90b54b8f3d662e029fbbbefc",
+      "expected_levels": [
+        {
+          "price": 39.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧纵轴刻度标注 39.00"
+        },
+        {
+          "price": 38.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧纵轴刻度标注 38.00"
+        },
+        {
+          "price": 37.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧纵轴刻度标注 37.00"
+        },
+        {
+          "price": 36.14,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格标签 36.14（黑底高亮）"
+        },
+        {
+          "price": 36.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧纵轴刻度标注 36.00"
+        },
+        {
+          "price": 35.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧纵轴刻度标注 35.00"
+        }
+      ],
+      "expected_swings": [],
+      "expected_state": "trend_down",
+      "unreadable": [
+        "标注1-4引出的水平线未印出对应价格，无法读取",
+        "各高低点（前高/前低）具体价格未在图上印出",
+        "标题栏 MAX 20 (20) 35.96 的指标全称未印出",
+        "横轴只标出 12:30、5/23、7:00…5/26 等部分刻度，完整日期时间范围不完整"
+      ]
+    },
+    {
+      "id": "chart-07",
+      "question": "这张图是什么走势形态？图上标了哪些关键价位？",
+      "image": "data/market/charts/chart-07.png",
+      "image_sha256": "5e162235225df07ed5b9d2abd33bf84ecb21e886f4cacf7927cdff89c1ba3994",
+      "expected_levels": [
+        {
+          "price": 24.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "right axis label 24.00"
+        },
+        {
+          "price": 23.24,
+          "source": "axis",
+          "strip": 1,
+          "basis": "right axis highlighted last price label 23.24"
+        },
+        {
+          "price": 23.18,
+          "source": "unknown",
+          "strip": 1,
+          "basis": "MA 20 curve; header text MAX 20 (20) 23.18"
+        },
+        {
+          "price": 23.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "right axis label 23.00"
+        },
+        {
+          "price": 22.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "right axis label 22.00"
+        }
+      ],
+      "expected_swings": [],
+      "expected_state": "trend_up",
+      "unreadable": [
+        "exact swing high price (annotation 4) not printed",
+        "exact swing low price not printed",
+        "ONH/ONL/Globex levels not printed",
+        "exact prices for annotations 1-3 not printed"
+      ]
+    },
+    {
+      "id": "chart-08",
+      "question": "这张图是什么走势形态？图上标了哪些关键价位？",
+      "image": "data/market/charts/chart-08.png",
+      "image_sha256": "5c5834ae9ce3f770a96504a81b75a0c391fa7fdabb137def7ddff87cb8caacda",
+      "expected_levels": [
+        {
+          "price": 1399.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 1,399.00"
+        },
+        {
+          "price": 1398.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 1,398.00"
+        },
+        {
+          "price": 1397.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 1,397.00"
+        },
+        {
+          "price": 1396.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 1,396.00"
+        },
+        {
+          "price": 1395.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 1,395.00"
+        },
+        {
+          "price": 1394.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 1,394.00"
+        },
+        {
+          "price": 1393.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 1,393.00，邻近标注3高点"
+        },
+        {
+          "price": 1392.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 1,392.00"
+        },
+        {
+          "price": 1391.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 1,391.00"
+        },
+        {
+          "price": 1390.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 1,390.00，邻近标注2高点"
+        },
+        {
+          "price": 1389.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 1,389.00"
+        },
+        {
+          "price": 1388.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 1,388.00"
+        },
+        {
+          "price": 1387.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 1,387.00"
+        },
+        {
+          "price": 1386.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 1,386.00"
+        },
+        {
+          "price": 1385.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 1,385.00"
+        },
+        {
+          "price": 1384.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 1,384.00，邻近标注1低点"
+        },
+        {
+          "price": 1383.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 1,383.00，图内最低刻度"
+        }
+      ],
+      "expected_swings": [],
+      "expected_state": "trading_range",
+      "unreadable": [
+        "标注1、2、3 处K线的具体价格未在图上印出，swings 价格记为 null",
+        "头部数值 L=1377.50、1377.39 与图内纵轴刻度 1,383–1,399 不一致，未作为价位使用",
+        "均线指标仅显示 MAX 20 (20)，无法确认指标全名与完整参数",
+        "条带2 只有页脚文字与页码 11，无行情内容"
+      ]
+    },
+    {
+      "id": "chart-09",
+      "question": "这张图是什么走势形态？图上标了哪些关键价位？",
+      "image": "data/market/charts/chart-09.png",
+      "image_sha256": "66345387d054cd57dee17361c2140a86b2defd31144efdc457c5d25ba92d2328",
+      "expected_levels": [
+        {
+          "price": 176.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "主图右侧纵轴刻度 176.00"
+        },
+        {
+          "price": 174.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "主图右侧纵轴刻度 174.00"
+        },
+        {
+          "price": 172.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "主图右侧纵轴刻度 172.00"
+        },
+        {
+          "price": 172.83,
+          "source": "annotation",
+          "strip": 1,
+          "basis": "主图右侧最新价黑底标签 172.83，与标题 L=172.83 一致"
+        },
+        {
+          "price": 184.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "插图（5 min）纵轴刻度 184.00"
+        },
+        {
+          "price": 182.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "插图纵轴刻度 182.00"
+        },
+        {
+          "price": 180.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "插图纵轴刻度 180.00"
+        },
+        {
+          "price": 178.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "插图纵轴刻度 178.00"
+        },
+        {
+          "price": 176.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "插图纵轴刻度 176.00"
+        },
+        {
+          "price": 174.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "插图纵轴刻度 174.00"
+        },
+        {
+          "price": 172.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "插图纵轴刻度 172.00"
+        },
+        {
+          "price": 171.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "插图纵轴底部刻度 171.00"
+        }
+      ],
+      "expected_swings": [],
+      "expected_state": "trend_down",
+      "unreadable": [
+        "图中各摆动高/低点未印出具体价格，swings 价格留空",
+        "图例中 MAX 1m 5m (Close,90) 的 MAX 含义图上未说明",
+        "主图上方菜单栏与工具栏文字不可辨读",
+        "插图纵轴最高刻度以上部分未完整印出",
+        "标注 1/2/3 所处位置的成交价格图上未印出"
+      ]
+    },
+    {
+      "id": "chart-10",
+      "question": "这张图是什么走势形态？图上标了哪些关键价位？",
+      "image": "data/market/charts/chart-10.png",
+      "image_sha256": "535839f0bbdeab63b537f19eaa108193b914ad3297291dc4d9619631c10d1308",
+      "expected_levels": [
+        {
+          "price": 1396.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 1,396.00"
+        },
+        {
+          "price": 1395.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 1,395.00"
+        },
+        {
+          "price": 1394.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 1,394.00"
+        },
+        {
+          "price": 1393.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 1,393.00"
+        },
+        {
+          "price": 1392.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 1,392.00"
+        },
+        {
+          "price": 1391.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 1,391.00"
+        },
+        {
+          "price": 1390.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 1,390.00"
+        },
+        {
+          "price": 1389.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 1,389.00"
+        },
+        {
+          "price": 1388.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 1,388.00"
+        },
+        {
+          "price": 1387.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 1,387.00"
+        },
+        {
+          "price": 1386.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 1,386.00"
+        },
+        {
+          "price": 1385.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 1,385.00"
+        },
+        {
+          "price": 1384.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 1,384.00"
+        },
+        {
+          "price": 1383.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 1,383.00"
+        },
+        {
+          "price": 1382.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 1,382.00"
+        },
+        {
+          "price": 1381.0,
+          "source": "axis",
+          "strip": 1,
+          "basis": "右侧价格轴刻度 1,381.00"
+        }
+      ],
+      "expected_swings": [],
+      "expected_state": "trend_down",
+      "unreadable": [
+        "成交量指标 V () 的具体参数未印出",
+        "手绘水平线的具体价格数值未印出",
+        "标题行末尾“1374. …”被截断，后续内容不可读",
+        "各摆动高低点的具体价格数值未印出",
+        "时间轴左侧起点时刻被截断，仅可见“12:50”起的部分"
+      ]
+    }
+  ]
+}
