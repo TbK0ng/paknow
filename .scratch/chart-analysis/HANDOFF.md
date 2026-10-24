@@ -38,6 +38,24 @@ chart-10 首跑 `JSONDecodeError: Unterminated string ... char 10`——偏移�
 - `paknow/workflows/graph.py`：`_generate_node` 把 `generate_failure` 记进 `state["failures"]`（`generate: ...`），`/runs/{id}` 可见。
 - 回归测试：`tests/test_chart_answer.py` 两条（截断不冒泡、降级进 trace）。
 
+## 口径重审（进行中）
+
+上面那三个率衡量的是**“印刷数字抄全没有”**，不是“关键位找准没有”：金标准 164 条里 159 条是轴刻度，10 张图的 `expected_swings` 全为空，读图提示词还明令“不得按刻度或轴线推算”。
+
+新口径（owner 已定，尚未落到产品）：
+
+- 表头数值（`L=`、`MAX 20 (20)`）与价格轴刻度**不算**关键位；
+- 图上标注只用于**定位**，关键价按相邻两条刻度插值估算，容差**半格**（`chart-09` 轴间距 2.0 → ±1.0，其余 ±0.5，见 `proto_steps.json`）；
+- 形态必须给「名称 / 位置 / 依据 / 把握」，只写名称不输出。
+
+探针 `.scratch/chart-analysis/proto_key_levels.py`（未接产品）+ 10 张读数 `proto/`：
+
+- **读图输出上限必须 16384**：8192 下 10 张里 9 张失败（8 张空内容、2 张 JSON 截断），16384 下 10/10 成功，单张约 34s。
+- 关键位、摆动点、形态全部中文；`chart-06` 此前 `basis` 退化成英文，已由语言约束修好。
+- 已知未解：多面板/多品种被压进单值字段（`chart-02` 的形态引用不存在的条带 3–6，`chart-03` 的 `instrument="ESU08 / AAPL"`、`market_state=unclear`）；少量形态文本缺冒号。
+
+因此 `## 首次实测` 的 1.8% / 8.0% / 0 属于**旧口径**，不与新口径交叉比较。
+
 ## Verification
 
 ```bash
