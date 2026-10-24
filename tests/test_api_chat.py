@@ -2,6 +2,12 @@
 
 from __future__ import annotations
 
+import asyncio
+import io
+
+from fastapi import UploadFile
+from PIL import Image
+
 from apps.api import main
 
 
@@ -103,3 +109,32 @@ def test_graph_disabled_is_reported_as_such(monkeypatch):
     assert payload["graph_stats"] == {}
     assert payload["graph"] == []
     assert payload["rewritten"] is False
+
+
+def test_only_the_charts_shape_carries_chart_read(monkeypatch):
+    read = {
+        "market_state": "trend_up",
+        "levels": [
+            {"price": 7526.75, "source": "annotation", "strip": 1, "basis": "箭头旁 2 @ 7526.75"},
+            {"price": None, "source": "unknown", "strip": 2, "basis": "左上角数字被裁切"},
+        ],
+        "unreadable": ["周期未标注"],
+    }
+    monkeypatch.setattr(
+        main,
+        "run_query",
+        lambda q, images=None: {
+            "answer": {"answer": "答"},
+            "chart_read": read,
+            "chart_read_status": "structured",
+        },
+    )
+    buf = io.BytesIO()
+    Image.new("RGB", (800, 600)).save(buf, "PNG")
+    upload = UploadFile(file=io.BytesIO(buf.getvalue()), filename="chart.png")
+
+    chart_payload = asyncio.run(main.charts("哪些价位关键？", upload))
+    text_payload = main.query(main.QueryRequest(query="双底是什么？"))
+
+    assert chart_payload["chart_read"] == read
+    assert "chart_read" not in text_payload
