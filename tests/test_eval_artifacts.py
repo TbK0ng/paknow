@@ -20,6 +20,10 @@ ROOT = Path(__file__).resolve().parents[1]
 GOLD = ROOT / "evals" / "gold"
 RUNS = ROOT / ".scratch" / "retrieval-eval-parity"
 CHAPTER = ROOT / "book" / "chapter14-evaluation.md"
+CHART_CHAPTER = ROOT / "book" / "chapter13-chart.md"
+#: the only chart run the book may quote; a run against another dataset revision
+#: is incomparable, which is what the ``dataset_sha256`` gate below enforces
+CHART_RUN = ROOT / ".scratch" / "chart-analysis" / "eval" / "20261024T125057Z" / "summary.json"
 
 DATASETS = ("graph_expansion.json", "graph_expansion_v2.json", "chart_v1.json")
 ABLATIONS = (
@@ -121,6 +125,45 @@ def test_chapter14_quotes_the_committed_records():
             assert f"{judged[arm]['scores'][metric]['mean']:.3f}" in text
     for arm in ("text", "graph"):
         assert str(judged[arm]["unsupported_claims"]["total"]) in text
+
+
+def test_chart_run_uses_the_frozen_dataset():
+    # a run against another revision is incomparable — that is why the book may
+    # not quote `.scratch/chart-analysis/eval/dev` (hash `18d205d3…`)
+    assert load(CHART_RUN)["dataset_sha256"] == sidecar("chart_v1.json")
+
+
+def test_docs_quote_the_chart_run():
+    summary = load(CHART_RUN)["summary"]
+    rates = [
+        f"{summary['miss_rate'] * 100:.1f}%",
+        f"{summary['extra_rate'] * 100:.1f}%",
+    ]
+    total = str(summary["expected_levels_total"])
+    # chapter 13 quotes the bucket row; chapter 14 quotes the ratios; chapter 12
+    # only carries the rates; the overview pages add the denominator
+    per_chapter = {
+        CHART_CHAPTER: [
+            total,
+            *rates,
+            f"{summary['matched_total']} / {summary['missed_total']} / "
+            f"{summary['extra_total']} / {summary['drifted_total']}",
+        ],
+        CHAPTER: [
+            total,
+            *rates,
+            f"{summary['missed_total']}/{summary['expected_levels_total']}",
+            f"{summary['extra_total']}/{summary['answered_levels_total']}",
+        ],
+        ROOT / "README.md": [total, *rates],
+        ROOT / "book" / "chapter11-ai-review.md": [total, *rates],
+        ROOT / "book" / "chapter12-allinrag-comparison.md": rates,
+    }
+
+    for chapter, fragments in per_chapter.items():
+        text = re.sub(r"\s+", " ", chapter.read_text(encoding="utf-8"))
+        for fragment in fragments:
+            assert fragment in text, (chapter.name, fragment)
 
 
 def _mtime(path: Path) -> float:
