@@ -72,6 +72,11 @@ _NON_CHART_SYSTEM = """
 """
 
 
+#: Shown when the answer call itself fails to parse: a truncated JSON must leave
+#: a run the user can see and retry, not an exception out of ``run_query``.
+_DEGRADED_ANSWER = "本次生成失败：模型输出被截断或结构非法，没有可展示的答案。请重试本问题。"
+
+
 class Answer(BaseModel):
     answer: str
     cited_indices: list[int] = Field(default_factory=list)
@@ -260,7 +265,9 @@ def generate(
     images: list[bytes] | None = None,
     *,
     mode: str = "extractive",
-    max_tokens: int = 8192,
+    # reasoning tokens share max_tokens with the content: the chart read needed
+    # 8192 for the same reason, and an answer re-sends the strips on top of it
+    max_tokens: int = 16384,
     graph_evidence: list[dict[str, Any]] | None = None,
     citation_index: Mapping[str, int] | None = None,
     toc_context: list[dict[str, Any]] | None = None,
@@ -345,7 +352,20 @@ def generate(
         {"role": "system", "content": system},
         {"role": "user", "content": user},
     ]
-    ans = gateway.chat_json(Answer, messages, images=images, max_tokens=max_tokens)
+    try:
+        ans = gateway.chat_json(Answer, messages, images=images, max_tokens=max_tokens)
+    except Exception as exc:  # noqa: BLE001 - one bad answer never aborts the run
+        # a truncated JSON (`{"answer":"` and no closing) used to escape
+        # run_query and surface as an HTTP 500 with nothing to show
+        return {
+            "answer": _DEGRADED_ANSWER,
+            "evidence_ids": [],
+            "figure_ids": [],
+            "uncertainty": [],
+            "chart_read": chart_read,
+            "chart_read_status": "structured" if chart_read else "unstructured",
+            "generate_failure": f"{type(exc).__name__}: {exc}"[:300],
+        }
     by_number = {
         index.get(str(unit.get("evidence_id")), position): unit
         for position, unit in enumerate(evidence)

@@ -1,6 +1,7 @@
 """Chart questions answer from the image; text questions keep the evidence prompt."""
 from __future__ import annotations
 
+import json
 from typing import Any
 
 import pytest
@@ -67,6 +68,34 @@ def test_router_fallback_keeps_the_picture_in_play(monkeypatch: pytest.MonkeyPat
     assert with_image.intent == "chart_analysis"
     assert "visual_page" in with_image.routes
     assert text_only.intent == "knowledge_qa"
+
+
+def test_truncated_answer_json_degrades_instead_of_raising(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # chart-10 came back as `{"answer":"` and escaped run_query as a 500
+    def boom(*_args: Any, **_kwargs: Any) -> None:
+        raise json.JSONDecodeError("Unterminated string", '{"answer":"', 10)
+
+    monkeypatch.setattr(generate_module.gateway, "chat_json", boom)
+
+    out = generate_module.generate("这张图怎么看？", [], mode="chart")
+
+    assert out["answer"] == generate_module._DEGRADED_ANSWER
+    assert out["evidence_ids"] == []
+    assert out["generate_failure"].startswith("JSONDecodeError")
+
+
+def test_degraded_answer_lands_in_the_trace(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        graph_module,
+        "generate",
+        lambda *_a, **_k: {"answer": "x", "evidence_ids": [], "generate_failure": "boom"},
+    )
+
+    state = graph_module._generate_node(_state("chart_analysis"))
+
+    assert state["failures"] == ["generate: boom"]
 
 
 # --- layered answer: full level list, converged suggestions, cited evidence -- #

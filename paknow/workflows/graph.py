@@ -221,6 +221,10 @@ def _generate_node(state: QState) -> QState:
         ],
         chart_read=state.get("chart_read"),
     )
+    # a degraded answer still ends the run; the reason belongs in the trace
+    failure = (state["answer"] or {}).pop("generate_failure", None)
+    if failure:
+        state.setdefault("failures", []).append(f"generate: {failure}")
     return state
 
 
