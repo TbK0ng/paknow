@@ -12,9 +12,10 @@ from typing import Any, TypedDict
 
 from langgraph.graph import END, START, StateGraph
 
+from paknow.chart import is_non_chart
 from paknow.memory.sop import select_sop
 from paknow.memory.trace import save_trace
-from paknow.retrieval.pipeline import citable_units, retrieve_evidence
+from paknow.retrieval.pipeline import citable_units, citation_binding, retrieve_evidence
 from paknow.workflows.evidence import check_sufficiency
 from paknow.workflows.generate import generate
 from paknow.workflows.router import QueryPlan, retrieval_queries, route
@@ -113,6 +114,12 @@ def _retrieve_node(state: QState) -> QState:
         ),
     )
     state["acc"] = result.acc
+    # a non-chart picture must not pull a textbook essay: one unit frames the
+    # visible text. The read comes from the read node; without one (text
+    # question, failed read) retrieval is untouched.
+    if state.get("intent") == "chart_analysis" and is_non_chart(state.get("chart_read")):
+        result.citable_units = result.citable_units[:1]
+        result.citation_index = citation_binding(result.citable_units)
     state["hits"] = result.text_hits
     state["figures"] = result.figures
     state["context_units"] = result.context_units
