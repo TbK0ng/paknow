@@ -1,3 +1,5 @@
+evals/gold/graph_expansion.json -text
+evals/gold/graph_expansion.sha256 -text
 evals/gold/graph_expansion_v2.json -text
 evals/gold/chart_v1.json -text
 evals/gold/chart_v1.sha256 -text
