@@ -12,7 +12,7 @@ from typing import Any, TypedDict
 
 from langgraph.graph import END, START, StateGraph
 
-from paknow.chart import is_non_chart
+from paknow.chart import chart_queries, is_non_chart, read_chart
 from paknow.memory.sop import select_sop
 from paknow.memory.trace import save_trace
 from paknow.retrieval.pipeline import citable_units, citation_binding, retrieve_evidence
@@ -63,6 +63,8 @@ class QState(TypedDict, total=False):
     barrefs: list[dict[str, Any]]
     acc: dict[str, dict[str, Any]]
     wants_examples: bool
+    # structured chart read (chart intent only); None when absent or failed
+    chart_read: dict[str, Any] | None
 
 
 def _route_node(state: QState) -> QState:
@@ -84,14 +86,40 @@ def _route_node(state: QState) -> QState:
     return state
 
 
+def _read_node(state: QState) -> QState:
+    """One structured read, before retrieval: the sub-queries need it.
+
+    Only a chart question with an upload has something to read; every other
+    state passes through without a model call. A failed read is classified,
+    never raised, so retrieval falls back to the text path.
+    """
+    state["chart_read"] = None
+    if state.get("intent") != "chart_analysis" or not state.get("images"):
+        return state
+    read, failure = read_chart(state["images"])
+    if read is None:
+        reason = (failure or {}).get("reason") or "no_content"
+        state.setdefault("failures", []).append(f"chart_read: {reason}")
+        return state
+    state["chart_read"] = read.model_dump()
+    return state
+
+
 def _retrieve_node(state: QState) -> QState:
     # targeted gap query first (drives this round), then SOP extras, then plan set
+    plan_queries = retrieval_queries(state["plan"], state["query"])
+    if state.get("intent") == "chart_analysis":
+        read_queries = chart_queries(state.get("chart_read"))
+        if read_queries:
+            # the read names the structure the picture shows, so its wording
+            # takes the plan slots right after the question and shares the cap
+            plan_queries = (plan_queries[:1] + read_queries + plan_queries[1:])[:6]
     queries: list[str] = []
     seen_q: set[str] = set()
     for q in [
         state.get("next_query"),
         *state.get("sop_extra_queries", []),
-        *retrieval_queries(state["plan"], state["query"]),
+        *plan_queries,
     ]:
         q = (q or "").strip()
         if q and q not in seen_q:
@@ -187,6 +215,7 @@ def _generate_node(state: QState) -> QState:
             {"figure_id": f.get("figure_id"), "figure_label": f.get("figure_label")}
             for f in state.get("figures", [])
         ],
+        chart_read=state.get("chart_read"),
     )
     # a degraded read is a visible failure of this run, not a silent fallback
     failure = state["answer"].pop("chart_read_failure", None)
@@ -231,12 +260,15 @@ def _maybe_auto_optimize() -> None:
 def build_graph():
     g = StateGraph(QState)
     g.add_node("route", _route_node)
+    g.add_node("read", _read_node)
     g.add_node("retrieve", _retrieve_node)
     g.add_node("check", _check_node)
     g.add_node("generate", _generate_node)
     g.add_node("record", _record_node)
     g.add_edge(START, "route")
-    g.add_edge("route", "retrieve")
+    # exactly one read per run: gap rounds loop retrieve->check, never through read
+    g.add_edge("route", "read")
+    g.add_edge("read", "retrieve")
     g.add_edge("retrieve", "check")
     g.add_conditional_edges("check", _after_check, {"generate": "generate", "retrieve": "retrieve"})
     g.add_edge("generate", "record")

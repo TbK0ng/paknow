@@ -129,7 +129,9 @@ def read_chart(
             ChartRead,
             messages,
             images=list(images),
-            max_tokens=4096,
+            # reasoning tokens count against max_tokens: a dense page burns
+            # ~5k before the JSON, so 4096 always truncated to invalid JSON
+            max_tokens=8192,
             timeout=READ_TIMEOUT_S,
             attempts=1,
         )
@@ -141,3 +143,52 @@ def read_chart(
             detail = f"invalid JSON: {detail}"
         return None, {"reason": _failure_reason(exc), "detail": detail[:300]}
     return _clamp_strips(out, strip_count), None
+
+
+#: How a read market state is phrased for retrieval (book-side wording, not
+#: the enum label).
+_MARKET_STATE_QUERY = {
+    "trend_up": "上升趋势 回调 买入",
+    "trend_down": "下降趋势 反弹 卖出",
+    "trading_range": "交易区间 区间边缘 突破",
+    "unclear": "走势结构",
+}
+
+
+def chart_queries(read: dict[str, Any] | None) -> list[str]:
+    """Sub-queries implied by a structured read; empty when there is no read.
+
+    An empty ``levels`` list means the picture was not a chart, so the text
+    path stays exactly as it is. The callers merge these under their existing
+    query cap.
+    """
+    if not read or not read.get("levels"):
+        return []
+    out: list[str] = []
+    structure = " ".join(
+        p
+        for p in (
+            _MARKET_STATE_QUERY.get(read.get("market_state") or "", ""),
+            " ".join(read.get("patterns") or []),
+        )
+        if p
+    )
+    if structure:
+        out.append(f"{structure} 如何处理")
+    prices = " ".join(
+        f"{float(f['price']):g}"
+        for f in read.get("focus") or []
+        if isinstance(f.get("price"), (int, float))
+    )
+    if prices:
+        out.append(f"{prices} 关键位 支撑 阻力")
+    # annotations are verbatim chart text: keep short terms (labels, prices),
+    # drop single-char tool labels and whole title/axis blocks
+    annotations = " ".join(
+        a.strip()
+        for a in read.get("annotations") or []
+        if 1 < len(a.strip()) <= 60
+    )[:160]
+    if annotations:
+        out.append(f"{annotations} 图上标注 含义")
+    return out[:3]

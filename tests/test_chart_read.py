@@ -107,6 +107,8 @@ def test_read_call_uses_one_attempt_under_the_120s_budget() -> None:
     assert kwargs["timeout"] == 120
     assert kwargs["attempts"] == 1
     assert kwargs["images"]
+    # reasoning tokens share max_tokens; 4096 truncated every dense page
+    assert kwargs["max_tokens"] == 8192
 
 
 # --- read_chart: every reported strip lands in 1..N ----------------------- #
@@ -179,18 +181,11 @@ def test_read_without_images_is_no_content() -> None:
     assert failure is not None and failure["reason"] == "no_content"
 
 
-# --- generate: one read, surfaced in the returned answer dict ------------- #
+# --- generate: renders the read the graph already made --------------------- #
 
 
-def test_chart_generate_returns_the_structured_read(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_chart_generate_renders_the_structured_read(monkeypatch: pytest.MonkeyPatch) -> None:
     read = _read()
-    calls: list[list[bytes]] = []
-
-    def fake_read(images, **_kwargs):
-        calls.append(images)
-        return read, None
-
-    monkeypatch.setattr(generate_module, "read_chart", fake_read)
     seen: dict[str, Any] = {}
 
     def fake_answer(schema, messages, **kwargs):
@@ -199,51 +194,45 @@ def test_chart_generate_returns_the_structured_read(monkeypatch: pytest.MonkeyPa
 
     monkeypatch.setattr(generate_module.gateway, "chat_json", fake_answer)
 
-    out = generate_module.generate("哪些价位关键？", [], [_png((800, 600))], mode="chart")
+    out = generate_module.generate(
+        "哪些价位关键？", [], [_png((800, 600))], mode="chart", chart_read=read.model_dump()
+    )
 
     assert out["chart_read"] == read.model_dump()
     assert out["chart_read_status"] == "structured"
-    assert len(calls) == 1
     assert "7519.75" in seen["user"]  # the answer is written from the read
 
 
-def test_chart_generate_degrades_when_the_read_fails(monkeypatch: pytest.MonkeyPatch) -> None:
-    calls: list[list[bytes]] = []
-
-    def fake_read(images, **_kwargs):
-        calls.append(images)
-        return None, {"reason": "timeout", "detail": "timed out"}
-
-    monkeypatch.setattr(generate_module, "read_chart", fake_read)
+def test_chart_generate_degrades_when_there_is_no_read(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         generate_module.gateway,
         "chat_json",
         lambda schema, messages, **kwargs: generate_module.Answer(answer="降级回答"),
     )
 
-    out = generate_module.generate("哪些价位关键？", [], [_png((800, 600))], mode="chart")
+    out = generate_module.generate(
+        "哪些价位关键？", [], [_png((800, 600))], mode="chart", chart_read=None
+    )
 
     assert out["chart_read"] is None
     assert out["chart_read_status"] == "unstructured"
     assert out["answer"] == "降级回答"
-    assert len(calls) == 1
 
 
-def test_text_generate_never_reads_a_chart(monkeypatch: pytest.MonkeyPatch) -> None:
-    def boom(*_args, **_kwargs):
-        raise AssertionError("a text question must not trigger a chart read")
+def test_text_generate_renders_no_chart_read(monkeypatch: pytest.MonkeyPatch) -> None:
+    seen: dict[str, Any] = {}
 
-    monkeypatch.setattr(generate_module, "read_chart", boom)
-    monkeypatch.setattr(
-        generate_module.gateway,
-        "chat_json",
-        lambda schema, messages, **kwargs: generate_module.Answer(answer="答"),
-    )
+    def fake_answer(schema, messages, **kwargs):
+        seen["user"] = messages[-1]["content"]
+        return generate_module.Answer(answer="答")
+
+    monkeypatch.setattr(generate_module.gateway, "chat_json", fake_answer)
 
     out = generate_module.generate("双底是什么？", [], mode="extractive")
 
     assert out["chart_read"] is None
     assert out["chart_read_status"] == "unstructured"
+    assert "图上读数" not in seen["user"]
 
 
 # --- run_query: the read lands in the run output --------------------------- #
@@ -370,7 +359,14 @@ def _chart_chain(monkeypatch: pytest.MonkeyPatch, *, read, failures=()) -> dict[
         trace["read_calls"] += 1
         return read
 
-    monkeypatch.setattr(generate_module, "read_chart", fake_read)
+    # the read now happens in the graph, before retrieval; the answer must not
+    # read the image a second time
+    monkeypatch.setattr(graph_module, "read_chart", fake_read)
+    monkeypatch.setattr(
+        generate_module,
+        "read_chart",
+        lambda *_a, **_k: pytest.fail("generate must not read the image again"),
+    )
 
     def fake_answer(schema, messages, **kwargs):
         trace["answer_calls"] += 1
