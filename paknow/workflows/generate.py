@@ -6,7 +6,6 @@ from typing import Any, Mapping
 
 from pydantic import BaseModel, Field
 
-from paknow.chart import read_chart
 from paknow.gateway import gateway
 from paknow.retrieval.pipeline import citation_binding
 
@@ -170,6 +169,7 @@ def generate(
     barrefs: list[dict[str, Any]] | None = None,
     wants_examples: bool = False,
     figure_catalog: list[dict[str, Any]] | None = None,
+    chart_read: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     # derived visual observations are understanding aids, NOT citable evidence:
     # they go into an unnumbered block so citation indices stay consistent
@@ -178,17 +178,13 @@ def generate(
     index = dict(citation_index) if citation_index is not None else citation_binding(evidence)
     context = build_context(evidence, index)
     parts = [f"问题：{query}"]
-    # chart questions read the picture once, first; the read is uncitable and
-    # carries no [n], so the answer's citations still point at evidence only
-    chart_read: dict[str, Any] | None = None
-    if mode == "chart" and images:
-        read, _failure = read_chart(images)
-        if read is not None:
-            chart_read = read.model_dump()
-            parts.append(
-                "图上读数（结构化，来自图片本身，不是可引用证据）：\n"
-                + json.dumps(chart_read, ensure_ascii=False)
-            )
+    # chart questions are answered from the read the graph made before
+    # retrieval; it is uncitable and carries no [n]
+    if chart_read:
+        parts.append(
+            "图上读数（结构化，来自图片本身，不是可引用证据）：\n"
+            + json.dumps(chart_read, ensure_ascii=False)
+        )
     if toc_context:
         parts.append(
             "目录框架（相关章节，用于定位知识范围，不直接引用编号）：\n"
