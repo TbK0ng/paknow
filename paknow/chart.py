@@ -8,7 +8,7 @@ the run.
 from __future__ import annotations
 
 import json
-from typing import Any, Literal
+from typing import Any, Literal, Mapping
 
 from pydantic import BaseModel, ValidationError
 
@@ -60,9 +60,24 @@ CHART_READ_SYSTEM = """你是行情截图的读数器，只做一件事：把图
 - levels 列出全部可读位，不裁剪；每条带 source（annotation/swing/axis/unknown）与图上依据 basis。
 - focus 只给 5-8 个，按固定优先级：图上标注 > 前高/前低 > ONH/ONL > 区间边缘/平台 > 均线。两个数值冲突时保留更极端的那个，另一条写进 unreadable。
 - annotations 逐条抄图上文字原文（如 "2 @ 7519.75"），不改写、不合并。
-- 非行情截图：market_state 写 unclear，levels 留空，只记录可见文字与版式。
+- 非行情截图（纯文字页、产品界面、无关照片等）：market_state 一律写 unclear，levels、focus、swings 全部返回空数组；annotations 逐条抄图上看得清的文字与版式（标题、按钮、正文片段），不得编造价位，也不得推断图上没有的结论。
 - 你只看到图，没有任何资料证据；不要输出 [n] 引用标记，也不要解释概念。
 """
+
+
+def is_non_chart(read: Mapping[str, Any] | None) -> bool:
+    """The read's contract for a picture that is not a market chart.
+
+    A chart that is merely hard to read keeps some structure (swings or focus);
+    only the all-empty, ``unclear`` read is a non-chart.
+    """
+    return bool(
+        read
+        and read.get("market_state") == "unclear"
+        and not read.get("levels")
+        and not read.get("focus")
+        and not read.get("swings")
+    )
 
 
 def _failure_reason(exc: Exception) -> str:
