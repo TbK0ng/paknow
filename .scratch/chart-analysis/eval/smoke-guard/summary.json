@@ -1,0 +1,46 @@
+{
+  "dataset": "evals\\gold\\chart_v1.json",
+  "dataset_sha256": "d23799a4e118eb4163605266249e0201df111e3ce9a026890ef5bc8791299b1a",
+  "timestamp": "smoke-guard",
+  "limit": 1,
+  "arms": {
+    "chart": {
+      "expand_graph": false
+    }
+  },
+  "summary": {
+    "items": 1,
+    "ok": 1,
+    "skipped": 0,
+    "errors": 0,
+    "skip_reasons": {},
+    "items_with_miss": 0,
+    "items_with_extra": 1,
+    "items_with_drift": 0,
+    "expected_levels_total": 7,
+    "answered_levels_total": 8,
+    "matched_total": 7,
+    "missed_total": 0,
+    "extra_total": 1,
+    "drifted_total": 0,
+    "miss_rate": 0.0,
+    "extra_rate": 0.125,
+    "drift_rate": 0.0,
+    "elapsed_s": 62.4
+  },
+  "details": [
+    {
+      "id": "chart-01",
+      "status": "ok",
+      "reason": null,
+      "missed_levels": [],
+      "extra_levels": [
+        186.45
+      ],
+      "drifted_levels": []
+    }
+  ],
+  "errors": [],
+  "wall_time_s": 62.4,
+  "ran": 1
+}

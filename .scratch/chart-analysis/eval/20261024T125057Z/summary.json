@@ -1,0 +1,141 @@
+{
+  "dataset": "evals\\gold\\chart_v1.json",
+  "dataset_sha256": "d23799a4e118eb4163605266249e0201df111e3ce9a026890ef5bc8791299b1a",
+  "timestamp": "20261024T125057Z",
+  "limit": 0,
+  "arms": {
+    "chart": {
+      "expand_graph": false
+    }
+  },
+  "summary": {
+    "items": 10,
+    "ok": 10,
+    "skipped": 0,
+    "errors": 0,
+    "skip_reasons": {},
+    "items_with_miss": 2,
+    "items_with_extra": 6,
+    "items_with_drift": 0,
+    "expected_levels_total": 164,
+    "answered_levels_total": 175,
+    "matched_total": 161,
+    "missed_total": 3,
+    "extra_total": 14,
+    "drifted_total": 0,
+    "miss_rate": 0.0183,
+    "extra_rate": 0.08,
+    "drift_rate": 0.0,
+    "elapsed_s": 688.6
+  },
+  "details": [
+    {
+      "id": "chart-01",
+      "status": "ok",
+      "reason": null,
+      "missed_levels": [],
+      "extra_levels": [
+        186.45
+      ],
+      "drifted_levels": []
+    },
+    {
+      "id": "chart-02",
+      "status": "ok",
+      "reason": null,
+      "missed_levels": [],
+      "extra_levels": [
+        1284.5,
+        1285.01,
+        1288.38,
+        1356.25,
+        1358.81
+      ],
+      "drifted_levels": []
+    },
+    {
+      "id": "chart-03",
+      "status": "ok",
+      "reason": null,
+      "missed_levels": [],
+      "extra_levels": [
+        169.16,
+        170.02,
+        1285.28
+      ],
+      "drifted_levels": []
+    },
+    {
+      "id": "chart-04",
+      "status": "ok",
+      "reason": null,
+      "missed_levels": [],
+      "extra_levels": [],
+      "drifted_levels": []
+    },
+    {
+      "id": "chart-05",
+      "status": "ok",
+      "reason": null,
+      "missed_levels": [],
+      "extra_levels": [],
+      "drifted_levels": []
+    },
+    {
+      "id": "chart-06",
+      "status": "ok",
+      "reason": null,
+      "missed_levels": [
+        36.14
+      ],
+      "extra_levels": [],
+      "drifted_levels": []
+    },
+    {
+      "id": "chart-07",
+      "status": "ok",
+      "reason": null,
+      "missed_levels": [],
+      "extra_levels": [],
+      "drifted_levels": []
+    },
+    {
+      "id": "chart-08",
+      "status": "ok",
+      "reason": null,
+      "missed_levels": [],
+      "extra_levels": [
+        1377.39,
+        1377.5
+      ],
+      "drifted_levels": []
+    },
+    {
+      "id": "chart-09",
+      "status": "ok",
+      "reason": null,
+      "missed_levels": [
+        184.0,
+        171.0
+      ],
+      "extra_levels": [
+        172.94
+      ],
+      "drifted_levels": []
+    },
+    {
+      "id": "chart-10",
+      "status": "ok",
+      "reason": null,
+      "missed_levels": [],
+      "extra_levels": [
+        1374.0,
+        1388.0
+      ],
+      "drifted_levels": []
+    }
+  ],
+  "errors": [],
+  "wall_time_s": 799.3,
+  "ran": 1
+}

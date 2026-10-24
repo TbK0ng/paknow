@@ -4,9 +4,9 @@ Spec 与票 01–05 已实现、评审、合并。不要重开；本文件记录
 
 ## State
 
-- 分支：`feat/retrieval-eval-parity`，tip `8944bfb`（基于 `ce1befd`，即 PR #1 `/paknow/pull/1` 的 tip）。
+- 分支：已合并进 `main`（`8944bfb` 是 `main` 的祖先）；`feat/*` 分支已删除。
 - 票：`issues/01`…`05` 全部 resolved；spec `spec.md` 为 resolved。
-- 测试：`E:/PAknow/.venv/Scripts/python.exe -m pytest tests -q` → **162 passed**。
+- 测试：`E:/PAknow/.venv/Scripts/python.exe -m pytest tests -q` → **323 passed**。
 - Review：两轴结论与修复见 `.scratch/retrieval-eval-parity/spec.md` 的 Comments；修复提交 `68d0bcc`，合并 `8944bfb`。
 - 工作树 `E:/PAknow-wt/*` 与 `ticket/*` 分支已在收尾时删除。
 
@@ -79,5 +79,5 @@ PYTHONPATH=. python scripts/eval_judge.py --resume --out .scratch/retrieval-eval
 - **生产召回宽度**仍是 14；若要改成 20，必须单独开变更并评估提示词增长（本 spec 明确排除）。
 - 判定分数在 temperature 0 下重跑仍会漂移，只作诊断，不能当门禁；若要做门禁，先解决判定稳定性。
 - 回答的「引用越界 / 引用图谱 id」两项硬约束在当前 `generate()` 实现下结构上难以触发；保留为不变量护栏。
-- PR #1（`feat/graph-expansion`）尚未合并；本分支叠在它上面，合并顺序必须先 #1。
+- PR #1（`feat/graph-expansion`）与本分支都已合并进 `main`；合并顺序的约束已解除。
 - tracker 没有 `blocked` 状态：阻塞票只能用 `needs-triage` 暂存，前置完成后手动翻 `ready-for-agent`（`check_scratch.py` 的约束）。

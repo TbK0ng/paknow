@@ -4,9 +4,9 @@ The graph-expansion spec and tickets 01–05 are implemented, merged, reviewed, 
 
 ## State
 
-- Branch: `feat/graph-expansion` (integration), tip after this docs commit.
+- Branch: merged into `main` (`0fb9f53` is an ancestor of `main`); `feat/*` branches and worktrees deleted.
 - Resolved: `issues/01-retrieval-seam-and-gold-baseline.md` … `issues/05-gold-regression.md`; spec `spec.md`.
-- Tests: `E:/PAknow/.venv/Scripts/python.exe -m pytest tests -q` → **71 passed**.
+- Tests: `E:/PAknow/.venv/Scripts/python.exe -m pytest tests -q` → **323 passed**.
 - Review: `.scratch/graph-expansion/code-review.md`; all findings fixed in `e07e808`, merged `0fb9f53`.
 - ADRs: `docs/adr/0002-derived-observations-are-not-citable-evidence.md`, `docs/adr/0003-graph-is-an-expansion-layer-not-a-scored-route.md`. Vocabulary: `GLOSSARY.md`.
 - Worktrees `E:/PAknow-wt/{t04,t05,t-review}` and their `ticket/*` branches were removed after merge.
