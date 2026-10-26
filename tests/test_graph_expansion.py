@@ -73,7 +73,7 @@ def _patched(
 
     monkeypatch.setattr(pipeline, "hybrid_search", fake_search)
     monkeypatch.setattr(pipeline, "point_to_doc", lambda p: p.payload)
-    monkeypatch.setattr(pipeline, "rerank", lambda q, docs, top_k=None: docs)
+    monkeypatch.setattr(pipeline, "rerank_best", lambda docs, queries, *, fallback_query, top_k=None: docs)
     monkeypatch.setattr(
         pipeline,
         "expand_evidence",

@@ -22,7 +22,7 @@ description: "一份自评：值得肯定的部分、必须承认的短板、10 
 | 优点 | 证据 |
 |---|---|
 | **引用可追溯** | 每个 `[n]` 绑定 `evidence_id`，最终渲染到书/章/图/页；越界索引被丢弃 |
-| **数据审计扎实** | 实测计数暴露了多项"看起来有、实际没有"：父块悬空 1,670/1,670（旧文档里的 743 已过时）、图注几何候选 2,244 而标签链接只 80 条、`page_visual` 集合为空；邻接 `adjacent_ids` 覆盖率 91,235/91,235 |
+| **数据审计扎实** | 实测计数暴露了多项"看起来有、实际没有"：父块悬空 1,670/1,670（2026-10-25 已回填，见第 1 章 §4.2）、图注几何候选 2,244 而标签链接只 80 条、`page_visual` 集合为空；邻接 `adjacent_ids` 覆盖率 91,235/91,235 |
 | **派生材料边界清晰** | 927 条 `derived_observation`（全量 91,235 中的 1.0%）+ 生成端独立"图读辅助"块，引用体系不被污染 |
 | **条件化知识（半接线）** | 1,888 条主张全部带 `context`/`modality` 限定；但扩展与渲染读的是 `conditions`/`exceptions`（库里 0 条），所以条件目前是**透传**而不是**筛选**。排序可复现（seed 序 → `extraction_confidence` 降序 → `claim_id`，`paknow/graph/expansion.py:238-243`）。见第 2 章 §4.2 |
 | **记忆有生命周期** | `candidate → replay_validated → shadow → active → superseded/retired` 状态机有合法转移表（`paknow/memory/sop.py:3-25`），git 每次变更可 diff；当前 2 个 SOP 一个 `candidate` 一个 `shadow`，`active` 需要离线回放才升得上去 |

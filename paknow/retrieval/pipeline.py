@@ -35,9 +35,15 @@ from paknow.retrieval.search import (
     expand_evidence,
     hybrid_search,
     point_to_doc,
-    rerank,
+    rerank_best,
 )
 from paknow.retrieval.toc import toc_recall
+
+#: Candidates that reach the cross-encoder. The pool was 20 while recall returns
+#: up to 40 per query over 6 queries, so everything past RRF rank 20 was never
+#: rescored. 24 of the 123 gold evidence points sit at RRF rank 41+ in the
+#: accumulated pool, so the pool is one query's width times two.
+_RERANK_POOL = 80
 
 
 @dataclass
@@ -63,12 +69,20 @@ def citable_units(
     text_hits: Sequence[Mapping[str, Any]],
     context_units: Sequence[Mapping[str, Any]],
 ) -> list[dict[str, Any]]:
-    """Text hits then new context units: exactly what generation renders."""
+    """Text hits, then new adjacent context units: what generation may cite.
+
+    Chunk parents are deliberately excluded: a parent contains the hit's own
+    text, so numbering both restates one paragraph twice (39 of 114 answer runs
+    cited a parent and its child) while the parent adds no independent support.
+    ``generate`` still shows them, in an unnumbered reading-context block.
+    """
     units: list[dict[str, Any]] = [
         dict(hit) for hit in text_hits if hit.get("evidence_id")
     ]
     have = {str(unit["evidence_id"]) for unit in units}
     for unit in context_units:
+        if unit.get("is_parent"):
+            continue
         evidence_id = unit.get("evidence_id")
         if evidence_id and str(evidence_id) not in have:
             units.append(dict(unit))
@@ -120,11 +134,18 @@ def retrieve_evidence(
     per-document cap stays at 5). It defaults to the production width 14, so
     callers that do not set it keep the online behaviour; the ablation varies it
     to measure the width's effect on the same frozen questions.
+
+    Text hits are reranked against the queries that retrieved them: a unit found
+    by a step-back or sub-query is scored with that query, and keeps its best
+    score across all of them.
     """
     if text_width < 1:
         raise ValueError(f"text_width must be >= 1, got {text_width!r}")
     failures: list[str] = []
     seen: dict[str, dict[str, Any]] = dict(acc or {})
+    # evidence_id -> the round queries that returned it; rerank scores each hit
+    # against those, not only against the rewritten question.
+    queries_by_id: dict[str, list[str]] = {}
 
     round_queries: list[str] = []
     for q in queries:
@@ -150,8 +171,13 @@ def retrieve_evidence(
                 for p in hybrid_search(q, top_k=40):
                     d = point_to_doc(p)
                     eid = d.get("evidence_id")
-                    if eid and eid not in seen:
+                    if not eid:
+                        continue
+                    if eid not in seen:
                         seen[eid] = d
+                    hit_by = queries_by_id.setdefault(eid, [])
+                    if q not in hit_by:
+                        hit_by.append(q)
             except Exception as e:  # noqa: BLE001
                 failures.append(f"retrieve: {e}")
         if seed_future is not None:
@@ -167,12 +193,17 @@ def retrieve_evidence(
     # cross-encoder rerank over the top candidates (falls back to RRF order)
     if len(hits) >= 2:
         try:
-            hits = rerank(query, hits[:20], top_k=20)
+            hits = rerank_best(
+                hits[:_RERANK_POOL],
+                queries_by_id,
+                fallback_query=query,
+                top_k=_RERANK_POOL,
+            )
             for h in hits:
                 h["reranked"] = True
         except Exception as e:  # noqa: BLE001
             failures.append(f"rerank: {e}")
-    hits = diversify(hits, top_k=text_width, max_per_doc=5)
+    hits = diversify(hits, top_k=text_width)
 
     ev_ids = [h["evidence_id"] for h in hits if h.get("evidence_id")]
     figures: list[dict[str, Any]] = []

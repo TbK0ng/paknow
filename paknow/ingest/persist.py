@@ -7,6 +7,11 @@ from paknow.evidence.contracts import EvidenceUnit, FigureAsset
 
 
 def persist_units(units: list[EvidenceUnit]) -> int:
+    """Merge parse output; columns the parser leaves empty overwrite filled ones.
+
+    shortcut: re-ingesting a document clears figure_ids/adjacent_ids that the
+    separate link/backfill scripts wrote — re-run those scripts after a re-ingest.
+    """
     seen: set[str] = set()
     ordered: list[EvidenceUnit] = []
     for u in units:

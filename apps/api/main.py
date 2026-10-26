@@ -167,7 +167,7 @@ def search(req: SearchRequest) -> dict[str, Any]:
         except Exception:
             # Retrieval must still work when the local reranker is unavailable.
             pass
-    hits = diversify(candidates, top_k=req.top_k, max_per_doc=5)
+    hits = diversify(candidates, top_k=req.top_k)
     return {"query": req.query, "count": len(hits), "hits": hits}
 
 

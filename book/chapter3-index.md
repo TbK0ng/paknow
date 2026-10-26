@@ -87,7 +87,7 @@ payload 字段：`evidence_id / doc_id / block_type / text / figure_ids / chapte
 | 稀疏向量含子串污染 | 分词器变更后人工审计 | 全量 sparse 重索引 |
 | 单元 `figure_ids` 为空 | 逐单元判空：`link_captions_to_figures.py` 把 caption/paragraph 全量拉到内存里按 `locator.bbox` 过滤（不是一条 SQL）；只有"取非空"那一步用到 SQL，在 `scripts/backfill_figure_links.py:22` 的 `func.json_array_length(...) > 0` | 图文链接回填 + payload 同步 |
 | 邻接为空 | 邻接字段逐条判空（Python 侧读 `adjacent_ids`） | 阅读顺序回填 81,809 |
-| 父块悬空 | 解析率 0 / 1,670 | 改为邻接方案 |
+| 父块悬空 | 解析率 0 / 1,670 | 2026-10-25 回填 743 个父块（`scripts/backfill_parent_chunks.py`），解析率 1,670 / 1,670；`chunk_units` 改为保留父块 |
 
 > **经验**：每次改分词器、词典、链接规则，都要问一句"索引里的旧数据还一致吗"。另外注意上一行那类"检测方式"——库里存的是 JSON 数组，空数组和有元素在 SQL 里长得一样容易骗人，真正的判空是在 Python 里把 JSON 解析出来数的。
 

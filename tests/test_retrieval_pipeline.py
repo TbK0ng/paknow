@@ -38,9 +38,12 @@ def _patched(monkeypatch, *, hits_by_query, fail_queries=(), expanded=None):
     def fake_point_to_doc(p):
         return p.payload
 
+    def fake_rerank(docs, queries, *, fallback_query, top_k=None):
+        return docs
+
     monkeypatch.setattr(pipeline, "hybrid_search", fake_search)
     monkeypatch.setattr(pipeline, "point_to_doc", fake_point_to_doc)
-    monkeypatch.setattr(pipeline, "rerank", lambda q, docs, top_k=None: docs)
+    monkeypatch.setattr(pipeline, "rerank_best", fake_rerank)
     monkeypatch.setattr(
         pipeline,
         "expand_evidence",
@@ -166,7 +169,7 @@ def test_text_width_reaches_the_diversity_step(monkeypatch):
     )
     seen = {}
 
-    def fake_diversify(hits, *, top_k=14, max_per_doc=5):
+    def fake_diversify(hits, *, top_k=14, max_per_doc=8, dedupe_chars=200):
         seen["top_k"] = top_k
         seen["max_per_doc"] = max_per_doc
         return hits
@@ -175,7 +178,7 @@ def test_text_width_reaches_the_diversity_step(monkeypatch):
 
     pipeline.retrieve_evidence("q", ["q"], text_width=20)
 
-    assert seen == {"top_k": 20, "max_per_doc": 5}
+    assert seen == {"top_k": 20, "max_per_doc": 8}
 
 
 def test_text_width_defaults_to_the_production_fourteen(monkeypatch):
@@ -187,7 +190,7 @@ def test_text_width_defaults_to_the_production_fourteen(monkeypatch):
     )
     seen = {}
 
-    def fake_diversify(hits, *, top_k=14, max_per_doc=5):
+    def fake_diversify(hits, *, top_k=14, max_per_doc=8, dedupe_chars=200):
         seen["top_k"] = top_k
         return hits
 
@@ -215,3 +218,97 @@ def test_graph_off_does_not_report_seed_failures(monkeypatch):
 
     assert [h["evidence_id"] for h in result.text_hits] == ["e1"]
     assert result.failures == []
+
+
+def test_each_hit_keeps_the_queries_that_returned_it(monkeypatch):
+    _patched(
+        monkeypatch,
+        hits_by_query={
+            "orig": [{"evidence_id": "e1", "text": "a", "doc_id": "d1", "score": 0.9}],
+            "step-back": [{"evidence_id": "e2", "text": "b", "doc_id": "d1", "score": 0.8}],
+            "sub": [
+                {"evidence_id": "e1", "text": "a", "doc_id": "d1", "score": 0.9},
+                {"evidence_id": "e3", "text": "c", "doc_id": "d2", "score": 0.7},
+            ],
+        },
+    )
+    seen = {}
+
+    def capture(docs, queries, *, fallback_query, top_k=None):
+        seen["queries"] = {k: list(v) for k, v in queries.items()}
+        seen["fallback"] = fallback_query
+        seen["pool"] = len(docs)
+        return docs
+
+    monkeypatch.setattr(pipeline, "rerank_best", capture)
+
+    pipeline.retrieve_evidence("orig", ["orig", "step-back", "sub"], expand_graph=False)
+
+    assert seen["queries"] == {"e1": ["orig", "sub"], "e2": ["step-back"], "e3": ["sub"]}
+    assert seen["fallback"] == "orig"
+
+
+def test_rerank_scores_a_hit_against_the_query_that_found_it(monkeypatch):
+    from paknow.retrieval import search
+
+    class FakeModel:
+        def predict(self, pairs):
+            return [10.0 if q == "step-back" else 0.0 for q, _ in pairs]
+
+    monkeypatch.setattr(search, "_reranker", lambda: FakeModel())
+    docs = [
+        {"evidence_id": "orig-hit", "text": "a"},
+        {"evidence_id": "step-hit", "text": "b"},
+    ]
+
+    out = search.rerank_best(
+        docs,
+        {"orig-hit": ["orig"], "step-hit": ["step-back"]},
+        fallback_query="orig",
+    )
+
+    # scoring everything with "orig" would leave the input order untouched
+    assert [d["evidence_id"] for d in out] == ["step-hit", "orig-hit"]
+
+
+def test_rerank_falls_back_to_the_rewritten_query_for_carried_hits(monkeypatch):
+    from paknow.retrieval import search
+
+    class FakeModel:
+        def predict(self, pairs):
+            return [len(q) for q, _ in pairs]
+
+    monkeypatch.setattr(search, "_reranker", lambda: FakeModel())
+    docs = [{"evidence_id": "carried", "text": "a"}]
+
+    out = search.rerank_best(docs, {}, fallback_query="orig")
+
+    assert [d["evidence_id"] for d in out] == ["carried"]
+
+
+def test_diversify_keeps_headings_that_only_share_an_opening():
+    from paknow.retrieval import search
+
+    head = "交易区间开盘：多头突破失败" + "甲" * 90
+    docs = [
+        {"evidence_id": "a", "doc_id": "d1", "text": head + "第一种结果" * 30},
+        {"evidence_id": "b", "doc_id": "d1", "text": head + "第二种结果" * 30},
+        {"evidence_id": "c", "doc_id": "d1", "text": head + "第一种结果" * 30},  # exact duplicate of a
+    ]
+
+    out = search.diversify(docs, top_k=5)
+
+    assert [d["evidence_id"] for d in out] == ["a", "b"]
+
+
+def test_diversify_caps_one_book_at_the_doc_limit():
+    from paknow.retrieval import search
+
+    docs = [
+        {"evidence_id": f"e{i}", "doc_id": "big", "text": f" distintos {i} " * 20}
+        for i in range(12)
+    ]
+
+    out = search.diversify(docs, top_k=14, max_per_doc=8)
+
+    assert len(out) == 8

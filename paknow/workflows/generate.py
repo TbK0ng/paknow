@@ -84,7 +84,7 @@ class Answer(BaseModel):
     uncertainty: list[str] = Field(default_factory=list)
 
 
-def _render_unit(i: int, u: dict[str, Any]) -> str:
+def _render_unit_locator(u: dict[str, Any]) -> str:
     loc = []
     if u.get("chapter_path"):
         loc.append(" › ".join(u["chapter_path"]))
@@ -94,7 +94,11 @@ def _render_unit(i: int, u: dict[str, Any]) -> str:
         loc.append(f"印刷页{u['printed_page']}")
     if u.get("figure_label"):
         loc.append(str(u["figure_label"]))
-    src = " · ".join(loc) or "未知出处"
+    return " · ".join(loc) or "未知出处"
+
+
+def _render_unit(i: int, u: dict[str, Any]) -> str:
+    src = _render_unit_locator(u)
     tags = []
     if u.get("is_parent"):
         tags.append("父块上下文")
@@ -259,6 +263,21 @@ def render_graph_context(entries: list[dict[str, Any]]) -> list[str]:
     return lines
 
 
+def render_reading_context(units: list[dict[str, Any]], bound: Mapping[str, int]) -> list[str]:
+    """One line per chunk parent: the whole unit the hit was cut out of.
+
+    Unnumbered on purpose — the parent holds no fact the cited children do not
+    already carry, so it is reading context, never a citation target.
+    """
+    lines: list[str] = []
+    for unit in units:
+        eid = unit.get("evidence_id")
+        if not eid or str(eid) in bound:
+            continue
+        lines.append(f"- {_render_unit_locator(unit)} {unit.get('text') or ''}")
+    return lines
+
+
 def generate(
     query: str,
     units: list[dict[str, Any]],
@@ -269,6 +288,7 @@ def generate(
     # 8192 for the same reason, and an answer re-sends the strips on top of it
     max_tokens: int = 16384,
     graph_evidence: list[dict[str, Any]] | None = None,
+    reading_context: list[dict[str, Any]] | None = None,
     citation_index: Mapping[str, int] | None = None,
     toc_context: list[dict[str, Any]] | None = None,
     fallback: str | None = None,
@@ -303,6 +323,11 @@ def generate(
         parts.append(
             "图谱扩展（不可引用，仅作理解辅助；引用编号只指向「证据」区）：\n"
             + "\n".join(render_graph_context(graph_evidence))
+        )
+    if reading_context and (lines := render_reading_context(reading_context, index)):
+        parts.append(
+            "整段上下文（这些是「证据」里某些片段所属的完整段落，供理解前后文；"
+            "不可引用，引用编号只指向「证据」区）：\n" + "\n".join(lines)
         )
     if visual:
         parts.append(

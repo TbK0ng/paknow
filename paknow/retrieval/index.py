@@ -63,6 +63,9 @@ def _point(row: EvidenceUnitRow, dense: list[float], sparse: SparseVector) -> Po
 def _index_rows(rows: list[EvidenceUnitRow]) -> int:
     client = get_client()
     ensure_collections(client)
+    # Chunked parents are reading context only: their children carry the text
+    # that should match a query, so indexing the parent would double-recall it.
+    rows = [r for r in rows if not r.child_ids]
     texts = [r.text for r in rows]
     dense = embed_texts(texts)
     points: list[PointStruct] = []

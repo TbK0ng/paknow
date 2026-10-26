@@ -210,6 +210,9 @@ def _generate_node(state: QState) -> QState:
         state.get("images"),
         mode=mode,
         graph_evidence=state.get("graph_evidence"),
+        reading_context=[
+            u for u in state.get("context_units", []) if u.get("is_parent")
+        ],
         citation_index=state.get("citation_index"),
         toc_context=state.get("toc_context"),
         fallback=state.get("sop_fallback"),

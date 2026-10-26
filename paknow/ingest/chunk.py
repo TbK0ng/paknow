@@ -45,15 +45,19 @@ def chunk_units(units: list[EvidenceUnit], max_chars: int = DEFAULT_MAX_CHARS) -
         if len(u.text) <= max_chars:
             out.append(u)
             continue
-        for j, t in enumerate(chunk_text(u.text, max_chars)):
-            out.append(
-                u.model_copy(
-                    update={
-                        "evidence_id": stable_id("ev", u.doc_id, u.evidence_id, str(j)),
-                        "text": t,
-                        "text_hash": content_hash(t.encode("utf-8")),
-                        "parent_id": u.evidence_id,
-                    }
-                )
+        children = [
+            u.model_copy(
+                update={
+                    "evidence_id": stable_id("ev", u.doc_id, u.evidence_id, str(j)),
+                    "text": t,
+                    "text_hash": content_hash(t.encode("utf-8")),
+                    "parent_id": u.evidence_id,
+                }
             )
+            for j, t in enumerate(chunk_text(u.text, max_chars))
+        ]
+        # The parent stays as context-only reading material; only children enter
+        # the search index, so a child hit can expand back to its whole unit.
+        out.append(u.model_copy(update={"child_ids": [c.evidence_id for c in children]}))
+        out.extend(children)
     return out

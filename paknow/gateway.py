@@ -158,7 +158,10 @@ class ModelGateway:
             kwargs["timeout"] = timeout
         resp = self._create(attempts=attempts, **kwargs)
         raw = resp.choices[0].message.content or "{}"
-        data = json.loads(raw)
+        # The model emits raw newlines/tabs inside string values, which strict
+        # JSON forbids; strict parsing turned 6 of 120 answers into a degraded
+        # reply. strict=False accepts them and still rejects broken structure.
+        data = json.loads(raw, strict=False)
         return schema.model_validate(data)
 
     # ------------------------------------------------------------------ #
