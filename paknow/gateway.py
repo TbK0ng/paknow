@@ -14,13 +14,53 @@ from typing import Any
 
 from openai import OpenAI
 from PIL import Image
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from paknow.config import settings
 
 _MAX_SIDE = 1568  # vision encoder keeps this much detail; larger is waste
 _MAX_TILES = 8  # strips per upload, so one image cannot flood the prompt
 _JPEG_QUALITY = 90
+_SNIPPET = 120  # raw chars kept for the failure record; enough to recognise the reply
+
+
+class ModelOutputError(ValueError):
+    """A model reply that no JSON parse could turn into the schema object.
+
+    ``reason`` speaks the chart read's vocabulary (``invalid_structure`` /
+    ``no_content``) so a degraded answer is classified the same way everywhere.
+    """
+
+    def __init__(self, raw: str, detail: str) -> None:
+        self.snippet = raw[:_SNIPPET]
+        self.reason = "no_content" if not raw.strip() else "invalid_structure"
+        super().__init__(f"{detail}: {self.snippet!r}")
+
+
+def failure_reason(exc: Exception) -> str:
+    """The one failure vocabulary: ``timeout`` / ``invalid_structure`` / ``no_content``."""
+    if isinstance(exc, ModelOutputError):
+        return exc.reason
+    if isinstance(exc, TimeoutError) or type(exc).__name__ == "APITimeoutError":
+        return "timeout"
+    if isinstance(exc, (ValidationError, ValueError)):
+        return "invalid_structure"
+    return "no_content"
+
+
+_JSON = json.JSONDecoder(strict=False)
+
+
+def _first_json_object(raw: str) -> Any:
+    """The first complete object in ``raw``; anything after it is ignored."""
+    start = raw.find("{")
+    if start < 0:
+        raise ModelOutputError(raw, "no JSON object in reply")
+    try:
+        value, _end = _JSON.raw_decode(raw, start)
+    except json.JSONDecodeError:
+        raise ModelOutputError(raw, "reply is not valid JSON") from None
+    return value
 
 
 def _strip_step(height: int) -> int:
@@ -157,8 +197,16 @@ class ModelGateway:
         if timeout is not None:
             kwargs["timeout"] = timeout
         resp = self._create(attempts=attempts, **kwargs)
-        raw = resp.choices[0].message.content or "{}"
-        data = json.loads(raw)
+        raw = resp.choices[0].message.content or ""
+        # models emit bare newlines/tabs inside strings and a second object
+        # after the first; tolerate both before giving up on the reply
+        try:
+            data = json.loads(raw)
+        except json.JSONDecodeError:
+            try:
+                data = json.loads(raw, strict=False)
+            except json.JSONDecodeError:
+                data = _first_json_object(raw)
         return schema.model_validate(data)
 
     # ------------------------------------------------------------------ #
