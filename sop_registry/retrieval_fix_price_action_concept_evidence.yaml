@@ -1,0 +1,53 @@
+sop_id: retrieval_fix_price_action_concept_evidence
+version: 1
+status: candidate
+intent_scope:
+- knowledge_qa
+preconditions:
+- 中文提问、术语来自价格行为/裸K交易教材体系（如牛旗、测量移动、主要趋势反转、窄幅空头通道、尖峰、横盘区间）
+- 问题常含缩写或省略主语（LL、MM、MTR、spike、TR），且一句话里同时问'条件+度量方法'
+- 同一问题被重复提问，说明首轮检索未命中或证据不足
+steps:
+- operation: expand_terms
+  action: 把问题中的缩写与中文术语双向展开为中英同义词组，并补齐上位概念
+  example: LL→lower low/低点下移; 牛旗→bull flag/bull pullback; 测量移动→measured move/MM/等距投射;
+    主要趋势反转→major trend reversal/MTR; 尖峰→spike/突破; 横盘→trading range/TR
+- operation: step_back
+  action: 把具体问题抽象为教材章节级主题再检索（如'失败形态之后的度量目标'→'突破与测量移动章节''趋势反转失败章节'）
+- operation: multi_query
+  action: 至少三条并行查询：①定义型（是什么）②条件型（什么时候成立/失效）③度量型（怎么量、目标位怎么算），避免只命中纯定义段落
+- operation: hybrid_search
+  action: 关键词（含英文原词）+ 向量混合检索，权重偏向同时含'形态名'+'测量/目标'的段落
+- operation: expand_figures
+  action: 召回图注、示意图说明与案例段落，因为测量移动与目标位规则常只在图注中给出
+- operation: rerank
+  action: 按是否同时覆盖'形态条件+度量步骤+例外/失败情形'重排，优先保留含条件从句（如果…则…、除非…）的片段
+- operation: check_evidence
+  action: 逐条核对 required_evidence 是否齐全，缺失项回到 multi_query 追加针对性查询（如只缺'仓位/风险管理'就补'逆势交易
+    仓位 缩小 风险'）
+required_evidence:
+- 形态或概念的明确定义段落（含英文原名）
+- 度量规则/目标位计算步骤（测量移动、等距投射、第一目标位）
+- 适用条件与例外条款（何时可做、何时必须缩小仓位或放弃）
+- 至少一个带图注或案例的具体示例
+fallback: 证据不足时先 step_back 到上位章节（突破/通道/反转任一）取通用规则，再用 hyde 生成假设性答案做二次检索；仍缺则明确回答'现有资料只覆盖X，未覆盖Y'，只陈述可引用的通用原则，不臆造具体数值或比例
+stop: 至少两条相互独立的片段同时覆盖'定义+度量/操作规则'，或已完成三轮扩展检索且缺口已定位并如实说明
+failure_patterns:
+- retrieval_error：中文口语化提问与教材术语/英文缩写不匹配，单轮关键词检索召回为空
+- no_evidence：测量移动、目标位规则散落在图注与案例段落，纯文本块检索未命中
+- low_evidence：只召回定义片段，缺少'条件+度量+例外'的完整链条，答案停在半句
+compatible_versions:
+  corpus: 2b9b41f6cc0c
+  graph: 1105n/3753e
+  embed_model: BAAI/bge-m3
+  rerank_model: BAAI/bge-reranker-v2-m3
+  visual_model: Qwen/Qwen2.5-VL-3B-Instruct
+  generator_model: deepseek-flash
+validation:
+  dataset: null
+  paired_runs: 0
+  wins: 0
+  losses: 0
+  ties: 0
+  approved: false
+  notes: null
