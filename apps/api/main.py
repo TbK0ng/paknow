@@ -43,7 +43,12 @@ app = FastAPI(title="PAknow", version="0.1.0", lifespan=_lifespan)
 
 @app.exception_handler(StoreLockedError)
 async def _store_locked(_request: Request, exc: StoreLockedError) -> JSONResponse:
-    """The embedded store belongs to another process: retry later, never an empty 200."""
+    """The embedded store belongs to another process: retry later, never an empty 200.
+
+    In the shipped FastAPI app startup refusal normally happens first (the
+    lifespan checks the store); this handler is the single mapping point and
+    still covers a lock acquired after startup.
+    """
     return JSONResponse(status_code=503, content={"detail": str(exc)})
 
 

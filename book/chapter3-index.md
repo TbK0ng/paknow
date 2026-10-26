@@ -59,7 +59,7 @@ description: "BGE-M3 dense + 自研 TF 稀疏的索引设计、领域分词与�
 
 **离线模式的两个限制**：
 
-1. **单进程只有一个 client**：嵌入式 Qdrant 同一个 path 只允许一个实例；除 `lru_cache` 单例外，`get_client`（`paknow/retrieval/qdrant_store.py`）还在 `<objects>/qdrant.lock` 上加进程级独占文件锁。第二个进程立即抛 `StoreLockedError`（带持锁 pid、时间与命令），检索层不吞成失败清单，API 回 **503 "评测或脚本正在占用存储，请稍后重试"**——不会有 200 加一屏空命中。
+1. **单进程只有一个 client**：嵌入式 Qdrant 同一个 path 只允许一个实例；除 `lru_cache` 单例外，`get_client`（`paknow/retrieval/qdrant_store.py`）还在 `<objects>/qdrant.lock` 上加进程级独占文件锁。第二个进程立即抛 `StoreLockedError`（带持锁 pid、时间与命令）；API 在启动自检（`_lifespan`）里就调 `check_store_ready`，所以第二个 API 进程**带着可读的原因拒绝启动**——不会出现"进程活着但只回 200 空命中"。
 2. **规模超过官方建议值，且没测过**：客户端自己会打警告原文——"Local mode is not recommended for collections with more than 20,000 points. Collection <evidence_text> contains 81809 points."（`data/link_log.txt:1`）。`evidence_text` 实有 81,809 点，约为建议上限的 **4 倍**；本项目**没有做过**该规模下的延迟/内存基准，所以不能宣称"能跑"就等于"性能可接受"。
 
 **切 server 的开关**：`settings.qdrant_url` 非空即走远程（`paknow/retrieval/qdrant_store.py:120-121`），环境变量 `QDRANT_URL`，配套 `docker-compose.yml` 里已有 `qdrant/qdrant:v1.12.4`（与 postgres 16 同文件）。默认值 `""` 表示嵌入式，与 `paknow/config.py:28-34` 一致。切 server 不看这把锁，也能解掉"单 client"限制，但**换不来已验证的性能结论**——那需要一次基准，不在这份文档里。
