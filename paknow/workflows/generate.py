@@ -7,7 +7,7 @@ from typing import Any, Mapping
 from pydantic import BaseModel, Field
 
 from paknow.chart import ChartRead, is_non_chart
-from paknow.gateway import gateway
+from paknow.gateway import failure_reason, gateway
 from paknow.retrieval.pipeline import citation_binding
 
 _ANSWER_SYSTEM = """你是交易价格行为资料的问答助手。只依据提供的证据回答，逐项绑定证据编号 [n]。
@@ -191,7 +191,7 @@ def build_context(
     )
 
 
-def _graph_locator(entry: dict[str, Any]) -> str:
+def graph_locator(entry: dict[str, Any]) -> str:
     loc = []
     if entry.get("chapter_path"):
         loc.append(" › ".join(entry["chapter_path"]))
@@ -254,7 +254,7 @@ def render_graph_context(entries: list[dict[str, Any]]) -> list[str]:
         else:
             body = f" | {(entry.get('text') or '')[:220]}"
         lines.append(
-            f"- （不可引用·仅理解辅助）[{kind}] {desc} | {ref} | {_graph_locator(entry)}{body}"
+            f"- （不可引用·仅理解辅助）[{kind}] {desc} | {ref} | {graph_locator(entry)}{body}"
         )
     return lines
 
@@ -364,7 +364,13 @@ def generate(
             "uncertainty": [],
             "chart_read": chart_read,
             "chart_read_status": "structured" if chart_read else "unstructured",
-            "generate_failure": f"{type(exc).__name__}: {exc}"[:300],
+            # machine-readable marker: a reader can tell this placeholder from
+            # a genuinely short answer without guessing by length
+            "degraded": True,
+            "degradation": {
+                "reason": failure_reason(exc),
+                "detail": f"{type(exc).__name__}: {exc}"[:300],
+            },
         }
     by_number = {
         index.get(str(unit.get("evidence_id")), position): unit

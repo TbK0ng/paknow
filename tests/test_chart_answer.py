@@ -83,19 +83,92 @@ def test_truncated_answer_json_degrades_instead_of_raising(
 
     assert out["answer"] == generate_module._DEGRADED_ANSWER
     assert out["evidence_ids"] == []
-    assert out["generate_failure"].startswith("JSONDecodeError")
+    assert out["degraded"] is True
+    assert out["degradation"]["reason"] == "invalid_structure"
+    assert out["degradation"]["detail"].startswith("JSONDecodeError")
+
+
+@pytest.mark.parametrize(
+    ("error", "reason"),
+    [
+        (TimeoutError("slow"), "timeout"),
+        (ValueError("schema"), "invalid_structure"),
+        (RuntimeError("upstream"), "no_content"),
+    ],
+)
+def test_degraded_answer_reuses_the_chart_read_classification(
+    monkeypatch: pytest.MonkeyPatch, error: Exception, reason: str
+) -> None:
+    def boom(*_args: Any, **_kwargs: Any) -> None:
+        raise error
+
+    monkeypatch.setattr(generate_module.gateway, "chat_json", boom)
+
+    out = generate_module.generate("什么是双底？", [])
+
+    assert out["degraded"] is True
+    assert out["degradation"]["reason"] == reason
+
+
+def test_a_short_real_answer_is_not_marked_degraded(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def fake_answer(*_args: Any, **_kwargs: Any) -> Any:
+        from paknow.workflows.generate import Answer
+
+        return Answer(answer="不知道")  # shorter than the placeholder, but real
+
+    monkeypatch.setattr(generate_module.gateway, "chat_json", fake_answer)
+
+    out = generate_module.generate("什么是双底？", [])
+
+    assert out["answer"] == "不知道"
+    assert "degraded" not in out
+
+
+def test_degraded_marker_reaches_the_run_trace(monkeypatch: pytest.MonkeyPatch) -> None:
+    seen: dict[str, Any] = {}
+    monkeypatch.setattr(graph_module, "save_trace", lambda *a, **k: seen.update(k))
+    monkeypatch.setattr(graph_module, "_maybe_auto_optimize", lambda: None)
+    state = _state("knowledge_qa")
+    state.update(
+        {
+            "run_id": "r1",
+            "t0": 0.0,
+            "answer": {
+                "answer": generate_module._DEGRADED_ANSWER,
+                "evidence_ids": [],
+                "degraded": True,
+                "degradation": {"reason": "invalid_structure", "detail": "boom"},
+            },
+            "failures": ["generate: invalid_structure: boom"],
+        }
+    )
+
+    graph_module._record_node(state)
+
+    assert seen["answer"]["degraded"] is True
+    assert seen["answer"]["degradation"]["reason"] == "invalid_structure"
+    assert seen["failures"] == ["generate: invalid_structure: boom"]
 
 
 def test_degraded_answer_lands_in_the_trace(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         graph_module,
         "generate",
-        lambda *_a, **_k: {"answer": "x", "evidence_ids": [], "generate_failure": "boom"},
+        lambda *_a, **_k: {
+            "answer": "x",
+            "evidence_ids": [],
+            "degraded": True,
+            "degradation": {"reason": "invalid_structure", "detail": "boom"},
+        },
     )
 
     state = graph_module._generate_node(_state("chart_analysis"))
 
-    assert state["failures"] == ["generate: boom"]
+    assert state["failures"] == ["generate: invalid_structure: boom"]
+    # the marker stays in the answer dict, which is the trace's ``output``
+    assert state["answer"]["degraded"] is True
 
 
 # --- layered answer: full level list, converged suggestions, cited evidence -- #

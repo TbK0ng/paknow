@@ -198,6 +198,25 @@ def test_text_width_defaults_to_the_production_fourteen(monkeypatch):
     assert seen["top_k"] == 14
 
 
+def test_candidate_pool_keeps_the_ranked_head_before_diversity(monkeypatch):
+    docs = [
+        {"evidence_id": f"e{i}", "text": f"文本{i}", "doc_id": f"d{i}", "score": 1.0 - i / 100}
+        for i in range(40)
+    ]
+    _patched(monkeypatch, hits_by_query={"q": docs})
+
+    result = pipeline.retrieve_evidence("q", ["q"], expand_graph=False)
+
+    assert [h["evidence_id"] for h in result.text_hits] == [f"e{i}" for i in range(14)]
+    # the judge's pool is the ranked head before the diversity cap
+    assert [h["evidence_id"] for h in result.candidate_hits] == [
+        f"e{i}" for i in range(20)
+    ]
+    assert {h["evidence_id"] for h in result.text_hits} <= {
+        h["evidence_id"] for h in result.candidate_hits
+    }
+
+
 def test_text_width_must_be_positive():
     with pytest.raises(ValueError, match="text_width"):
         pipeline.retrieve_evidence("q", ["q"], text_width=0)

@@ -51,9 +51,12 @@ def _stub_chain(monkeypatch, *, units, citation_index):
     monkeypatch.setattr(
         graph_module,
         "check_sufficiency",
-        lambda *a, **k: SimpleNamespace(
-            next_query=None,
-            model_dump=lambda: {"sufficient": True, "next_query": None},
+        lambda *a, **k: (
+            SimpleNamespace(
+                next_query=None,
+                model_dump=lambda: {"sufficient": True, "next_query": None},
+            ),
+            None,
         ),
     )
     monkeypatch.setattr(

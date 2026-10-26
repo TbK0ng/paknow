@@ -41,10 +41,13 @@ class QState(TypedDict, total=False):
     hyde: str
     next_query: str | None
     hits: list[dict[str, Any]]
+    # ranked recall before the answer's diversity cap: the judge's evidence pool
+    candidate_hits: list[dict[str, Any]]
     figures: list[dict[str, Any]]
     round: int
     max_rounds: int
     sufficiency: dict[str, Any]
+    judge_stats: dict[str, int]
     answer: dict[str, Any]
     run_id: str
     t0: float
@@ -174,6 +177,7 @@ def _retrieve_node(state: QState) -> QState:
         result.citable_units = result.citable_units[:1]
         result.citation_index = citation_binding(result.citable_units)
     state["hits"] = result.text_hits
+    state["candidate_hits"] = result.candidate_hits
     state["figures"] = result.figures
     state["context_units"] = result.context_units
     state["citable_units"] = result.citable_units
@@ -193,15 +197,19 @@ def _check_node(state: QState) -> QState:
     for req in state.get("sop_evidence_requirements", []):
         if req not in needs:
             needs.append(req)
-    suff = check_sufficiency(
+    suff, sent = check_sufficiency(
         state["query"],
         needs[:8],
-        state.get("hits", []),
+        state.get("candidate_hits") or state.get("hits", []),
         round_=state.get("round", 0),
         max_rounds=state.get("max_rounds", 3),
     )
     state["sufficiency"] = suff.model_dump()
     state["next_query"] = suff.next_query
+    # keep the last view the judge actually read: a capped round sends nothing
+    # and must not overwrite the scale with an empty one
+    if sent is not None:
+        state["judge_stats"] = sent
     return state
 
 
@@ -242,23 +250,36 @@ def _generate_node(state: QState) -> QState:
         ],
         chart_read=state.get("chart_read"),
     )
-    # a degraded answer still ends the run; the reason belongs in the trace
-    failure = (state["answer"] or {}).pop("generate_failure", None)
-    if failure:
-        state.setdefault("failures", []).append(f"generate: {failure}")
+    # a degraded answer still ends the run; its classification belongs in the
+    # trace (the answer dict itself stays in ``output`` with the marker)
+    degradation = (state["answer"] or {}).get("degradation")
+    if degradation:
+        state.setdefault("failures", []).append(
+            f"generate: {degradation['reason']}: {degradation['detail']}"
+        )
     return state
 
 
 def _record_node(state: QState) -> QState:
     ans = state.get("answer") or {}
     ev_ids = ans.get("evidence_ids") or []
+    # the run trace carries the verdict and the size of the view it judged
+    stats = state.get("judge_stats") or {}
+    trace_output = {
+        **ans,
+        "sufficiency": {
+            **state.get("sufficiency", {}),
+            "evidence_items": stats.get("evidence_items", 0),
+            "evidence_chars": stats.get("evidence_chars", 0),
+        },
+    }
     save_trace(
         state["run_id"],
         state["query"],
         intents=[state.get("intent", "knowledge_qa")],
         routes=state.get("routes", []),
         evidence_ids=ev_ids,
-        answer=ans,
+        answer=trace_output,
         failures=state.get("failures", []),
         elapsed_ms=int((time.time() - state["t0"]) * 1000),
         sop_id=state.get("sop_id"),
