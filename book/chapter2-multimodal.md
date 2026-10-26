@@ -102,7 +102,7 @@ description: "图资产提取、VLM 观察（派生材料）、视觉路线替�
 
 **为什么**：如果丢掉 `context`，图谱会得出"高二总是可靠"这种错误结论。所以 `qualifiers` 原样随主张进入生成上下文。
 
-**但要如实说清实现口径**：扩展代码读的是 `conditions` / `exceptions` 两个键（`paknow/graph/expansion.py:277-278`），而库里 1,888 条主张的 qualifiers 只有 `context` / `modality`——这两个键一条都没有。结论：条件现在是**透传**，不是**筛选**。主张进入上下文的真实顺序是 **种子概念顺序 → `extraction_confidence` 降序 → `claim_id`**（`paknow/graph/expansion.py:238-243`）；文档里曾经写的"主题匹配 > 谓词匹配 > 条件匹配"是策划稿，代码里不存在。
+**消费端口径**：主张的限定词在 `_claim_conditions(qualifiers)` **一处**映射——`context` → 背景、`modality` → 语气，并在同一条主张行里渲染；没有条件的主张不出现任何条件字样（不兜底成"无条件"，也不编造）。扩展层曾经读 `conditions` / `exceptions` 两个从未写入的键，现已删除。条件仍然只参与**渲染**、不参与**筛选**：主张进入上下文的顺序是 **种子概念顺序 → `extraction_confidence` 降序 → `claim_id`**（`paknow/graph/expansion.py:236-243`）；文档里曾经写的"主题匹配 > 谓词匹配 > 条件匹配"是策划稿，代码里不存在。
 
 ### 4.3 趋势生命周期：一个小而关键的种子
 

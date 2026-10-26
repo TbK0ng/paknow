@@ -6,7 +6,7 @@
 **可追溯出处**的知识问答、上传图表分析，并保留程序性记忆（SOP）的生命周期。
 
 > 技术文档站：<https://tbk0ng.github.io/paknow/>（源码 `book/`，MkDocs Material）。
-> 回测/行情统计按实施决策暂缓；质量评测已起步，回归门槛只覆盖确定性记录（见下文“评测”）。
+> 回测/行情统计按实施决策暂缓；质量评测已起步，并有本地质量门禁（`scripts/quality_gate.py`，CI 只守确定性记录，见下文“评测”）。
 
 ## 能力
 
@@ -45,12 +45,12 @@
 | 服务 | `apps/api/main.py`（FastAPI）+ `apps/viewer/index.html` |
 | 集成 | `integrations/paknow-mcp/`（MCP 适配器，11 个工具，走 HTTP） |
 
-## 规模与实测（本地库快照 2026-10-24）
+## 规模与实测（本地库快照 2026-10-25，父块回填后）
 
 | 指标 | 值 |
 |---|---|
 | 资料 | 7 份 = 4 PDF + 3 EPUB |
-| 证据单元 | 91,235（paragraph 61,040 / heading 19,194 / footer 9,426 / caption 1,575） |
+| 证据单元 | 91,978（paragraph 61,705 / heading 19,272 / footer 9,426 / caption 1,575） |
 | 图资产 | 927（全部有 VLM 观察，标记 `derived_observation`） |
 | 主张 / 边 | 1,888 / 3,753 |
 | BarRef | 674 |

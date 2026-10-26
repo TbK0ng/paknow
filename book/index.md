@@ -9,7 +9,7 @@ description: "PAknow：可追溯出处的多模态 RAG、条件化证据图谱�
     带条件的主张图谱、派生视觉索引，以及<strong>可验证、可版本化、可回滚</strong>的程序性记忆（SOP）。
   </p>
   <div class="paknow-badges">
-    <span class="paknow-badge">91,235 证据单元</span>
+    <span class="paknow-badge">91,978 证据单元</span>
     <span class="paknow-badge">927 图资产</span>
     <span class="paknow-badge">1,888 主张 · 3,753 边</span>
     <span class="paknow-badge">674 K 线指代</span>
