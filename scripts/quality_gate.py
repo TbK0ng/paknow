@@ -492,11 +492,16 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     for mode, rows in records.items():
         write_jsonl(out_dir / ("records.jsonl" if mode == "deterministic" else f"{mode}.records.jsonl"), rows)
+    # the summary names the exact bytes it summarizes (ADR-0004)
+    hashes = {"answers_sha256": file_sha256(out_dir / "records.jsonl")}
+    if "judge" in records:
+        hashes["judge_sha256"] = file_sha256(out_dir / "judge.records.jsonl")
     (out_dir / "summary.json").write_text(
         json.dumps(
             {
                 "dataset": display_path(args.dataset),
                 "dataset_sha256": digest,
+                **hashes,
                 "sample": sample_ids,
                 "modes": list(blocks),
                 "baseline": display_path(args.baseline),

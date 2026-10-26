@@ -221,6 +221,29 @@ def test_recording_writes_the_dataset_hash_and_the_sample(tmp_path, monkeypatch)
     assert payload["deterministic"]["arms"]["text"]["items"] == 10
     assert (tmp_path / "run" / "records.jsonl").exists()
     assert (tmp_path / "run" / "summary.json").exists()
+    summary = json.loads((tmp_path / "run" / "summary.json").read_text(encoding="utf-8"))
+    assert summary["answers_sha256"] == quality_gate.file_sha256(
+        tmp_path / "run" / "records.jsonl"
+    )
+
+
+def test_recording_hashes_the_judge_records_too(tmp_path, monkeypatch):
+    baseline = tmp_path / "baseline.json"
+    monkeypatch.setattr(quality_gate, "run_deterministic", Runner())
+    monkeypatch.setattr(quality_gate, "run_judge", JudgeRunner())
+
+    code = quality_gate.main(
+        ["--record", "--judge", "--baseline", str(baseline), "--out", str(tmp_path / "run")]
+    )
+
+    assert code == 0
+    summary = json.loads((tmp_path / "run" / "summary.json").read_text(encoding="utf-8"))
+    assert summary["answers_sha256"] == quality_gate.file_sha256(
+        tmp_path / "run" / "records.jsonl"
+    )
+    assert summary["judge_sha256"] == quality_gate.file_sha256(
+        tmp_path / "run" / "judge.records.jsonl"
+    )
 
 
 # ---------------------------------------------------------------------------

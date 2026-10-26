@@ -1,6 +1,8 @@
 {
   "dataset": "evals\\gold\\graph_expansion_v2.json",
   "dataset_sha256": "7cf35d945cfc35572d0fb31b4c96fb4d3fa54adb36859e4186c6e3c0d5d55560",
+  "answers_sha256": "20aee4c8ab41fb4c58337bfd54bcea8e7c9474293ea47c432e67b6a9a9baba16",
+  "judge_sha256": "87ac2a529994022949475130d6b0cf99e4246f082951ebad912fb5fdc5ea269c",
   "sample": [
     "enc-01",
     "mech-01",
