@@ -1,0 +1,75 @@
+{
+  "dataset": "evals\\gold\\graph_expansion_v2.json",
+  "dataset_sha256": "7cf35d945cfc35572d0fb31b4c96fb4d3fa54adb36859e4186c6e3c0d5d55560",
+  "timestamp": "20261025T143040Z",
+  "limit": 0,
+  "arms": {
+    "text": {
+      "expand_graph": false
+    },
+    "graph": {
+      "expand_graph": true
+    }
+  },
+  "summary": {
+    "text": {
+      "items": 60,
+      "ok": 60,
+      "errors": 0,
+      "hard_pass": 60,
+      "hard_pass_rate": 1.0,
+      "invalid_citation_items": 0,
+      "graph_citation_items": 0,
+      "coverage_mean": 0.3,
+      "coverage_complete_items": 15,
+      "coverage_distribution": {
+        "0": 37,
+        "(0,0.5)": 6,
+        "[0.5,1)": 2,
+        "1": 15
+      },
+      "citations_total": 493,
+      "citable_total": 1080,
+      "graph_evidence_total": 0,
+      "rounds_mean": 1.3667,
+      "retrieval_failures": 0,
+      "elapsed_s": 2430.9
+    },
+    "graph": {
+      "items": 60,
+      "ok": 60,
+      "errors": 0,
+      "hard_pass": 60,
+      "hard_pass_rate": 1.0,
+      "invalid_citation_items": 0,
+      "graph_citation_items": 0,
+      "coverage_mean": 0.2889,
+      "coverage_complete_items": 15,
+      "coverage_distribution": {
+        "0": 39,
+        "(0,0.5)": 4,
+        "[0.5,1)": 2,
+        "1": 15
+      },
+      "citations_total": 489,
+      "citable_total": 1080,
+      "graph_evidence_total": 1006,
+      "rounds_mean": 1.25,
+      "retrieval_failures": 2,
+      "elapsed_s": 2304.8
+    },
+    "paired": 60,
+    "hard_pass_delta": 0,
+    "hard_pass_rate_delta": 0.0,
+    "coverage_mean_delta": -0.0111,
+    "coverage_better_items": 3,
+    "coverage_worse_items": 5,
+    "coverage_equal_items": 52,
+    "citations_total_delta": -4,
+    "rounds_mean_delta": -0.1167
+  },
+  "errors": [],
+  "wall_time_s": 4735.8,
+  "chain_time_s": 4735.7,
+  "ran": 120
+}

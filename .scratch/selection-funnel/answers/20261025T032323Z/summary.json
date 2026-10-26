@@ -1,0 +1,75 @@
+{
+  "dataset": "evals\\gold\\graph_expansion_v2.json",
+  "dataset_sha256": "7cf35d945cfc35572d0fb31b4c96fb4d3fa54adb36859e4186c6e3c0d5d55560",
+  "timestamp": "20261025T032323Z",
+  "limit": 0,
+  "arms": {
+    "text": {
+      "expand_graph": false
+    },
+    "graph": {
+      "expand_graph": true
+    }
+  },
+  "summary": {
+    "text": {
+      "items": 60,
+      "ok": 60,
+      "errors": 0,
+      "hard_pass": 60,
+      "hard_pass_rate": 1.0,
+      "invalid_citation_items": 0,
+      "graph_citation_items": 0,
+      "coverage_mean": 0.3056,
+      "coverage_complete_items": 16,
+      "coverage_distribution": {
+        "0": 38,
+        "(0,0.5)": 4,
+        "[0.5,1)": 2,
+        "1": 16
+      },
+      "citations_total": 586,
+      "citable_total": 1139,
+      "graph_evidence_total": 0,
+      "rounds_mean": 1.2667,
+      "retrieval_failures": 4,
+      "elapsed_s": 2342.1
+    },
+    "graph": {
+      "items": 60,
+      "ok": 60,
+      "errors": 0,
+      "hard_pass": 60,
+      "hard_pass_rate": 1.0,
+      "invalid_citation_items": 0,
+      "graph_citation_items": 0,
+      "coverage_mean": 0.2944,
+      "coverage_complete_items": 15,
+      "coverage_distribution": {
+        "0": 38,
+        "(0,0.5)": 5,
+        "[0.5,1)": 2,
+        "1": 15
+      },
+      "citations_total": 596,
+      "citable_total": 1141,
+      "graph_evidence_total": 1047,
+      "rounds_mean": 1.3833,
+      "retrieval_failures": 2,
+      "elapsed_s": 2540.0
+    },
+    "paired": 60,
+    "hard_pass_delta": 0,
+    "hard_pass_rate_delta": 0.0,
+    "coverage_mean_delta": -0.0111,
+    "coverage_better_items": 5,
+    "coverage_worse_items": 5,
+    "coverage_equal_items": 50,
+    "citations_total_delta": 10,
+    "rounds_mean_delta": 0.1166
+  },
+  "errors": [],
+  "wall_time_s": 4882.2,
+  "chain_time_s": 4882.1,
+  "ran": 120
+}

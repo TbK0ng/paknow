@@ -1,0 +1,3298 @@
+{
+  "dataset": "evals\\gold\\graph_expansion_v2.json",
+  "frozen_at": "2026-10-23",
+  "protocol": "per-item frozen expanded_queries (6); answer eval runs the production chain per arm",
+  "top_k": 20,
+  "text_width": 14,
+  "mode": "graph",
+  "baseline_reused": true,
+  "baseline_summary": {
+    "items": 60,
+    "expected_total": 123,
+    "expected_found": 73,
+    "expected_missing": 50,
+    "items_with_any_hit": 50,
+    "items_with_all_hits": 39,
+    "items_graph_unique": 21
+  },
+  "text_arm_summary": {
+    "items": 60,
+    "expected_total": 123,
+    "expected_found": 50,
+    "expected_missing": 73,
+    "items_with_any_hit": 40,
+    "items_with_all_hits": 25
+  },
+  "summary": {
+    "items": 60,
+    "expected_total": 123,
+    "baseline_found": 73,
+    "regression_text_found": 50,
+    "graph_found": 18,
+    "graph_only": 13,
+    "graph_arm_found": 63,
+    "net_gain": 13,
+    "recovered_expected": 9,
+    "newly_recalled": 9,
+    "lost": 19,
+    "text_path_lost": 23,
+    "still_missing": 41,
+    "graph_entries": 840,
+    "items_graph_unique": 21,
+    "items_graph_unique_recovered": 5,
+    "items_truncated": 60,
+    "truncated_edges": 0,
+    "truncated_evidence": 60,
+    "truncated_tokens": 0,
+    "failures": 0
+  },
+  "items": [
+    {
+      "id": "enc-01",
+      "category": "encyclopedia",
+      "question": "高开后出现三角形，突破失败之后通常怎么走？",
+      "expected": [
+        "887ee7c246cdbf4a193ae7e4a2591bbd"
+      ],
+      "baseline_found": [
+        "887ee7c246cdbf4a193ae7e4a2591bbd"
+      ],
+      "baseline_missing": [],
+      "regression_text_found": [],
+      "graph_found": [],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [
+        "887ee7c246cdbf4a193ae7e4a2591bbd"
+      ],
+      "text_path_lost": [
+        "887ee7c246cdbf4a193ae7e4a2591bbd"
+      ],
+      "still_missing": [],
+      "graph_unique": false,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 16,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 694,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 694
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "enc-02",
+      "category": "encyclopedia",
+      "question": "开盘就是多头趋势，但昨日最低点下方的突破失败，说明什么？",
+      "expected": [
+        "eb0060c008738555e2583eccc08759a2",
+        "7e71a9e4c42b86d41d0e6dd8a72b6747",
+        "1d83a0a9080240344c9177e5ab2cc4b4"
+      ],
+      "baseline_found": [
+        "eb0060c008738555e2583eccc08759a2",
+        "1d83a0a9080240344c9177e5ab2cc4b4"
+      ],
+      "baseline_missing": [
+        "7e71a9e4c42b86d41d0e6dd8a72b6747"
+      ],
+      "regression_text_found": [
+        "eb0060c008738555e2583eccc08759a2",
+        "1d83a0a9080240344c9177e5ab2cc4b4"
+      ],
+      "graph_found": [],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [],
+      "text_path_lost": [],
+      "still_missing": [
+        "7e71a9e4c42b86d41d0e6dd8a72b6747"
+      ],
+      "graph_unique": true,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [
+        "eb0060c008738555e2583eccc08759a2",
+        "1d83a0a9080240344c9177e5ab2cc4b4"
+      ],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 21,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 774,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 774
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "enc-03",
+      "category": "encyclopedia",
+      "question": "双顶上方突破失败，属于哪种形态的变体？",
+      "expected": [
+        "94bbeb00f09f549082761927fcf7b968"
+      ],
+      "baseline_found": [
+        "94bbeb00f09f549082761927fcf7b968"
+      ],
+      "baseline_missing": [],
+      "regression_text_found": [
+        "94bbeb00f09f549082761927fcf7b968"
+      ],
+      "graph_found": [],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [],
+      "text_path_lost": [],
+      "still_missing": [],
+      "graph_unique": false,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [
+        "94bbeb00f09f549082761927fcf7b968"
+      ],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 18,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 730,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 730
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "enc-04",
+      "category": "encyclopedia",
+      "question": "18根K线区间下方的突破失败之后，随后会发生什么？",
+      "expected": [
+        "ece546c3b83ba9ff8baa6c49bbba8733",
+        "4b6ee5d889e220cb45c01c17a6b1bdcd",
+        "8a0d524251b9729ee1a76ae2f568932d"
+      ],
+      "baseline_found": [
+        "ece546c3b83ba9ff8baa6c49bbba8733",
+        "4b6ee5d889e220cb45c01c17a6b1bdcd",
+        "8a0d524251b9729ee1a76ae2f568932d"
+      ],
+      "baseline_missing": [],
+      "regression_text_found": [
+        "ece546c3b83ba9ff8baa6c49bbba8733",
+        "4b6ee5d889e220cb45c01c17a6b1bdcd"
+      ],
+      "graph_found": [],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [
+        "8a0d524251b9729ee1a76ae2f568932d"
+      ],
+      "text_path_lost": [
+        "8a0d524251b9729ee1a76ae2f568932d"
+      ],
+      "still_missing": [],
+      "graph_unique": false,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [
+        "ece546c3b83ba9ff8baa6c49bbba8733",
+        "4b6ee5d889e220cb45c01c17a6b1bdcd"
+      ],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 16,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 694,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 694
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "enc-05",
+      "category": "encyclopedia",
+      "question": "18根K线区间下方的突破失败，可能出现哪些结果？",
+      "expected": [
+        "3546dcad106552ec66fea23d4e70c856",
+        "074854a6b27a2b41c66b31879399177f",
+        "d819d7ff2ca0c4e4967e326371aca21e"
+      ],
+      "baseline_found": [
+        "3546dcad106552ec66fea23d4e70c856",
+        "074854a6b27a2b41c66b31879399177f",
+        "d819d7ff2ca0c4e4967e326371aca21e"
+      ],
+      "baseline_missing": [],
+      "regression_text_found": [],
+      "graph_found": [],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [
+        "3546dcad106552ec66fea23d4e70c856",
+        "074854a6b27a2b41c66b31879399177f",
+        "d819d7ff2ca0c4e4967e326371aca21e"
+      ],
+      "text_path_lost": [
+        "3546dcad106552ec66fea23d4e70c856",
+        "074854a6b27a2b41c66b31879399177f",
+        "d819d7ff2ca0c4e4967e326371aca21e"
+      ],
+      "still_missing": [],
+      "graph_unique": false,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 16,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 694,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 694
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "enc-06",
+      "category": "encyclopedia",
+      "question": "空头通道下方的突破失败，为什么会变成竭尽性卖出高潮？",
+      "expected": [
+        "0e2c249d3b76bd8d87e9a41e8f60304d",
+        "01a8d5e972736f9a93ec96631a270e90"
+      ],
+      "baseline_found": [
+        "0e2c249d3b76bd8d87e9a41e8f60304d",
+        "01a8d5e972736f9a93ec96631a270e90"
+      ],
+      "baseline_missing": [],
+      "regression_text_found": [
+        "0e2c249d3b76bd8d87e9a41e8f60304d"
+      ],
+      "graph_found": [],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [
+        "01a8d5e972736f9a93ec96631a270e90"
+      ],
+      "text_path_lost": [
+        "01a8d5e972736f9a93ec96631a270e90"
+      ],
+      "still_missing": [],
+      "graph_unique": false,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [
+        "0e2c249d3b76bd8d87e9a41e8f60304d"
+      ],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 23,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 946,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 946
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "enc-07",
+      "category": "encyclopedia",
+      "question": "楔形底失败之后会形成什么？",
+      "expected": [
+        "c4259e41e8a1ff68f38a6a45146ea84f",
+        "e7f8295f98ab4f50c283fbf61cffcba9"
+      ],
+      "baseline_found": [
+        "c4259e41e8a1ff68f38a6a45146ea84f",
+        "e7f8295f98ab4f50c283fbf61cffcba9"
+      ],
+      "baseline_missing": [],
+      "regression_text_found": [
+        "c4259e41e8a1ff68f38a6a45146ea84f",
+        "e7f8295f98ab4f50c283fbf61cffcba9"
+      ],
+      "graph_found": [],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [],
+      "text_path_lost": [],
+      "still_missing": [],
+      "graph_unique": false,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [
+        "c4259e41e8a1ff68f38a6a45146ea84f",
+        "e7f8295f98ab4f50c283fbf61cffcba9"
+      ],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 17,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 691,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 691
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "enc-08",
+      "category": "encyclopedia",
+      "question": "买入高潮失败之后，市场通常接着形成什么形态？",
+      "expected": [
+        "133fafbcf874c332ff9c1a15299b7543"
+      ],
+      "baseline_found": [
+        "133fafbcf874c332ff9c1a15299b7543"
+      ],
+      "baseline_missing": [],
+      "regression_text_found": [
+        "133fafbcf874c332ff9c1a15299b7543"
+      ],
+      "graph_found": [],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [],
+      "text_path_lost": [],
+      "still_missing": [],
+      "graph_unique": false,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [
+        "133fafbcf874c332ff9c1a15299b7543"
+      ],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 15,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 818,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 818
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "enc-09",
+      "category": "encyclopedia",
+      "question": "向下跳空后出现卖出高潮，但向上反转失败，市场会怎么走？",
+      "expected": [
+        "e8a4845ca3960812aa92332c6c34c13d",
+        "825b57972094d7f0b375f5a5a990f18b"
+      ],
+      "baseline_found": [
+        "e8a4845ca3960812aa92332c6c34c13d",
+        "825b57972094d7f0b375f5a5a990f18b"
+      ],
+      "baseline_missing": [],
+      "regression_text_found": [
+        "e8a4845ca3960812aa92332c6c34c13d"
+      ],
+      "graph_found": [],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [
+        "825b57972094d7f0b375f5a5a990f18b"
+      ],
+      "text_path_lost": [
+        "825b57972094d7f0b375f5a5a990f18b"
+      ],
+      "still_missing": [],
+      "graph_unique": false,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [
+        "e8a4845ca3960812aa92332c6c34c13d"
+      ],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 18,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 810,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 810
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "enc-10",
+      "category": "encyclopedia",
+      "question": "卖出高潮、向下跳空之后形成H2底部，但失败，说明什么？",
+      "expected": [
+        "70074b9992cb9216f018d26b3c659a25"
+      ],
+      "baseline_found": [
+        "70074b9992cb9216f018d26b3c659a25"
+      ],
+      "baseline_missing": [],
+      "regression_text_found": [
+        "70074b9992cb9216f018d26b3c659a25"
+      ],
+      "graph_found": [],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [],
+      "text_path_lost": [],
+      "still_missing": [],
+      "graph_unique": false,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [
+        "70074b9992cb9216f018d26b3c659a25"
+      ],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 16,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 892,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 892
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "mech-01",
+      "category": "mechanism",
+      "question": "双底多头旗形在三本书里分别怎么定义、在什么条件下有效？",
+      "expected": [
+        "38de0072aaf37b666ca771d380096a96",
+        "cef8b481f6df7299941c4b676c15c999",
+        "bca2e3898d49a9a6149a1cb2668cb883"
+      ],
+      "baseline_found": [
+        "bca2e3898d49a9a6149a1cb2668cb883"
+      ],
+      "baseline_missing": [
+        "38de0072aaf37b666ca771d380096a96",
+        "cef8b481f6df7299941c4b676c15c999"
+      ],
+      "regression_text_found": [],
+      "graph_found": [
+        "38de0072aaf37b666ca771d380096a96",
+        "cef8b481f6df7299941c4b676c15c999",
+        "bca2e3898d49a9a6149a1cb2668cb883"
+      ],
+      "recovered_expected": [
+        "38de0072aaf37b666ca771d380096a96",
+        "cef8b481f6df7299941c4b676c15c999"
+      ],
+      "newly_recalled": [
+        "38de0072aaf37b666ca771d380096a96",
+        "cef8b481f6df7299941c4b676c15c999"
+      ],
+      "lost": [],
+      "text_path_lost": [
+        "bca2e3898d49a9a6149a1cb2668cb883"
+      ],
+      "still_missing": [],
+      "graph_unique": true,
+      "graph_unique_recovered": true,
+      "graph_only": [
+        "38de0072aaf37b666ca771d380096a96",
+        "cef8b481f6df7299941c4b676c15c999",
+        "bca2e3898d49a9a6149a1cb2668cb883"
+      ],
+      "graph_arm_found": [
+        "38de0072aaf37b666ca771d380096a96",
+        "cef8b481f6df7299941c4b676c15c999",
+        "bca2e3898d49a9a6149a1cb2668cb883"
+      ],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 19,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 906,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 906
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "mech-02",
+      "category": "mechanism",
+      "question": "大趋势之后出现交易区间，通常意味着什么？",
+      "expected": [
+        "e755693118a08f01cde502901d0a2963",
+        "6bf656e645a27e4f907333ea588dcb7c",
+        "c60dded0e13239457aefff8ed49432db",
+        "89392667981e012caed61cfb1179e3fc"
+      ],
+      "baseline_found": [],
+      "baseline_missing": [
+        "e755693118a08f01cde502901d0a2963",
+        "6bf656e645a27e4f907333ea588dcb7c",
+        "c60dded0e13239457aefff8ed49432db",
+        "89392667981e012caed61cfb1179e3fc"
+      ],
+      "regression_text_found": [],
+      "graph_found": [],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [],
+      "text_path_lost": [],
+      "still_missing": [
+        "e755693118a08f01cde502901d0a2963",
+        "6bf656e645a27e4f907333ea588dcb7c",
+        "c60dded0e13239457aefff8ed49432db",
+        "89392667981e012caed61cfb1179e3fc"
+      ],
+      "graph_unique": true,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 16,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 923,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 923
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "mech-03",
+      "category": "mechanism",
+      "question": "跳空开盘在日内图上是突破还是回调？",
+      "expected": [
+        "b05f7402a6f80706f4512bed2c5997d8",
+        "1b3c4a17ac8c689e2a0ecde9027df8fe",
+        "2f84c72607665ba007e01aadcb393aee",
+        "dded563fceb3227616b981d604da3203"
+      ],
+      "baseline_found": [
+        "2f84c72607665ba007e01aadcb393aee",
+        "dded563fceb3227616b981d604da3203"
+      ],
+      "baseline_missing": [
+        "b05f7402a6f80706f4512bed2c5997d8",
+        "1b3c4a17ac8c689e2a0ecde9027df8fe"
+      ],
+      "regression_text_found": [
+        "dded563fceb3227616b981d604da3203"
+      ],
+      "graph_found": [
+        "2f84c72607665ba007e01aadcb393aee"
+      ],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [],
+      "text_path_lost": [
+        "2f84c72607665ba007e01aadcb393aee"
+      ],
+      "still_missing": [
+        "b05f7402a6f80706f4512bed2c5997d8",
+        "1b3c4a17ac8c689e2a0ecde9027df8fe"
+      ],
+      "graph_unique": true,
+      "graph_unique_recovered": false,
+      "graph_only": [
+        "2f84c72607665ba007e01aadcb393aee"
+      ],
+      "graph_arm_found": [
+        "2f84c72607665ba007e01aadcb393aee",
+        "dded563fceb3227616b981d604da3203"
+      ],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 18,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 747,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 747
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "mech-04",
+      "category": "mechanism",
+      "question": "趋势什么时候会恢复，什么时候转成交易区间？",
+      "expected": [
+        "9117c447e1fdb66bc1cdef15c58d3845",
+        "7647d8b10d55959dc8868e16f5f0b234",
+        "1c216bfdaa9eafae8eeb7a473038b45a",
+        "dded563fceb3227616b981d604da3203"
+      ],
+      "baseline_found": [],
+      "baseline_missing": [
+        "9117c447e1fdb66bc1cdef15c58d3845",
+        "7647d8b10d55959dc8868e16f5f0b234",
+        "1c216bfdaa9eafae8eeb7a473038b45a",
+        "dded563fceb3227616b981d604da3203"
+      ],
+      "regression_text_found": [],
+      "graph_found": [
+        "dded563fceb3227616b981d604da3203"
+      ],
+      "recovered_expected": [
+        "dded563fceb3227616b981d604da3203"
+      ],
+      "newly_recalled": [
+        "dded563fceb3227616b981d604da3203"
+      ],
+      "lost": [],
+      "text_path_lost": [],
+      "still_missing": [
+        "9117c447e1fdb66bc1cdef15c58d3845",
+        "7647d8b10d55959dc8868e16f5f0b234",
+        "1c216bfdaa9eafae8eeb7a473038b45a"
+      ],
+      "graph_unique": true,
+      "graph_unique_recovered": true,
+      "graph_only": [
+        "dded563fceb3227616b981d604da3203"
+      ],
+      "graph_arm_found": [
+        "dded563fceb3227616b981d604da3203"
+      ],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 16,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 923,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 923
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "mech-05",
+      "category": "mechanism",
+      "question": "反转形态为什么大多数会失败？",
+      "expected": [
+        "dad1f6d51d393a7d023e82f26ca3fccd",
+        "a22445b3f64e9601378b8da782fc637a",
+        "ad5df18d8b827d41cc3a4bd64e5edb33",
+        "e7a6eb6e4f76e06f333cfb83901a5ff3"
+      ],
+      "baseline_found": [],
+      "baseline_missing": [
+        "dad1f6d51d393a7d023e82f26ca3fccd",
+        "a22445b3f64e9601378b8da782fc637a",
+        "ad5df18d8b827d41cc3a4bd64e5edb33",
+        "e7a6eb6e4f76e06f333cfb83901a5ff3"
+      ],
+      "regression_text_found": [],
+      "graph_found": [],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [],
+      "text_path_lost": [],
+      "still_missing": [
+        "dad1f6d51d393a7d023e82f26ca3fccd",
+        "a22445b3f64e9601378b8da782fc637a",
+        "ad5df18d8b827d41cc3a4bd64e5edb33",
+        "e7a6eb6e4f76e06f333cfb83901a5ff3"
+      ],
+      "graph_unique": true,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 18,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 787,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 787
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "mech-06",
+      "category": "mechanism",
+      "question": "陡峭通道中的测试低点，该不该逆势买入？",
+      "expected": [
+        "3b07a477c10e307acbe189e2424a1c82",
+        "0bcafd210d34306f5fd0fcd15e0a195c"
+      ],
+      "baseline_found": [
+        "0bcafd210d34306f5fd0fcd15e0a195c"
+      ],
+      "baseline_missing": [
+        "3b07a477c10e307acbe189e2424a1c82"
+      ],
+      "regression_text_found": [
+        "0bcafd210d34306f5fd0fcd15e0a195c"
+      ],
+      "graph_found": [
+        "3b07a477c10e307acbe189e2424a1c82",
+        "0bcafd210d34306f5fd0fcd15e0a195c"
+      ],
+      "recovered_expected": [
+        "3b07a477c10e307acbe189e2424a1c82"
+      ],
+      "newly_recalled": [
+        "3b07a477c10e307acbe189e2424a1c82"
+      ],
+      "lost": [],
+      "text_path_lost": [],
+      "still_missing": [],
+      "graph_unique": true,
+      "graph_unique_recovered": true,
+      "graph_only": [
+        "3b07a477c10e307acbe189e2424a1c82"
+      ],
+      "graph_arm_found": [
+        "3b07a477c10e307acbe189e2424a1c82",
+        "0bcafd210d34306f5fd0fcd15e0a195c"
+      ],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 23,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 863,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 863
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "mech-07",
+      "category": "mechanism",
+      "question": "突破在5分钟图上常见吗，什么样的突破才算强？",
+      "expected": [
+        "964597e441c0de153d9ef2105d842285",
+        "ce2b62d6e9578e6d2dd755f048409d5f",
+        "53d1ed976584910b48c36aa23580d936"
+      ],
+      "baseline_found": [
+        "ce2b62d6e9578e6d2dd755f048409d5f"
+      ],
+      "baseline_missing": [
+        "964597e441c0de153d9ef2105d842285",
+        "53d1ed976584910b48c36aa23580d936"
+      ],
+      "regression_text_found": [
+        "ce2b62d6e9578e6d2dd755f048409d5f"
+      ],
+      "graph_found": [
+        "964597e441c0de153d9ef2105d842285",
+        "ce2b62d6e9578e6d2dd755f048409d5f",
+        "53d1ed976584910b48c36aa23580d936"
+      ],
+      "recovered_expected": [
+        "964597e441c0de153d9ef2105d842285",
+        "53d1ed976584910b48c36aa23580d936"
+      ],
+      "newly_recalled": [
+        "964597e441c0de153d9ef2105d842285",
+        "53d1ed976584910b48c36aa23580d936"
+      ],
+      "lost": [],
+      "text_path_lost": [],
+      "still_missing": [],
+      "graph_unique": true,
+      "graph_unique_recovered": true,
+      "graph_only": [
+        "964597e441c0de153d9ef2105d842285",
+        "53d1ed976584910b48c36aa23580d936"
+      ],
+      "graph_arm_found": [
+        "964597e441c0de153d9ef2105d842285",
+        "ce2b62d6e9578e6d2dd755f048409d5f",
+        "53d1ed976584910b48c36aa23580d936"
+      ],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 16,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 654,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 654
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "mech-08",
+      "category": "mechanism",
+      "question": "开盘第一小时的双顶或双底旗形可以交易吗？",
+      "expected": [
+        "8eac6759d8b55a0ba5aa9e8be4cadda1"
+      ],
+      "baseline_found": [
+        "8eac6759d8b55a0ba5aa9e8be4cadda1"
+      ],
+      "baseline_missing": [],
+      "regression_text_found": [
+        "8eac6759d8b55a0ba5aa9e8be4cadda1"
+      ],
+      "graph_found": [],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [],
+      "text_path_lost": [],
+      "still_missing": [],
+      "graph_unique": false,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [
+        "8eac6759d8b55a0ba5aa9e8be4cadda1"
+      ],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 21,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 774,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 774
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "mech-09",
+      "category": "mechanism",
+      "question": "楔形反转需要满足什么条件？",
+      "expected": [
+        "8ef770a0d81c76cec759ad9a593f5834",
+        "9fa2638af2f5465db6c88764842e9e44",
+        "964597e441c0de153d9ef2105d842285"
+      ],
+      "baseline_found": [],
+      "baseline_missing": [
+        "8ef770a0d81c76cec759ad9a593f5834",
+        "9fa2638af2f5465db6c88764842e9e44",
+        "964597e441c0de153d9ef2105d842285"
+      ],
+      "regression_text_found": [],
+      "graph_found": [
+        "8ef770a0d81c76cec759ad9a593f5834",
+        "9fa2638af2f5465db6c88764842e9e44",
+        "964597e441c0de153d9ef2105d842285"
+      ],
+      "recovered_expected": [
+        "8ef770a0d81c76cec759ad9a593f5834",
+        "9fa2638af2f5465db6c88764842e9e44",
+        "964597e441c0de153d9ef2105d842285"
+      ],
+      "newly_recalled": [
+        "8ef770a0d81c76cec759ad9a593f5834",
+        "9fa2638af2f5465db6c88764842e9e44",
+        "964597e441c0de153d9ef2105d842285"
+      ],
+      "lost": [],
+      "text_path_lost": [],
+      "still_missing": [],
+      "graph_unique": true,
+      "graph_unique_recovered": true,
+      "graph_only": [
+        "8ef770a0d81c76cec759ad9a593f5834",
+        "9fa2638af2f5465db6c88764842e9e44",
+        "964597e441c0de153d9ef2105d842285"
+      ],
+      "graph_arm_found": [
+        "8ef770a0d81c76cec759ad9a593f5834",
+        "9fa2638af2f5465db6c88764842e9e44",
+        "964597e441c0de153d9ef2105d842285"
+      ],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 16,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 734,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 734
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "mech-10",
+      "category": "mechanism",
+      "question": "趋势中的回调会随着趋势持续而越来越大吗？",
+      "expected": [
+        "54c4bd4a184d6f709936370de1095174",
+        "4c652ffaee935db256aac204fb806ef2",
+        "3b08ac8b255117e428f6e08f5aafa308"
+      ],
+      "baseline_found": [],
+      "baseline_missing": [
+        "54c4bd4a184d6f709936370de1095174",
+        "4c652ffaee935db256aac204fb806ef2",
+        "3b08ac8b255117e428f6e08f5aafa308"
+      ],
+      "regression_text_found": [],
+      "graph_found": [],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [],
+      "text_path_lost": [],
+      "still_missing": [
+        "54c4bd4a184d6f709936370de1095174",
+        "4c652ffaee935db256aac204fb806ef2",
+        "3b08ac8b255117e428f6e08f5aafa308"
+      ],
+      "graph_unique": true,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 16,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 923,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 923
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "enc-11",
+      "category": "encyclopedia",
+      "question": "更高高点的双顶熊旗失败之后，价格先做出更低低点，再形成什么？",
+      "expected": [
+        "715ab63aab264f80e02c0634b2ec1c30"
+      ],
+      "baseline_found": [
+        "715ab63aab264f80e02c0634b2ec1c30"
+      ],
+      "baseline_missing": [],
+      "regression_text_found": [
+        "715ab63aab264f80e02c0634b2ec1c30"
+      ],
+      "graph_found": [],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [],
+      "text_path_lost": [],
+      "still_missing": [],
+      "graph_unique": false,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [
+        "715ab63aab264f80e02c0634b2ec1c30"
+      ],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 18,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 933,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 933
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "enc-12",
+      "category": "encyclopedia",
+      "question": "一波卖出高潮之后，接下来常见的结构有哪几种？",
+      "expected": [
+        "38a9a3419bc54cdfac362427f8691f83",
+        "c8fdc5614adbf3d440702d3eeaa25b43",
+        "2a08f8d4a63d20c412edb257b5eaf424"
+      ],
+      "baseline_found": [
+        "38a9a3419bc54cdfac362427f8691f83",
+        "c8fdc5614adbf3d440702d3eeaa25b43",
+        "2a08f8d4a63d20c412edb257b5eaf424"
+      ],
+      "baseline_missing": [],
+      "regression_text_found": [
+        "38a9a3419bc54cdfac362427f8691f83",
+        "c8fdc5614adbf3d440702d3eeaa25b43"
+      ],
+      "graph_found": [],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [
+        "2a08f8d4a63d20c412edb257b5eaf424"
+      ],
+      "text_path_lost": [
+        "2a08f8d4a63d20c412edb257b5eaf424"
+      ],
+      "still_missing": [],
+      "graph_unique": false,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [
+        "38a9a3419bc54cdfac362427f8691f83",
+        "c8fdc5614adbf3d440702d3eeaa25b43"
+      ],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 16,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 972,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 972
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "enc-13",
+      "category": "encyclopedia",
+      "question": "交易区间开盘之后，多头突破和空头突破分别有什么结局？",
+      "expected": [
+        "01fbcabae453b35f4a5c2ba478a2883c",
+        "35d1bcd20e9a4c4b1084a3047c4ea04d",
+        "06a38e7d0fc49978bea96b4feff36a33"
+      ],
+      "baseline_found": [
+        "01fbcabae453b35f4a5c2ba478a2883c",
+        "35d1bcd20e9a4c4b1084a3047c4ea04d",
+        "06a38e7d0fc49978bea96b4feff36a33"
+      ],
+      "baseline_missing": [],
+      "regression_text_found": [
+        "35d1bcd20e9a4c4b1084a3047c4ea04d"
+      ],
+      "graph_found": [],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [
+        "01fbcabae453b35f4a5c2ba478a2883c",
+        "06a38e7d0fc49978bea96b4feff36a33"
+      ],
+      "text_path_lost": [
+        "01fbcabae453b35f4a5c2ba478a2883c",
+        "06a38e7d0fc49978bea96b4feff36a33"
+      ],
+      "still_missing": [],
+      "graph_unique": false,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [
+        "35d1bcd20e9a4c4b1084a3047c4ea04d"
+      ],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 21,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 952,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 952
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "enc-14",
+      "category": "encyclopedia",
+      "question": "连续外包牛旗的向上突破和向下突破，结果分别是什么？",
+      "expected": [
+        "1b9ac2313706aa29dd181725ffb33ab8"
+      ],
+      "baseline_found": [
+        "1b9ac2313706aa29dd181725ffb33ab8"
+      ],
+      "baseline_missing": [],
+      "regression_text_found": [],
+      "graph_found": [],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [
+        "1b9ac2313706aa29dd181725ffb33ab8"
+      ],
+      "text_path_lost": [
+        "1b9ac2313706aa29dd181725ffb33ab8"
+      ],
+      "still_missing": [],
+      "graph_unique": false,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 16,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 694,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 694
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "enc-15",
+      "category": "encyclopedia",
+      "question": "空头陷阱之后，价格随后形成什么趋势？",
+      "expected": [
+        "4de48e3656dc670c6ffa5d983fa02bf3"
+      ],
+      "baseline_found": [
+        "4de48e3656dc670c6ffa5d983fa02bf3"
+      ],
+      "baseline_missing": [],
+      "regression_text_found": [
+        "4de48e3656dc670c6ffa5d983fa02bf3"
+      ],
+      "graph_found": [],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [],
+      "text_path_lost": [],
+      "still_missing": [],
+      "graph_unique": false,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [
+        "4de48e3656dc670c6ffa5d983fa02bf3"
+      ],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 16,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 928,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 928
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "enc-16",
+      "category": "encyclopedia",
+      "question": "楔形顶之后，价格接下来先形成什么？",
+      "expected": [
+        "fe32b58d1c464c04d68ec32a291f5ffa"
+      ],
+      "baseline_found": [
+        "fe32b58d1c464c04d68ec32a291f5ffa"
+      ],
+      "baseline_missing": [],
+      "regression_text_found": [
+        "fe32b58d1c464c04d68ec32a291f5ffa"
+      ],
+      "graph_found": [],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [],
+      "text_path_lost": [],
+      "still_missing": [],
+      "graph_unique": false,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [
+        "fe32b58d1c464c04d68ec32a291f5ffa"
+      ],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 17,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 717,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 717
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "enc-17",
+      "category": "encyclopedia",
+      "question": "双底之后上涨，随后会走成哪种日子？",
+      "expected": [
+        "0ca1ca2eeeec25370cd794962364847a"
+      ],
+      "baseline_found": [
+        "0ca1ca2eeeec25370cd794962364847a"
+      ],
+      "baseline_missing": [],
+      "regression_text_found": [
+        "0ca1ca2eeeec25370cd794962364847a"
+      ],
+      "graph_found": [],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [],
+      "text_path_lost": [],
+      "still_missing": [],
+      "graph_unique": false,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [
+        "0ca1ca2eeeec25370cd794962364847a"
+      ],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 17,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 960,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 960
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "enc-18",
+      "category": "encyclopedia",
+      "question": "深度回调之后，市场进入哪种结构？",
+      "expected": [
+        "0b19860eef9cdd5885ca908dc7338cc1"
+      ],
+      "baseline_found": [
+        "0b19860eef9cdd5885ca908dc7338cc1"
+      ],
+      "baseline_missing": [],
+      "regression_text_found": [],
+      "graph_found": [],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [
+        "0b19860eef9cdd5885ca908dc7338cc1"
+      ],
+      "text_path_lost": [
+        "0b19860eef9cdd5885ca908dc7338cc1"
+      ],
+      "still_missing": [],
+      "graph_unique": false,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 19,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 753,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 753
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "enc-19",
+      "category": "encyclopedia",
+      "question": "大幅向下跳空之后，主要趋势反转和双底按什么顺序出现？",
+      "expected": [
+        "abcb3f634d0e190b4ce79aa2166a29e6"
+      ],
+      "baseline_found": [
+        "abcb3f634d0e190b4ce79aa2166a29e6"
+      ],
+      "baseline_missing": [],
+      "regression_text_found": [
+        "abcb3f634d0e190b4ce79aa2166a29e6"
+      ],
+      "graph_found": [],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [],
+      "text_path_lost": [],
+      "still_missing": [],
+      "graph_unique": false,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [
+        "abcb3f634d0e190b4ce79aa2166a29e6"
+      ],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 18,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 810,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 810
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "enc-20",
+      "category": "encyclopedia",
+      "question": "先急涨、再沿通道缓涨的行情，通道被向下突破之后会转成什么？",
+      "expected": [
+        "c925fee8879ee9d72855ffcbb546f50f",
+        "0b7d9918ffc4b470e29c4b863e9400ce"
+      ],
+      "baseline_found": [
+        "c925fee8879ee9d72855ffcbb546f50f",
+        "0b7d9918ffc4b470e29c4b863e9400ce"
+      ],
+      "baseline_missing": [],
+      "regression_text_found": [
+        "c925fee8879ee9d72855ffcbb546f50f"
+      ],
+      "graph_found": [],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [
+        "0b7d9918ffc4b470e29c4b863e9400ce"
+      ],
+      "text_path_lost": [
+        "0b7d9918ffc4b470e29c4b863e9400ce"
+      ],
+      "still_missing": [],
+      "graph_unique": false,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [
+        "c925fee8879ee9d72855ffcbb546f50f"
+      ],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 23,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 946,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 946
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "mech-11",
+      "category": "mechanism",
+      "question": "紧密交易区间为什么像磁铁，向上或向下追突破为什么经常失败？",
+      "expected": [
+        "5472a0b83780b8486da7a8eeee190e64",
+        "00838a05232ae5772211b42657ce9c73",
+        "c3fed04bcf6436a285f64e59c759c01f"
+      ],
+      "baseline_found": [],
+      "baseline_missing": [
+        "5472a0b83780b8486da7a8eeee190e64",
+        "00838a05232ae5772211b42657ce9c73",
+        "c3fed04bcf6436a285f64e59c759c01f"
+      ],
+      "regression_text_found": [],
+      "graph_found": [],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [],
+      "text_path_lost": [],
+      "still_missing": [
+        "5472a0b83780b8486da7a8eeee190e64",
+        "00838a05232ae5772211b42657ce9c73",
+        "c3fed04bcf6436a285f64e59c759c01f"
+      ],
+      "graph_unique": true,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 21,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 952,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 952
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "mech-12",
+      "category": "mechanism",
+      "question": "急拉之后转成缓坡的尖峰加通道走势，后半段为什么会回测通道起点？",
+      "expected": [
+        "951eabecbe84ea6298230099ed3895ab",
+        "6b5f97090d4194f024d60ccf954534bd",
+        "615866ae8b2db0a307f6cd71d8d09383",
+        "8161d3b60e1e9b7a4474265e36230814"
+      ],
+      "baseline_found": [
+        "6b5f97090d4194f024d60ccf954534bd",
+        "615866ae8b2db0a307f6cd71d8d09383"
+      ],
+      "baseline_missing": [
+        "951eabecbe84ea6298230099ed3895ab",
+        "8161d3b60e1e9b7a4474265e36230814"
+      ],
+      "regression_text_found": [
+        "6b5f97090d4194f024d60ccf954534bd",
+        "615866ae8b2db0a307f6cd71d8d09383"
+      ],
+      "graph_found": [],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [],
+      "text_path_lost": [],
+      "still_missing": [
+        "951eabecbe84ea6298230099ed3895ab",
+        "8161d3b60e1e9b7a4474265e36230814"
+      ],
+      "graph_unique": true,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [
+        "6b5f97090d4194f024d60ccf954534bd",
+        "615866ae8b2db0a307f6cd71d8d09383"
+      ],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 26,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 1126,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 1126
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "mech-13",
+      "category": "mechanism",
+      "question": "价格接近某些位置时会突然加速，到了又马上掉头，书里怎么解释？",
+      "expected": [
+        "24100ff46110f09c9f7f14f4e1da8644",
+        "ebc6f9b176231cbf755587d7182868ee",
+        "f1204778d7b7513b6290c70f0a944834",
+        "bbcfd2ed29877a3de1992c4d18a2a6ab"
+      ],
+      "baseline_found": [
+        "24100ff46110f09c9f7f14f4e1da8644",
+        "f1204778d7b7513b6290c70f0a944834"
+      ],
+      "baseline_missing": [
+        "ebc6f9b176231cbf755587d7182868ee",
+        "bbcfd2ed29877a3de1992c4d18a2a6ab"
+      ],
+      "regression_text_found": [],
+      "graph_found": [],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [
+        "24100ff46110f09c9f7f14f4e1da8644",
+        "f1204778d7b7513b6290c70f0a944834"
+      ],
+      "text_path_lost": [
+        "24100ff46110f09c9f7f14f4e1da8644",
+        "f1204778d7b7513b6290c70f0a944834"
+      ],
+      "still_missing": [
+        "ebc6f9b176231cbf755587d7182868ee",
+        "bbcfd2ed29877a3de1992c4d18a2a6ab"
+      ],
+      "graph_unique": true,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 18,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 974,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 974
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "mech-14",
+      "category": "mechanism",
+      "question": "怎样区分真正的趋势反转和一次逆势抢反弹？",
+      "expected": [
+        "044e7c90baf695139377d63f0b16037b",
+        "06ef90590d2141944f42a467af6bb923",
+        "708aa3940932b8b9c9c40a9eb5ad6c7d",
+        "17a7a10ba875e900a9480739932ba970"
+      ],
+      "baseline_found": [
+        "06ef90590d2141944f42a467af6bb923"
+      ],
+      "baseline_missing": [
+        "044e7c90baf695139377d63f0b16037b",
+        "708aa3940932b8b9c9c40a9eb5ad6c7d",
+        "17a7a10ba875e900a9480739932ba970"
+      ],
+      "regression_text_found": [
+        "06ef90590d2141944f42a467af6bb923"
+      ],
+      "graph_found": [],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [],
+      "text_path_lost": [],
+      "still_missing": [
+        "044e7c90baf695139377d63f0b16037b",
+        "708aa3940932b8b9c9c40a9eb5ad6c7d",
+        "17a7a10ba875e900a9480739932ba970"
+      ],
+      "graph_unique": true,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [
+        "06ef90590d2141944f42a467af6bb923"
+      ],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 16,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 923,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 923
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "mech-15",
+      "category": "mechanism",
+      "question": "趋势里的回调为什么要等第二条腿走完才算结束？",
+      "expected": [
+        "6eb7a60eff40e2d3d9ff374bb2559612",
+        "3ad8fdd7a9db6fce275e9e2e0d5aab69",
+        "67ded5ba12943aae35014b8a4d9b7c5a"
+      ],
+      "baseline_found": [
+        "6eb7a60eff40e2d3d9ff374bb2559612"
+      ],
+      "baseline_missing": [
+        "3ad8fdd7a9db6fce275e9e2e0d5aab69",
+        "67ded5ba12943aae35014b8a4d9b7c5a"
+      ],
+      "regression_text_found": [],
+      "graph_found": [],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [
+        "6eb7a60eff40e2d3d9ff374bb2559612"
+      ],
+      "text_path_lost": [
+        "6eb7a60eff40e2d3d9ff374bb2559612"
+      ],
+      "still_missing": [
+        "3ad8fdd7a9db6fce275e9e2e0d5aab69",
+        "67ded5ba12943aae35014b8a4d9b7c5a"
+      ],
+      "graph_unique": true,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 16,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 923,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 923
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "mech-16",
+      "category": "mechanism",
+      "question": "多头旗形的向上突破失败之后，这段横盘在事后被叫作什么？",
+      "expected": [
+        "0a03888881ad37f74050360654f32a09",
+        "3271b2669b093284211d3d475e0f3cc3"
+      ],
+      "baseline_found": [],
+      "baseline_missing": [
+        "0a03888881ad37f74050360654f32a09",
+        "3271b2669b093284211d3d475e0f3cc3"
+      ],
+      "regression_text_found": [],
+      "graph_found": [],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [],
+      "text_path_lost": [],
+      "still_missing": [
+        "0a03888881ad37f74050360654f32a09",
+        "3271b2669b093284211d3d475e0f3cc3"
+      ],
+      "graph_unique": true,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 16,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 694,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 694
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "mech-17",
+      "category": "mechanism",
+      "question": "第一次入场信号不够确定时，应该等什么？",
+      "expected": [
+        "10bfbcda1f219ab0a1a2dd6169c3c279",
+        "09e2dc9cf77baaeae5cccf2ea5e46b19"
+      ],
+      "baseline_found": [
+        "10bfbcda1f219ab0a1a2dd6169c3c279"
+      ],
+      "baseline_missing": [
+        "09e2dc9cf77baaeae5cccf2ea5e46b19"
+      ],
+      "regression_text_found": [
+        "10bfbcda1f219ab0a1a2dd6169c3c279"
+      ],
+      "graph_found": [],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [],
+      "text_path_lost": [],
+      "still_missing": [
+        "09e2dc9cf77baaeae5cccf2ea5e46b19"
+      ],
+      "graph_unique": true,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [
+        "10bfbcda1f219ab0a1a2dd6169c3c279"
+      ],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 20,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 791,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 791
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "mech-18",
+      "category": "mechanism",
+      "question": "同一个形态放到更高周期上看会变成什么？",
+      "expected": [
+        "0877fc6bf090788fb25916cd3e9d8652",
+        "17d8f4a6a24166b93282e8d2373b8240",
+        "88872301a5163ea6148e736152b7a600"
+      ],
+      "baseline_found": [
+        "0877fc6bf090788fb25916cd3e9d8652",
+        "88872301a5163ea6148e736152b7a600"
+      ],
+      "baseline_missing": [
+        "17d8f4a6a24166b93282e8d2373b8240"
+      ],
+      "regression_text_found": [
+        "0877fc6bf090788fb25916cd3e9d8652"
+      ],
+      "graph_found": [],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [
+        "88872301a5163ea6148e736152b7a600"
+      ],
+      "text_path_lost": [
+        "88872301a5163ea6148e736152b7a600"
+      ],
+      "still_missing": [
+        "17d8f4a6a24166b93282e8d2373b8240"
+      ],
+      "graph_unique": true,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [
+        "0877fc6bf090788fb25916cd3e9d8652"
+      ],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 19,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 972,
+        "seeds": 6,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 972
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "mech-19",
+      "category": "mechanism",
+      "question": "强趋势K线之后立刻出现反向强趋势K线，这种高潮反转后面怎么发展？",
+      "expected": [
+        "56823e23d2899f7f13d853dee10bace8",
+        "c0693265dbd1b6bea27ea6223127334a",
+        "ebf46100eb3a1516b38296e38f395ef3"
+      ],
+      "baseline_found": [],
+      "baseline_missing": [
+        "56823e23d2899f7f13d853dee10bace8",
+        "c0693265dbd1b6bea27ea6223127334a",
+        "ebf46100eb3a1516b38296e38f395ef3"
+      ],
+      "regression_text_found": [],
+      "graph_found": [],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [],
+      "text_path_lost": [],
+      "still_missing": [
+        "56823e23d2899f7f13d853dee10bace8",
+        "c0693265dbd1b6bea27ea6223127334a",
+        "ebf46100eb3a1516b38296e38f395ef3"
+      ],
+      "graph_unique": true,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 17,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 836,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 836
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "mech-20",
+      "category": "mechanism",
+      "question": "从横盘或尖峰突破之后，第一目标位通常怎么量？",
+      "expected": [
+        "2c5556d3eb76567a761ffb3d114b0e5b",
+        "10c5e0a64d0dcd30ffe3b565b1ff2a82",
+        "c1e8a20448ca7f53d60088507f71eab6",
+        "2f4509fafa405667d29d388e7f1e98c5"
+      ],
+      "baseline_found": [],
+      "baseline_missing": [
+        "2c5556d3eb76567a761ffb3d114b0e5b",
+        "10c5e0a64d0dcd30ffe3b565b1ff2a82",
+        "c1e8a20448ca7f53d60088507f71eab6",
+        "2f4509fafa405667d29d388e7f1e98c5"
+      ],
+      "regression_text_found": [],
+      "graph_found": [],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [],
+      "text_path_lost": [],
+      "still_missing": [
+        "2c5556d3eb76567a761ffb3d114b0e5b",
+        "10c5e0a64d0dcd30ffe3b565b1ff2a82",
+        "c1e8a20448ca7f53d60088507f71eab6",
+        "2f4509fafa405667d29d388e7f1e98c5"
+      ],
+      "graph_unique": true,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 18,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 906,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 906
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "exc-01",
+      "category": "exception",
+      "question": "在窄幅空头通道里，LL主要趋势反转失败之后变成什么？",
+      "expected": [
+        "301be677f99a48d42521814d4f8247e0"
+      ],
+      "baseline_found": [
+        "301be677f99a48d42521814d4f8247e0"
+      ],
+      "baseline_missing": [],
+      "regression_text_found": [
+        "301be677f99a48d42521814d4f8247e0"
+      ],
+      "graph_found": [],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [],
+      "text_path_lost": [],
+      "still_missing": [],
+      "graph_unique": false,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [
+        "301be677f99a48d42521814d4f8247e0"
+      ],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 25,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 989,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 989
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "exc-02",
+      "category": "exception",
+      "question": "回踩20均线的缺口K线，什么背景下不能当买入或卖出信号？",
+      "expected": [
+        "2a9f22e5d299e512c70aed43b279c124",
+        "edf0270199e5f16715a6f78b807105c8",
+        "31a3da0f44bdb31b27b02682b235ba63"
+      ],
+      "baseline_found": [
+        "2a9f22e5d299e512c70aed43b279c124",
+        "edf0270199e5f16715a6f78b807105c8",
+        "31a3da0f44bdb31b27b02682b235ba63"
+      ],
+      "baseline_missing": [],
+      "regression_text_found": [
+        "2a9f22e5d299e512c70aed43b279c124",
+        "edf0270199e5f16715a6f78b807105c8",
+        "31a3da0f44bdb31b27b02682b235ba63"
+      ],
+      "graph_found": [],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [],
+      "text_path_lost": [],
+      "still_missing": [],
+      "graph_unique": false,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [
+        "2a9f22e5d299e512c70aed43b279c124",
+        "edf0270199e5f16715a6f78b807105c8",
+        "31a3da0f44bdb31b27b02682b235ba63"
+      ],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 20,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 741,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 741
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "exc-03",
+      "category": "exception",
+      "question": "楔形底失败之后形成什么？",
+      "expected": [
+        "3415bd7f2a95d0b8cfedc283d9f14ff7"
+      ],
+      "baseline_found": [
+        "3415bd7f2a95d0b8cfedc283d9f14ff7"
+      ],
+      "baseline_missing": [],
+      "regression_text_found": [
+        "3415bd7f2a95d0b8cfedc283d9f14ff7"
+      ],
+      "graph_found": [],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [],
+      "text_path_lost": [],
+      "still_missing": [],
+      "graph_unique": false,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [
+        "3415bd7f2a95d0b8cfedc283d9f14ff7"
+      ],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 17,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 714,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 714
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "exc-04",
+      "category": "exception",
+      "question": "楔形顶失败、价格没有反转时，后面可能出现什么？",
+      "expected": [
+        "5839117359f4313b98bd494988759f4f",
+        "5b0653ff2ee34242ef19ff43cb6e3c9a",
+        "55349233ef4feb913edb74d599799939"
+      ],
+      "baseline_found": [
+        "5839117359f4313b98bd494988759f4f",
+        "5b0653ff2ee34242ef19ff43cb6e3c9a",
+        "55349233ef4feb913edb74d599799939"
+      ],
+      "baseline_missing": [],
+      "regression_text_found": [
+        "5839117359f4313b98bd494988759f4f",
+        "5b0653ff2ee34242ef19ff43cb6e3c9a",
+        "55349233ef4feb913edb74d599799939"
+      ],
+      "graph_found": [],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [],
+      "text_path_lost": [],
+      "still_missing": [],
+      "graph_unique": false,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [
+        "5839117359f4313b98bd494988759f4f",
+        "5b0653ff2ee34242ef19ff43cb6e3c9a",
+        "55349233ef4feb913edb74d599799939"
+      ],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 18,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 736,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 736
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "exc-05",
+      "category": "exception",
+      "question": "空头末端的最后一个旗形反转失败，通常意味着什么？",
+      "expected": [
+        "076bb510b08cac5f22300b3be4e1248f",
+        "7d3ce9a9e7bd8804455aeaa28b20aab8",
+        "4f220ff7be0f54dece532b78a7ccb940"
+      ],
+      "baseline_found": [
+        "076bb510b08cac5f22300b3be4e1248f",
+        "7d3ce9a9e7bd8804455aeaa28b20aab8",
+        "4f220ff7be0f54dece532b78a7ccb940"
+      ],
+      "baseline_missing": [],
+      "regression_text_found": [
+        "076bb510b08cac5f22300b3be4e1248f",
+        "4f220ff7be0f54dece532b78a7ccb940"
+      ],
+      "graph_found": [],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [
+        "7d3ce9a9e7bd8804455aeaa28b20aab8"
+      ],
+      "text_path_lost": [
+        "7d3ce9a9e7bd8804455aeaa28b20aab8"
+      ],
+      "still_missing": [],
+      "graph_unique": false,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [
+        "076bb510b08cac5f22300b3be4e1248f",
+        "4f220ff7be0f54dece532b78a7ccb940"
+      ],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 18,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 787,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 787
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "exc-06",
+      "category": "exception",
+      "question": "卖出高潮中出现的ii买入信号，反弹结果如何？",
+      "expected": [
+        "5f51be9f8bf2e6a878c586be13902c3f"
+      ],
+      "baseline_found": [
+        "5f51be9f8bf2e6a878c586be13902c3f"
+      ],
+      "baseline_missing": [],
+      "regression_text_found": [
+        "5f51be9f8bf2e6a878c586be13902c3f"
+      ],
+      "graph_found": [],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [],
+      "text_path_lost": [],
+      "still_missing": [],
+      "graph_unique": false,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [
+        "5f51be9f8bf2e6a878c586be13902c3f"
+      ],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 18,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 824,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 824
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "exc-07",
+      "category": "exception",
+      "question": "第二腿陷阱式上涨为什么会失败？",
+      "expected": [
+        "68d6c863487e1c831c1cafb5567b1e63"
+      ],
+      "baseline_found": [
+        "68d6c863487e1c831c1cafb5567b1e63"
+      ],
+      "baseline_missing": [],
+      "regression_text_found": [
+        "68d6c863487e1c831c1cafb5567b1e63"
+      ],
+      "graph_found": [],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [],
+      "text_path_lost": [],
+      "still_missing": [],
+      "graph_unique": false,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [
+        "68d6c863487e1c831c1cafb5567b1e63"
+      ],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 16,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 863,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 863
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "exc-08",
+      "category": "exception",
+      "question": "18根K线区间上方的突破失败之后，价格转向哪边？",
+      "expected": [
+        "5575c0ae221c44ae2e39120e508ee68a"
+      ],
+      "baseline_found": [
+        "5575c0ae221c44ae2e39120e508ee68a"
+      ],
+      "baseline_missing": [],
+      "regression_text_found": [
+        "5575c0ae221c44ae2e39120e508ee68a"
+      ],
+      "graph_found": [],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [],
+      "text_path_lost": [],
+      "still_missing": [],
+      "graph_unique": false,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [
+        "5575c0ae221c44ae2e39120e508ee68a"
+      ],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 16,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 694,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 694
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "exc-09",
+      "category": "exception",
+      "question": "急涨与通道型楔形多头通道上方的突破，结果如何？",
+      "expected": [
+        "36354ef09fca84d5dd97a366c22d99ce"
+      ],
+      "baseline_found": [
+        "36354ef09fca84d5dd97a366c22d99ce"
+      ],
+      "baseline_missing": [],
+      "regression_text_found": [
+        "36354ef09fca84d5dd97a366c22d99ce"
+      ],
+      "graph_found": [],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [],
+      "text_path_lost": [],
+      "still_missing": [],
+      "graph_unique": false,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [
+        "36354ef09fca84d5dd97a366c22d99ce"
+      ],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 23,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 927,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 927
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "exc-10",
+      "category": "exception",
+      "question": "牛旗失败之后，空头趋势的跌幅和向下测量移动相比如何？",
+      "expected": [
+        "18aab5a3f72a4d67d5d953d5af80019d"
+      ],
+      "baseline_found": [
+        "18aab5a3f72a4d67d5d953d5af80019d"
+      ],
+      "baseline_missing": [],
+      "regression_text_found": [
+        "18aab5a3f72a4d67d5d953d5af80019d"
+      ],
+      "graph_found": [],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [],
+      "text_path_lost": [],
+      "still_missing": [],
+      "graph_unique": false,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [
+        "18aab5a3f72a4d67d5d953d5af80019d"
+      ],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 16,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 923,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 923
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "cond-01",
+      "category": "conditioned_claim",
+      "question": "不想按比例缩小仓位的时候，逆势交易还能不能做？",
+      "expected": [
+        "e58afdb137a5685768591e59c8eab41d"
+      ],
+      "baseline_found": [
+        "e58afdb137a5685768591e59c8eab41d"
+      ],
+      "baseline_missing": [],
+      "regression_text_found": [
+        "e58afdb137a5685768591e59c8eab41d"
+      ],
+      "graph_found": [
+        "e58afdb137a5685768591e59c8eab41d"
+      ],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [],
+      "text_path_lost": [],
+      "still_missing": [],
+      "graph_unique": false,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [
+        "e58afdb137a5685768591e59c8eab41d"
+      ],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 20,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 761,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 761
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "cond-02",
+      "category": "conditioned_claim",
+      "question": "信号、背景和方向都很完美，为什么还可能不做这笔交易？",
+      "expected": [
+        "749ef77184c09e61b1f65f3db979cd84"
+      ],
+      "baseline_found": [
+        "749ef77184c09e61b1f65f3db979cd84"
+      ],
+      "baseline_missing": [],
+      "regression_text_found": [
+        "749ef77184c09e61b1f65f3db979cd84"
+      ],
+      "graph_found": [
+        "749ef77184c09e61b1f65f3db979cd84"
+      ],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [],
+      "text_path_lost": [],
+      "still_missing": [],
+      "graph_unique": false,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [
+        "749ef77184c09e61b1f65f3db979cd84"
+      ],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 18,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 661,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 661
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "cond-03",
+      "category": "conditioned_claim",
+      "question": "回调数到第几次之后，就不该再按趋势思路做了？",
+      "expected": [
+        "418944eab33576aabb183168cbb29c01"
+      ],
+      "baseline_found": [
+        "418944eab33576aabb183168cbb29c01"
+      ],
+      "baseline_missing": [],
+      "regression_text_found": [],
+      "graph_found": [],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [
+        "418944eab33576aabb183168cbb29c01"
+      ],
+      "text_path_lost": [
+        "418944eab33576aabb183168cbb29c01"
+      ],
+      "still_missing": [],
+      "graph_unique": false,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 19,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 753,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 753
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "cond-04",
+      "category": "conditioned_claim",
+      "question": "哪种缺口通常很快会被回补？",
+      "expected": [
+        "bd5b4c28617ece147f8e580bcbbdb629"
+      ],
+      "baseline_found": [],
+      "baseline_missing": [
+        "bd5b4c28617ece147f8e580bcbbdb629"
+      ],
+      "regression_text_found": [],
+      "graph_found": [],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [],
+      "text_path_lost": [],
+      "still_missing": [
+        "bd5b4c28617ece147f8e580bcbbdb629"
+      ],
+      "graph_unique": true,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 18,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 810,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 810
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "cond-05",
+      "category": "conditioned_claim",
+      "question": "缺口刚出现时，能不能当场确定它是哪一种？",
+      "expected": [
+        "a37888141dae12ef3ba76bc29d4e66f5"
+      ],
+      "baseline_found": [
+        "a37888141dae12ef3ba76bc29d4e66f5"
+      ],
+      "baseline_missing": [],
+      "regression_text_found": [
+        "a37888141dae12ef3ba76bc29d4e66f5"
+      ],
+      "graph_found": [
+        "a37888141dae12ef3ba76bc29d4e66f5"
+      ],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [],
+      "text_path_lost": [],
+      "still_missing": [],
+      "graph_unique": false,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [
+        "a37888141dae12ef3ba76bc29d4e66f5"
+      ],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 18,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 756,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 756
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "cond-06",
+      "category": "conditioned_claim",
+      "question": "ii或ioi形态出现在什么位置时，可以作为独立的入场信号？",
+      "expected": [
+        "4032664410bb78b2e30d02a80b461c3f"
+      ],
+      "baseline_found": [
+        "4032664410bb78b2e30d02a80b461c3f"
+      ],
+      "baseline_missing": [],
+      "regression_text_found": [
+        "4032664410bb78b2e30d02a80b461c3f"
+      ],
+      "graph_found": [],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [],
+      "text_path_lost": [],
+      "still_missing": [],
+      "graph_unique": false,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [
+        "4032664410bb78b2e30d02a80b461c3f"
+      ],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 15,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 856,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 856
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "cond-07",
+      "category": "conditioned_claim",
+      "question": "开盘后半小时到一小时，一般会落在哪几种结构里？",
+      "expected": [
+        "34c0eb7ba7dfae64179bc14663ea7871"
+      ],
+      "baseline_found": [
+        "34c0eb7ba7dfae64179bc14663ea7871"
+      ],
+      "baseline_missing": [],
+      "regression_text_found": [],
+      "graph_found": [
+        "34c0eb7ba7dfae64179bc14663ea7871"
+      ],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [],
+      "text_path_lost": [
+        "34c0eb7ba7dfae64179bc14663ea7871"
+      ],
+      "still_missing": [],
+      "graph_unique": false,
+      "graph_unique_recovered": false,
+      "graph_only": [
+        "34c0eb7ba7dfae64179bc14663ea7871"
+      ],
+      "graph_arm_found": [
+        "34c0eb7ba7dfae64179bc14663ea7871"
+      ],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 21,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 709,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 709
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "cond-08",
+      "category": "conditioned_claim",
+      "question": "从一个时段进入下一个时段时，前一时段的高低点会起什么作用？",
+      "expected": [
+        "34e282394bfc079ff6820fcc26084eea"
+      ],
+      "baseline_found": [
+        "34e282394bfc079ff6820fcc26084eea"
+      ],
+      "baseline_missing": [],
+      "regression_text_found": [
+        "34e282394bfc079ff6820fcc26084eea"
+      ],
+      "graph_found": [],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [],
+      "text_path_lost": [],
+      "still_missing": [],
+      "graph_unique": false,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [
+        "34e282394bfc079ff6820fcc26084eea"
+      ],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 21,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 774,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 774
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "cond-09",
+      "category": "conditioned_claim",
+      "question": "回调只走了一条腿时，价格接下来可能怎么走？",
+      "expected": [
+        "38263836305d4b619af84051ad5d4970"
+      ],
+      "baseline_found": [
+        "38263836305d4b619af84051ad5d4970"
+      ],
+      "baseline_missing": [],
+      "regression_text_found": [],
+      "graph_found": [
+        "38263836305d4b619af84051ad5d4970"
+      ],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [],
+      "text_path_lost": [
+        "38263836305d4b619af84051ad5d4970"
+      ],
+      "still_missing": [],
+      "graph_unique": false,
+      "graph_unique_recovered": false,
+      "graph_only": [
+        "38263836305d4b619af84051ad5d4970"
+      ],
+      "graph_arm_found": [
+        "38263836305d4b619af84051ad5d4970"
+      ],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 19,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 753,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 753
+      },
+      "failures": [],
+      "query_count": 6
+    },
+    {
+      "id": "cond-10",
+      "category": "conditioned_claim",
+      "question": "三推楔形反转成立之后，目标一般先看哪里？",
+      "expected": [
+        "54b5a4889ee8f4a51910f85dd0880e75"
+      ],
+      "baseline_found": [
+        "54b5a4889ee8f4a51910f85dd0880e75"
+      ],
+      "baseline_missing": [],
+      "regression_text_found": [
+        "54b5a4889ee8f4a51910f85dd0880e75"
+      ],
+      "graph_found": [],
+      "recovered_expected": [],
+      "newly_recalled": [],
+      "lost": [],
+      "text_path_lost": [],
+      "still_missing": [],
+      "graph_unique": false,
+      "graph_unique_recovered": false,
+      "graph_only": [],
+      "graph_arm_found": [
+        "54b5a4889ee8f4a51910f85dd0880e75"
+      ],
+      "graph_entries": 14,
+      "graph_stats": {
+        "candidates": 18,
+        "selected": 14,
+        "truncated_edges": false,
+        "truncated_evidence": true,
+        "truncated_tokens": false,
+        "tokens": 794,
+        "seeds": 8,
+        "accumulated": 14,
+        "enabled": true
+      },
+      "truncation": {
+        "truncated": true,
+        "hit_limits": [
+          "evidence"
+        ],
+        "selected": 14,
+        "tokens": 794
+      },
+      "failures": [],
+      "query_count": 6
+    }
+  ]
+}

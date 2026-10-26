@@ -1,0 +1,511 @@
+{
+  "timestamp": "20261025T143040Z",
+  "answers": ".scratch\\selection-funnel\\answers3\\20261025T143040Z",
+  "answers_sha256": "9a5e42eb26beb1bec7402235efd8369db5414d385d05853da6241f0b5c1353b6",
+  "dataset": "evals\\gold\\graph_expansion_v2.json",
+  "dataset_sha256": "7cf35d945cfc35572d0fb31b4c96fb4d3fa54adb36859e4186c6e3c0d5d55560",
+  "judge": {
+    "model": "deepseek-flash",
+    "temperature": 0.0,
+    "max_tokens": 16384,
+    "system": "你是答案质量判定器。只依据用户消息里给出的题面、期望答案要点、待判答案与引用证据文本判断，\n不要引入外部知识，不要推测答案由谁或由哪条链路产生。\n\n三个维度各给一个 0-2 的整数分：\n- correctness 结论正确：0 = 与要点冲突或没有回答；1 = 只答到部分要点；2 = 覆盖全部要点且无实质错误。\n- condition_preservation 条件保留：0 = 要点里的条件被漏掉或被改写成无条件结论；\n  1 = 条件只保留了一部分；2 = 条件与语气完整保留。要点本身没有条件时，答案也不得自行添加无依据的条件或限定，\n  否则记 0-1。\n- citation_support 引用支撑：0 = 引用缺位，或所引证据不支持主要结论；1 = 只有部分主要结论被引用证据支撑；\n  2 = 每条主要结论都能由所引证据文本推出。\n\nunsupported_claims：逐条列出答案中无法由所引证据文本推出的**事实性断言**（短句，不要编号）；\n答案明确说明「资料未给出 / 未检索到 / 无法量化」这类关于证据范围的陈述不算不支持断言\n（只有当证据确实给出了该内容时才算错误）。全部有支撑时给空数组。\n\ncitation_support 必须与 unsupported_claims 一致：unsupported_claims 非空时 citation_support 最多为 1；\n若列出的断言包含主要结论，citation_support 记 0。\n先在心里核对，然后直接输出 JSON：不要复述题面、不要逐条分析、不要给出总体结论或单一总分。",
+    "schema": {
+      "additionalProperties": false,
+      "description": "Strict judge output: exactly the three scores plus unsupported claims.",
+      "properties": {
+        "correctness": {
+          "maximum": 2,
+          "minimum": 0,
+          "title": "Correctness",
+          "type": "integer"
+        },
+        "condition_preservation": {
+          "maximum": 2,
+          "minimum": 0,
+          "title": "Condition Preservation",
+          "type": "integer"
+        },
+        "citation_support": {
+          "maximum": 2,
+          "minimum": 0,
+          "title": "Citation Support",
+          "type": "integer"
+        },
+        "unsupported_claims": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Unsupported Claims",
+          "type": "array"
+        }
+      },
+      "required": [
+        "correctness",
+        "condition_preservation",
+        "citation_support",
+        "unsupported_claims"
+      ],
+      "title": "JudgeScores",
+      "type": "object"
+    },
+    "evidence_char_cap": 1200
+  },
+  "wall_time_s": 22.2,
+  "judge_call_time_s": 2692.2,
+  "hard_failures": [],
+  "errors": [],
+  "counts": {
+    "records": 120,
+    "hard_pass": 120,
+    "hard_fail": 0,
+    "judged": 120,
+    "errors": 0,
+    "pending": 0
+  },
+  "by_arm": {
+    "text": {
+      "records": 60,
+      "hard_pass": 60,
+      "hard_fail": 0,
+      "hard_pass_rate": 1.0,
+      "judged": 60,
+      "errors": 0,
+      "pending": 0,
+      "scores": {
+        "correctness": {
+          "mean": 1.2333,
+          "distribution": {
+            "0": 9,
+            "1": 28,
+            "2": 23
+          }
+        },
+        "condition_preservation": {
+          "mean": 1.2333,
+          "distribution": {
+            "0": 11,
+            "1": 24,
+            "2": 25
+          }
+        },
+        "citation_support": {
+          "mean": 1.0833,
+          "distribution": {
+            "0": 9,
+            "1": 37,
+            "2": 14
+          }
+        }
+      },
+      "unsupported_claims": {
+        "total": 152,
+        "mean": 2.5333,
+        "records_with_any": 45
+      },
+      "claims_with_full_citation_support": 0,
+      "coverage_mean": 0.3
+    },
+    "graph": {
+      "records": 60,
+      "hard_pass": 60,
+      "hard_fail": 0,
+      "hard_pass_rate": 1.0,
+      "judged": 60,
+      "errors": 0,
+      "pending": 0,
+      "scores": {
+        "correctness": {
+          "mean": 1.2333,
+          "distribution": {
+            "0": 10,
+            "1": 26,
+            "2": 24
+          }
+        },
+        "condition_preservation": {
+          "mean": 1.3167,
+          "distribution": {
+            "0": 9,
+            "1": 23,
+            "2": 28
+          }
+        },
+        "citation_support": {
+          "mean": 1.0333,
+          "distribution": {
+            "0": 8,
+            "1": 42,
+            "2": 10
+          }
+        }
+      },
+      "unsupported_claims": {
+        "total": 167,
+        "mean": 2.7833,
+        "records_with_any": 48
+      },
+      "claims_with_full_citation_support": 0,
+      "coverage_mean": 0.2889
+    }
+  },
+  "by_stratum": {
+    "encyclopedia": {
+      "text": {
+        "records": 20,
+        "hard_pass": 20,
+        "hard_fail": 0,
+        "hard_pass_rate": 1.0,
+        "judged": 20,
+        "errors": 0,
+        "pending": 0,
+        "scores": {
+          "correctness": {
+            "mean": 1.3,
+            "distribution": {
+              "0": 4,
+              "1": 6,
+              "2": 10
+            }
+          },
+          "condition_preservation": {
+            "mean": 1.5,
+            "distribution": {
+              "0": 2,
+              "1": 6,
+              "2": 12
+            }
+          },
+          "citation_support": {
+            "mean": 0.9,
+            "distribution": {
+              "0": 5,
+              "1": 12,
+              "2": 3
+            }
+          }
+        },
+        "unsupported_claims": {
+          "total": 73,
+          "mean": 3.65,
+          "records_with_any": 17
+        },
+        "claims_with_full_citation_support": 0,
+        "coverage_mean": 0.4
+      },
+      "graph": {
+        "records": 20,
+        "hard_pass": 20,
+        "hard_fail": 0,
+        "hard_pass_rate": 1.0,
+        "judged": 20,
+        "errors": 0,
+        "pending": 0,
+        "scores": {
+          "correctness": {
+            "mean": 1.45,
+            "distribution": {
+              "0": 3,
+              "1": 5,
+              "2": 12
+            }
+          },
+          "condition_preservation": {
+            "mean": 1.55,
+            "distribution": {
+              "0": 2,
+              "1": 5,
+              "2": 13
+            }
+          },
+          "citation_support": {
+            "mean": 1.15,
+            "distribution": {
+              "0": 1,
+              "1": 15,
+              "2": 4
+            }
+          }
+        },
+        "unsupported_claims": {
+          "total": 56,
+          "mean": 2.8,
+          "records_with_any": 16
+        },
+        "claims_with_full_citation_support": 0,
+        "coverage_mean": 0.3833
+      }
+    },
+    "mechanism": {
+      "text": {
+        "records": 20,
+        "hard_pass": 20,
+        "hard_fail": 0,
+        "hard_pass_rate": 1.0,
+        "judged": 20,
+        "errors": 0,
+        "pending": 0,
+        "scores": {
+          "correctness": {
+            "mean": 1.0,
+            "distribution": {
+              "0": 1,
+              "1": 18,
+              "2": 1
+            }
+          },
+          "condition_preservation": {
+            "mean": 0.8,
+            "distribution": {
+              "0": 7,
+              "1": 10,
+              "2": 3
+            }
+          },
+          "citation_support": {
+            "mean": 1.25,
+            "distribution": {
+              "0": 1,
+              "1": 13,
+              "2": 6
+            }
+          }
+        },
+        "unsupported_claims": {
+          "total": 34,
+          "mean": 1.7,
+          "records_with_any": 13
+        },
+        "claims_with_full_citation_support": 0,
+        "coverage_mean": 0.0333
+      },
+      "graph": {
+        "records": 20,
+        "hard_pass": 20,
+        "hard_fail": 0,
+        "hard_pass_rate": 1.0,
+        "judged": 20,
+        "errors": 0,
+        "pending": 0,
+        "scores": {
+          "correctness": {
+            "mean": 0.85,
+            "distribution": {
+              "0": 4,
+              "1": 15,
+              "2": 1
+            }
+          },
+          "condition_preservation": {
+            "mean": 0.75,
+            "distribution": {
+              "0": 6,
+              "1": 13,
+              "2": 1
+            }
+          },
+          "citation_support": {
+            "mean": 0.8,
+            "distribution": {
+              "0": 5,
+              "1": 14,
+              "2": 1
+            }
+          }
+        },
+        "unsupported_claims": {
+          "total": 58,
+          "mean": 2.9,
+          "records_with_any": 17
+        },
+        "claims_with_full_citation_support": 0,
+        "coverage_mean": 0.0167
+      }
+    },
+    "exception": {
+      "text": {
+        "records": 10,
+        "hard_pass": 10,
+        "hard_fail": 0,
+        "hard_pass_rate": 1.0,
+        "judged": 10,
+        "errors": 0,
+        "pending": 0,
+        "scores": {
+          "correctness": {
+            "mean": 1.2,
+            "distribution": {
+              "0": 3,
+              "1": 2,
+              "2": 5
+            }
+          },
+          "condition_preservation": {
+            "mean": 1.2,
+            "distribution": {
+              "0": 1,
+              "1": 6,
+              "2": 3
+            }
+          },
+          "citation_support": {
+            "mean": 0.9,
+            "distribution": {
+              "0": 3,
+              "1": 5,
+              "2": 2
+            }
+          }
+        },
+        "unsupported_claims": {
+          "total": 34,
+          "mean": 3.4,
+          "records_with_any": 8
+        },
+        "claims_with_full_citation_support": 0,
+        "coverage_mean": 0.4333
+      },
+      "graph": {
+        "records": 10,
+        "hard_pass": 10,
+        "hard_fail": 0,
+        "hard_pass_rate": 1.0,
+        "judged": 10,
+        "errors": 0,
+        "pending": 0,
+        "scores": {
+          "correctness": {
+            "mean": 1.1,
+            "distribution": {
+              "0": 3,
+              "1": 3,
+              "2": 4
+            }
+          },
+          "condition_preservation": {
+            "mean": 1.5,
+            "distribution": {
+              "0": 1,
+              "1": 3,
+              "2": 6
+            }
+          },
+          "citation_support": {
+            "mean": 1.3,
+            "distribution": {
+              "0": 0,
+              "1": 7,
+              "2": 3
+            }
+          }
+        },
+        "unsupported_claims": {
+          "total": 26,
+          "mean": 2.6,
+          "records_with_any": 7
+        },
+        "claims_with_full_citation_support": 0,
+        "coverage_mean": 0.4333
+      }
+    },
+    "conditioned_claim": {
+      "text": {
+        "records": 10,
+        "hard_pass": 10,
+        "hard_fail": 0,
+        "hard_pass_rate": 1.0,
+        "judged": 10,
+        "errors": 0,
+        "pending": 0,
+        "scores": {
+          "correctness": {
+            "mean": 1.6,
+            "distribution": {
+              "0": 1,
+              "1": 2,
+              "2": 7
+            }
+          },
+          "condition_preservation": {
+            "mean": 1.6,
+            "distribution": {
+              "0": 1,
+              "1": 2,
+              "2": 7
+            }
+          },
+          "citation_support": {
+            "mean": 1.3,
+            "distribution": {
+              "0": 0,
+              "1": 7,
+              "2": 3
+            }
+          }
+        },
+        "unsupported_claims": {
+          "total": 11,
+          "mean": 1.1,
+          "records_with_any": 7
+        },
+        "claims_with_full_citation_support": 0,
+        "coverage_mean": 0.5
+      },
+      "graph": {
+        "records": 10,
+        "hard_pass": 10,
+        "hard_fail": 0,
+        "hard_pass_rate": 1.0,
+        "judged": 10,
+        "errors": 0,
+        "pending": 0,
+        "scores": {
+          "correctness": {
+            "mean": 1.7,
+            "distribution": {
+              "0": 0,
+              "1": 3,
+              "2": 7
+            }
+          },
+          "condition_preservation": {
+            "mean": 1.8,
+            "distribution": {
+              "0": 0,
+              "1": 2,
+              "2": 8
+            }
+          },
+          "citation_support": {
+            "mean": 1.0,
+            "distribution": {
+              "0": 2,
+              "1": 6,
+              "2": 2
+            }
+          }
+        },
+        "unsupported_claims": {
+          "total": 27,
+          "mean": 2.7,
+          "records_with_any": 8
+        },
+        "claims_with_full_citation_support": 0,
+        "coverage_mean": 0.5
+      }
+    }
+  },
+  "paired": {
+    "n": 60,
+    "correctness_mean_delta": 0.0,
+    "condition_preservation_mean_delta": 0.0833,
+    "citation_support_mean_delta": -0.05,
+    "better": 9,
+    "worse": 10,
+    "equal": 41,
+    "hard_pass_text": 60,
+    "hard_pass_graph": 60,
+    "paired_items": 60
+  },
+  "ran": 2,
+  "evidence_units_fetched": 721
+}
