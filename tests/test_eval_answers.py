@@ -330,13 +330,28 @@ def test_two_frozen_runs_agree_per_item_without_routing(monkeypatch):
 
     Every model/DB step is stubbed, so the only way the two runs can differ is
     the harness itself (routing, plan assembly, ordering). Routing is turned
-    into a failure to prove the frozen path never calls it.
+    into a failure to prove the frozen path never calls it, and the judge is
+    stubbed to always demand another round: the frozen plan must still stop at
+    one, or ``next_query`` would leak a model-produced query into the list.
     """
     units = [{"evidence_id": "e1", "text": "a", "provenance": "text"}]
     _stub_chain(monkeypatch, units=units, citation_index={"e1": 0})
     monkeypatch.setattr(
         graph_module, "route", lambda *a, **k: pytest.fail("routed in frozen mode")
     )
+    judge_caps: list[int] = []
+
+    def demand_another_round(*args, **kwargs):
+        judge_caps.append(kwargs["max_rounds"])
+        return (
+            SimpleNamespace(
+                next_query="another round",
+                model_dump=lambda: {"sufficient": False, "next_query": "another round"},
+            ),
+            None,
+        )
+
+    monkeypatch.setattr(graph_module, "check_sufficiency", demand_another_round)
     items = [_gold_item("q1"), _gold_item("q2", category="mechanism")]
     keys = ("plan_source", "queries", "query_hash", "routes", "rounds", "coverage")
 
@@ -360,6 +375,9 @@ def test_two_frozen_runs_agree_per_item_without_routing(monkeypatch):
         assert record["query_hash"] == graph_module.query_hash(record["queries"])
         assert record["coverage"] == 1.0
         assert record["rounds"] == 1
+    # every judge call was capped at the frozen plan's single round
+    assert judge_caps == [1] * (len(items) * len(eval_answers.ARMS) * 2)
+
 
 
 def test_payload_records_plan_source_and_dataset_hash():

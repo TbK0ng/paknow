@@ -90,9 +90,14 @@ def frozen_plan(item: Mapping[str, Any]) -> QueryPlan:
     """The gold item's own queries as a plan, so routing never runs.
 
     ``expanded_queries[0]`` is the question itself (dataset contract); the rest
-    become sub-queries, so ``retrieval_queries`` rebuilds that exact list.
+    become sub-queries, so ``retrieval_queries`` rebuilds that exact list. One
+    round only: a judge-driven gap round would prepend a model-produced query,
+    so rounds and coverage would stop being a property of the dataset.
     """
-    return QueryPlan(sub_queries=list(item.get("expanded_queries") or [])[1:])
+    return QueryPlan(
+        sub_queries=list(item.get("expanded_queries") or [])[1:],
+        max_search_rounds=1,
+    )
 
 
 # ---------------------------------------------------------------------------

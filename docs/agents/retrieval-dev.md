@@ -136,9 +136,10 @@ carries `plan_source` (`frozen` / `routed`), the assembled query list `queries`
 produces it, so production behaviour is unchanged.
 
 `--frozen-queries` uses that seam: each item's plan is built from the gold item
-itself (`question` + `expanded_queries`), so routing never runs and two runs of
-the same code over the same dataset share the per-item query list, rounds and
-coverage. Every record carries `plan_source` (`frozen` / `routed`), `queries`
+itself (`question` + `expanded_queries`) with `max_search_rounds=1`, so routing
+never runs, no judge-driven gap round can prepend a model-produced query, and
+two runs of the same code over the same dataset share the per-item query list,
+rounds and coverage. Every record carries `plan_source` (`frozen` / `routed`), `queries`
 and `query_hash`; `summary.json` carries `plan_source` and `dataset_sha256`, so
 two runs are comparable only when both match. Without the flag the router
 produces the plan and the record says `plan_source: "routed"`, exactly as
