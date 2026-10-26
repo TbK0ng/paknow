@@ -71,7 +71,7 @@ curl -s -X POST http://localhost:8000/query \
   -d '{"query":"市场周期通常是如何转换的？"}'
 ```
 
-返回结构（字段齐全、数值仅示意，长数组已截断；`apps/api/main.py:124-143` 组装，`:151-158` 补两个改写字段）：
+返回结构（字段齐全、数值仅示意，长数组已截断；`apps/api/main.py:165-183` 组装，`:191-201` 补两个改写字段）：
 
 ```json
 {
@@ -124,7 +124,7 @@ curl -s -X POST http://localhost:8000/query \
 三个容易踩的点：
 
 - `answer` 是**扁平字符串**（markdown），不是嵌套对象；`uncertainty` 与 `citations` 与它平级。
-- 响应里**没有** `hits` / `barrefs` / `wants_examples`——它们是内部 `run_query` 的返回字段。想看原始证据用独立的 `POST /search`。
+- 默认响应里**没有** `hits` / `barrefs` / `wants_examples`——它们是内部 `run_query` 的返回字段。想看原始证据用独立的 `POST /search`；排障时在请求里加 `debug: true`，响应会多一个只读 `debug` 块（命中的 id/分数/块类型、可引用 id、上下文计数、充分性判定、结构化失败清单、轮数、图谱统计），默认请求体尺寸不变。
 - `graph` 里每条都是 `non_citable` 的理解辅助，不进 `[n]` 引用编号；`seen_index` 非空表示这条证据已作为可引用单元出现过，所以 `text` 为空。
 - 生成失败不会 500：答案正文是「本次生成失败…请重试」的占位文字，同时 `degraded: true`、`degradation.reason` 给出失败分类（`timeout` / `invalid_structure` / `no_content`，与读图失败同一套词）。判断占位请看这两个字段，不要靠答案长度猜。
 
