@@ -214,7 +214,9 @@ def hard_constraints(record: Mapping[str, Any]) -> list[str]:
     reasons: list[str] = []
     if record.get("status") != "ok":
         reasons.append("retrieval_error")
-    if not str(record.get("answer") or "").strip():
+    # a generation failure leaves a placeholder answer: it is empty for the
+    # gate even though its text is non-empty, so the flag decides, not length
+    if record.get("degraded") or not str(record.get("answer") or "").strip():
         reasons.append("empty_answer")
     checks = refresh_checks(record)
     if checks.get("invalid_citations"):

@@ -250,6 +250,66 @@ PAKNOW_DB_URL=sqlite:///E:/PAknow/data/paknow.db PYTHONPATH=. \
 and the cloud key but no Qdrant and no embedding model: it reads stored answers
 and evidence text only, so it does not take the embedded-Qdrant lock.
 
+### Local quality gate (pre-commit; deterministic mode needs no cloud key)
+
+`scripts/quality_gate.py` answers "did this change cost answer quality?" against
+a committed baseline. It never runs in CI: it takes the embedded-Qdrant lock and
+the judge mode spends cloud calls. It samples the v2 gold dataset once, fixed at
+ten items apportioned by stratum (two or three each of encyclopedia / mechanism /
+exception / conditioned claim, in dataset order) and injects each item's own
+plan, so routing never runs and the sample is a property of the dataset.
+
+| Mode | What it does | Needs |
+|---|---|---|
+| `--deterministic` (default) | Drives the chain's own route/read/retrieve nodes — no router, no sufficiency check, no generation. Records per-item queries + hash, citable ids, expected-evidence coverage and retrieval failures. | DB + objects + BGE-M3 |
+| `--judge` | Runs the deterministic pass, then the full chain (`run_query`, frozen plan) and the blind judge per record. | the above + cloud key |
+
+Hard constraints exit non-zero unconditionally: a crashed retrieval, an empty
+citable set (deterministic mode), and — in judge mode — an out-of-set citation,
+a graph-only evidence id cited, or an empty answer, where a degraded generation
+placeholder counts as empty by its `degraded` flag, not by text length. Soft
+metrics use the measured noise bands from the spec: expected-evidence coverage
+may fall at most `0.03` (frozen queries are deterministic), each judge dimension
+at most `0.12`, and the unsupported-claim total may grow at most `15` per arm.
+Improvements never fail.
+
+The baseline is `.scratch/production-readiness/quality-gate/baseline.json`; it
+carries `dataset_sha256` and the sample ids, so an edited dataset or a re-drawn
+sample is refused before any retrieval starts. Only `--record` writes it, it
+merges the mode's block into the file (keeping the other mode's), and a run with
+a hard failure is never recorded. Run records — `records.jsonl` (deterministic,
+per item), `judge.records.jsonl` (judge mode) and `summary.json` — go to
+`--out` and are committed with the baseline per ADR-0004.
+
+```bash
+# gate against the recorded baseline (default: deterministic, 10 items)
+PAKNOW_DB_URL=sqlite:///E:/PAknow/data/paknow.db \
+OBJECTS_DIR=E:/PAknow/data/objects \
+PYTHONPATH=. E:/PAknow/.venv/Scripts/python.exe scripts/quality_gate.py
+
+# add the blind judge (cloud key); compares the judge block too
+PAKNOW_DB_URL=sqlite:///E:/PAknow/data/paknow.db \
+OBJECTS_DIR=E:/PAknow/data/objects \
+PYTHONPATH=. E:/PAknow/.venv/Scripts/python.exe scripts/quality_gate.py --judge
+
+# re-record the baseline — only after an intentional behaviour change
+PAKNOW_DB_URL=sqlite:///E:/PAknow/data/paknow.db \
+OBJECTS_DIR=E:/PAknow/data/objects \
+PYTHONPATH=. E:/PAknow/.venv/Scripts/python.exe scripts/quality_gate.py \
+  --record --out .scratch/production-readiness/quality-gate/<timestamp>
+
+PAKNOW_DB_URL=sqlite:///E:/PAknow/data/paknow.db \
+OBJECTS_DIR=E:/PAknow/data/objects \
+PYTHONPATH=. E:/PAknow/.venv/Scripts/python.exe scripts/quality_gate.py \
+  --record --judge --out .scratch/production-readiness/quality-gate/<timestamp>
+```
+
+Exit codes: `0` pass, `1` a hard-constraint failure, a regression past a floor,
+or an unusable baseline (missing, wrong dataset hash, different sample, no judge
+block). The last case prints `refused ...` and returns before retrieval starts.
+Its own tests (`tests/test_quality_gate.py`) stub the chain and run in the light
+CI, alongside `pytest -q`; the workflow does not gain a job.
+
 ### Chart evaluation (needs DB + objects + BGE-M3 + cloud key)
 
 `scripts/eval_chart.py` runs each image in the chart gold set through one
@@ -385,5 +445,7 @@ locked. For parallel work, either give one process `QDRANT_URL=http://localhost:
 `eval_gold.py` (all three modes), `eval_answers.py`, `eval_judge.py`, the
 taxonomy dry run/apply, the claim-alignment dry run/apply and all `smoke_*`
 scripts need the local corpus artifacts above; the answer runner and the judge
-additionally need the cloud key. Only `--help` and the test suite run green
-without them.
+additionally need the cloud key. The quality gate needs the corpus for its
+deterministic mode and the corpus plus the key for `--judge`; a *recorded*
+baseline is refused when the dataset changed. Only `--help` and the test suite
+run green without them.
