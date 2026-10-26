@@ -427,13 +427,38 @@ concurrently. Two checks may read the DB concurrently; only the vector store is
 locked. For parallel work, either give one process `QDRANT_URL=http://localhost:6333`
 (a server bypasses the lock) or copy the objects dir per worktree (large).
 
+`get_client` also translates a store folder held by a process that never took
+our lock (older client, deleted lock file) into the same `StoreLockedError`
+using qdrant's own `Storage folder ... already accessed` message, so callers
+only ever handle one exception type.
+
+## Startup self-check
+
+`apps/api/main.py` refuses to start unless `check_store_ready`
+(`paknow/retrieval/qdrant_store.py`) can see the `evidence_text` collection and
+count it. The check is read-only — it never calls `ensure_collections`, so a
+store that was never built is reported instead of being silently created:
+
+```
+StoreNotReadyError: 向量库集合 evidence_text 不存在（…/qdrant）：尚未建库，先运行入库脚本。
+StoreNotReadyError: 向量库集合 evidence_text 为空（…/qdrant）：入库未完成，入库完成后再启动服务。
+StoreNotReadyError: 内嵌向量库已被占用（pid=..., cmd=...）；评测或脚本正在占用存储，请稍后重试。锁文件：...
+```
+
+The machine-readable `.reason` is `missing` / `empty` / `locked`. This is why
+`/health` can stay a bare liveness probe: the process only accepts requests once
+the store is usable, so "up" implies "can answer". `tests/test_api_startup_check.py`
+fabricates all three states in a temp objects dir.
+
 ## Failure lookup
 
 | Symptom | Cause | Fix |
 |---|---|---|
 | `sqlite3.OperationalError: unable to open database file`, or "no such table" | `PAKNOW_DB_URL` relative and resolved against the worktree CWD / absent `data/` | Set the absolute main-repo URL |
 | `503` with `内嵌向量库已被占用（pid=...）` | Another process holds `<OBJECTS_DIR>/qdrant.lock` (API server, eval, smoke) | Stop the process named in the detail; retry |
-| `Storage folder ... is already accessed by another instance of Qdrant client.` | The store's own lock is held without ours (older client, deleted lock file) | Stop the other process; run serially |
+| `Storage folder ... is already accessed by another instance of Qdrant client.` | The store's own lock is held without ours (older client, deleted lock file) | Translated into `StoreLockedError` (`503` / startup `locked`); stop the other process; run serially |
+| `Application startup failed` with `向量库集合 evidence_text 不存在` | `OBJECTS_DIR` points at a tree without the collection | Run the indexing scripts, or point `OBJECTS_DIR` at the built store |
+| `Application startup failed` with `向量库集合 evidence_text 为空` | The collection exists but holds no evidence unit | Finish indexing before starting the API |
 | Empty search results / "collection not found" | `OBJECTS_DIR` points at an empty or stale tree | Set `OBJECTS_DIR=E:/PAknow/data/objects` |
 | Model download attempts, `OSError` resolving `BAAI/bge-m3`, or slow first call | `HF_HOME` not pointing at the warmed cache | Confirm `settings.hf_home` is `E:\use_model`; set `HF_HOME` before importing `paknow` |
 | `ModuleNotFoundError: paknow` / `scripts` | `PYTHONPATH=.` missing or wrong CWD | Run from the checkout root with `PYTHONPATH=.` |

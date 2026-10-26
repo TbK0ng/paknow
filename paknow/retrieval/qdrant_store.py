@@ -17,7 +17,7 @@ import sys
 from datetime import datetime, timezone
 from functools import lru_cache
 from pathlib import Path
-from typing import IO
+from typing import IO, Literal
 
 import portalocker
 from qdrant_client import QdrantClient
@@ -48,6 +48,20 @@ class StoreLockedError(RuntimeError):
             f"内嵌向量库已被占用（{holder}）；评测或脚本正在占用存储，请稍后重试。"
             f"锁文件：{path}"
         )
+
+
+class StoreNotReadyError(RuntimeError):
+    """The store cannot answer, with the reason kept machine-readable.
+
+    ``reason`` is ``missing`` (collection absent), ``empty`` (no evidence unit
+    indexed) or ``locked`` (another process owns it); each carries its own
+    message so the operator knows which of the three to fix.
+    """
+
+    def __init__(self, reason: Literal["missing", "empty", "locked"], detail: str) -> None:
+        self.reason = reason
+        self.detail = detail
+        super().__init__(detail)
 
 
 # Held for the life of the process; closing it releases the lock.
@@ -122,9 +136,39 @@ def get_client() -> QdrantClient:
     _acquire_store_lock(store_lock_path())
     try:
         return QdrantClient(path=str(settings.objects_dir / "qdrant"))
-    except BaseException:
+    except BaseException as exc:
         _release_store_lock()
+        if isinstance(exc, RuntimeError) and "already accessed" in str(exc):
+            # A foreign process (one that does not take our lock file) holds the
+            # embedded folder itself; qdrant's message is the only evidence left.
+            raise StoreLockedError(store_lock_path(), "向量库目录已被其他进程打开") from None
         raise
+
+
+def check_store_ready(client: QdrantClient | None = None) -> int:
+    """Read-only readiness probe: the text collection exists and can be counted.
+
+    Deliberately not :func:`ensure_collections` — creating the collection would
+    disguise a store that was never built or never finished indexing as a
+    healthy one, which is the half-dead state this check exists to prevent.
+    """
+    where = settings.qdrant_url or settings.objects_dir / "qdrant"
+    try:
+        client = client or get_client()
+    except StoreLockedError as exc:
+        raise StoreNotReadyError("locked", str(exc)) from exc
+    if not client.collection_exists(COLLECTION_TEXT):
+        raise StoreNotReadyError(
+            "missing",
+            f"向量库集合 {COLLECTION_TEXT} 不存在（{where}）：尚未建库，先运行入库脚本。",
+        )
+    count = client.count(collection_name=COLLECTION_TEXT, exact=True).count
+    if count == 0:
+        raise StoreNotReadyError(
+            "empty",
+            f"向量库集合 {COLLECTION_TEXT} 为空（{where}）：入库未完成，入库完成后再启动服务。",
+        )
+    return count
 
 
 def ensure_collections(client: QdrantClient | None = None) -> None:

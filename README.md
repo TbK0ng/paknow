@@ -130,6 +130,8 @@ cp .env.example .env   # 默认 SQLite + 嵌入式 Qdrant；服务端模式的 U
 - 向量：Qdrant **嵌入式本地模式**（`data/objects/qdrant`），同一时刻只允许一个进程持有
   （`data/objects/qdrant.lock`，第二个进程直接 503，不会返回空结果）；`QDRANT_URL` 可切
   server 并绕过该锁（`docker-compose.yml` 给了 postgres 16 + qdrant 1.12.4）。
+- 启动自检：API 起来之前只读地确认 `evidence_text` 集合存在且可计数；未建库 / 集合为空 /
+  被占用三种情况各有自己的报错并**拒绝启动**，不会出现"进程活着但答案永远为空"。
 - 派生对象（图片/中间件）：`data/objects/` 内容寻址。
 - 云端：`deepseek-flash`（`ModelGateway` 可换）；图片输入需 `DEEPSEEK_VISION=true`，
   默认 `false` 时上传图片会被直接拒绝。
@@ -144,7 +146,7 @@ cp .env.example .env   # 默认 SQLite + 嵌入式 Qdrant；服务端模式的 U
 - `GET /figures/{figure_id}/image` — 图资产原图
 - `GET /documents` — 资料库文档目录
 - `GET /runs/{run_id}` — 审计 trace；`GET /sops` — SOP 版本
-- `GET /health` — 存活探针；`GET /` — 单页查看器
+- `GET /health` — 存活探针（进程只在存储就绪后才起得来，所以"活着"即可用）；`GET /` — 单页查看器
 
 `/query` 的响应是扁平结构：`answer`（字符串）、`uncertainty`、`citations`、`figures`、
 `rounds`、`graph_stats`、`graph`、`run_id`、`intent`、`is_framework`、`routes`，

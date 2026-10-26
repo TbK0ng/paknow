@@ -4,6 +4,7 @@ from __future__ import annotations
 import io
 import mimetypes
 import re
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, Literal
 
@@ -19,12 +20,25 @@ from paknow.evidence.citations import resolve_citations
 from paknow.gateway import gateway
 from paknow.ingest.store import object_path
 from paknow.memory.sop import list_sops
-from paknow.retrieval.qdrant_store import StoreLockedError
+from paknow.retrieval.qdrant_store import StoreLockedError, check_store_ready
 from paknow.retrieval.search import diversify, hybrid_search, point_to_doc, rerank
 from paknow.retrieval.visual import mask_right_bytes
 from paknow.workflows.graph import run_query
 
-app = FastAPI(title="PAknow", version="0.1.0")
+
+@asynccontextmanager
+async def _lifespan(_app: FastAPI):
+    """Refuse to serve a store we cannot answer from.
+
+    A process that is up but replies empty is indistinguishable from a working
+    one, so a missing, empty or locked store stops startup with its own reason
+    instead of degrading into that state.
+    """
+    check_store_ready()
+    yield
+
+
+app = FastAPI(title="PAknow", version="0.1.0", lifespan=_lifespan)
 
 
 @app.exception_handler(StoreLockedError)
