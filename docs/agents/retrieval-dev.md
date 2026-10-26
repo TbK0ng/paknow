@@ -126,6 +126,27 @@ and expected-evidence coverage (`covered / expected`, with the missing ids) is
 computed per item. Coverage is reported as a distribution, not folded into the
 hard verdict.
 
+The chain itself accepts an injected plan: `run_query(question, plan=<QueryPlan>)`
+makes the route node derive the same state (`intent`, `is_framework`, `routes`,
+`evidence_needs`, `sub_queries`, `step_back`, `hyde`, `max_rounds`, SOP) from
+that plan and skip the router model; every later step is untouched. The result
+carries `plan_source` (`frozen` / `routed`), the assembled query list `queries`
+(at most the six retrieval slots) and its stable `query_hash`; the run trace's
+`request` JSON records the same source and hash. Without a plan the router still
+produces it, so production behaviour is unchanged.
+
+`--frozen-queries` uses that seam: each item's plan is built from the gold item
+itself (`question` + `expanded_queries`) with `max_search_rounds=1`, so routing
+never runs, no judge-driven gap round can prepend a model-produced query, and
+two runs of the same code over the same dataset share the per-item query list,
+rounds and coverage. Every record carries `plan_source` (`frozen` / `routed`), `queries`
+and `query_hash`; `summary.json` carries `plan_source` and `dataset_sha256`, so
+two runs are comparable only when both match. Without the flag the router
+produces the plan and the record says `plan_source: "routed"`, exactly as
+before. A degraded answer stays readable in the record (`degraded`,
+`degradation`), so a gate can tell a generation placeholder from a short real
+answer.
+
 Artifacts go to `.scratch/retrieval-eval-parity/answers/<UTC-timestamp>/`:
 `records.jsonl` (one small record per item/arm, no retrieved text),
 `summary.json` (per-arm summaries, paired graph-vs-text delta, wall time) and
@@ -144,6 +165,12 @@ PYTHONPATH=. E:/PAknow/.venv/Scripts/python.exe scripts/eval_answers.py
 PAKNOW_DB_URL=sqlite:///E:/PAknow/data/paknow.db \
 OBJECTS_DIR=E:/PAknow/data/objects \
 PYTHONPATH=. E:/PAknow/.venv/Scripts/python.exe scripts/eval_answers.py --limit 2
+
+# frozen queries: same dataset + same code, identical query list/rounds/coverage
+PAKNOW_DB_URL=sqlite:///E:/PAknow/data/paknow.db \
+OBJECTS_DIR=E:/PAknow/data/objects \
+PYTHONPATH=. E:/PAknow/.venv/Scripts/python.exe scripts/eval_answers.py \
+  --frozen-queries --out .scratch/retrieval-eval-parity/answers/<timestamp>-frozen
 
 # resume an interrupted batch (same --out directory)
 PAKNOW_DB_URL=sqlite:///E:/PAknow/data/paknow.db \
@@ -223,6 +250,66 @@ PAKNOW_DB_URL=sqlite:///E:/PAknow/data/paknow.db PYTHONPATH=. \
 `--answers PATH` points the judge at a different batch. It needs the metadata DB
 and the cloud key but no Qdrant and no embedding model: it reads stored answers
 and evidence text only, so it does not take the embedded-Qdrant lock.
+
+### Local quality gate (pre-commit; deterministic mode needs no cloud key)
+
+`scripts/quality_gate.py` answers "did this change cost answer quality?" against
+a committed baseline. It never runs in CI: it takes the embedded-Qdrant lock and
+the judge mode spends cloud calls. It samples the v2 gold dataset once, fixed at
+ten items apportioned by stratum (two or three each of encyclopedia / mechanism /
+exception / conditioned claim, in dataset order) and injects each item's own
+plan, so routing never runs and the sample is a property of the dataset.
+
+| Mode | What it does | Needs |
+|---|---|---|
+| `--deterministic` (default) | Drives the chain's own route/read/retrieve nodes — no router, no sufficiency check, no generation. Records per-item queries + hash, citable ids, expected-evidence coverage and retrieval failures. | DB + objects + BGE-M3 |
+| `--judge` | Runs the deterministic pass, then the full chain (`run_query`, frozen plan) and the blind judge per record. | the above + cloud key |
+
+Hard constraints exit non-zero unconditionally: a crashed retrieval, an empty
+citable set (deterministic mode), and — in judge mode — an out-of-set citation,
+a graph-only evidence id cited, or an empty answer, where a degraded generation
+placeholder counts as empty by its `degraded` flag, not by text length. Soft
+metrics use the measured noise bands from the spec: expected-evidence coverage
+may fall at most `0.03` (frozen queries are deterministic), each judge dimension
+at most `0.12`, and the unsupported-claim total may grow at most `15` per arm.
+Improvements never fail.
+
+The baseline is `.scratch/production-readiness/quality-gate/baseline.json`; it
+carries `dataset_sha256` and the sample ids, so an edited dataset or a re-drawn
+sample is refused before any retrieval starts. Only `--record` writes it, it
+merges the mode's block into the file (keeping the other mode's), and a run with
+a hard failure is never recorded. Run records — `records.jsonl` (deterministic,
+per item), `judge.records.jsonl` (judge mode) and `summary.json` — go to
+`--out` and are committed with the baseline per ADR-0004.
+
+```bash
+# gate against the recorded baseline (default: deterministic, 10 items)
+PAKNOW_DB_URL=sqlite:///E:/PAknow/data/paknow.db \
+OBJECTS_DIR=E:/PAknow/data/objects \
+PYTHONPATH=. E:/PAknow/.venv/Scripts/python.exe scripts/quality_gate.py
+
+# add the blind judge (cloud key); compares the judge block too
+PAKNOW_DB_URL=sqlite:///E:/PAknow/data/paknow.db \
+OBJECTS_DIR=E:/PAknow/data/objects \
+PYTHONPATH=. E:/PAknow/.venv/Scripts/python.exe scripts/quality_gate.py --judge
+
+# re-record the baseline — only after an intentional behaviour change
+PAKNOW_DB_URL=sqlite:///E:/PAknow/data/paknow.db \
+OBJECTS_DIR=E:/PAknow/data/objects \
+PYTHONPATH=. E:/PAknow/.venv/Scripts/python.exe scripts/quality_gate.py \
+  --record --out .scratch/production-readiness/quality-gate/<timestamp>
+
+PAKNOW_DB_URL=sqlite:///E:/PAknow/data/paknow.db \
+OBJECTS_DIR=E:/PAknow/data/objects \
+PYTHONPATH=. E:/PAknow/.venv/Scripts/python.exe scripts/quality_gate.py \
+  --record --judge --out .scratch/production-readiness/quality-gate/<timestamp>
+```
+
+Exit codes: `0` pass, `1` a hard-constraint failure, a regression past a floor,
+or an unusable baseline (missing, wrong dataset hash, different sample, no judge
+block). The last case prints `refused ...` and returns before retrieval starts.
+Its own tests (`tests/test_quality_gate.py`) stub the chain and run in the light
+CI, alongside `pytest -q`; the workflow does not gain a job.
 
 ### Chart evaluation (needs DB + objects + BGE-M3 + cloud key)
 
@@ -320,11 +407,18 @@ serialized window as the eval (see below).
 
 ## Embedded Qdrant is single-process
 
-The default local-mode client locks its storage folder. A second client on the
-same `data/objects/qdrant` fails with:
+The embedded store belongs to one process at a time. `get_client`
+(`paknow/retrieval/qdrant_store.py`) takes an exclusive, non-blocking lock on
+`<OBJECTS_DIR>/qdrant.lock` before opening the client and holds it for the life
+of the process; the holder's pid, acquisition time and command sit beside it in
+`qdrant.lock.holder`.
+
+A second process does not queue and does not degrade into empty results: it
+raises `StoreLockedError` naming the holder, retrieval propagates that instead
+of recording it as a step failure, and the API answers `503`:
 
 ```
-Storage folder ... is already accessed by another instance of Qdrant client.
+内嵌向量库已被占用（pid=..., since=..., cmd=...）；评测或脚本正在占用存储，请稍后重试。
 ```
 
 Serialize every retrieval/eval/smoke run: stop `uvicorn` (and any notebook or
@@ -332,14 +426,40 @@ script holding the client) before starting another. Never run two evals, an eval
 plus a smoke run, or two agents' retrieval work against the same objects dir
 concurrently. Two checks may read the DB concurrently; only the vector store is
 locked. For parallel work, either give one process `QDRANT_URL=http://localhost:6333`
-server or copy the objects dir per worktree (large).
+(a server bypasses the lock) or copy the objects dir per worktree (large).
+
+`get_client` also translates a store folder held by a process that never took
+our lock (older client, deleted lock file) into the same `StoreLockedError`
+using qdrant's own `Storage folder ... already accessed` message, so callers
+only ever handle one exception type.
+
+## Startup self-check
+
+`apps/api/main.py` refuses to start unless `check_store_ready`
+(`paknow/retrieval/qdrant_store.py`) can see the `evidence_text` collection and
+count it. The check is read-only — it never calls `ensure_collections`, so a
+store that was never built is reported instead of being silently created:
+
+```
+StoreNotReadyError: 向量库集合 evidence_text 不存在（…/qdrant）：尚未建库，先运行入库脚本。
+StoreNotReadyError: 向量库集合 evidence_text 为空（…/qdrant）：入库未完成，入库完成后再启动服务。
+StoreNotReadyError: 内嵌向量库已被占用（pid=..., cmd=...）；评测或脚本正在占用存储，请稍后重试。锁文件：...
+```
+
+The machine-readable `.reason` is `missing` / `empty` / `locked`. This is why
+`/health` can stay a bare liveness probe: the process only accepts requests once
+the store is usable, so "up" implies "can answer". `tests/test_api_startup_check.py`
+fabricates all three states in a temp objects dir.
 
 ## Failure lookup
 
 | Symptom | Cause | Fix |
 |---|---|---|
 | `sqlite3.OperationalError: unable to open database file`, or "no such table" | `PAKNOW_DB_URL` relative and resolved against the worktree CWD / absent `data/` | Set the absolute main-repo URL |
-| `Storage folder ... is already accessed by another instance of Qdrant client.` | Embedded client already open (API server, eval, smoke) | Stop the other process; run serially |
+| `503` with `内嵌向量库已被占用（pid=...）` | Another process holds `<OBJECTS_DIR>/qdrant.lock` (API server, eval, smoke) | Stop the process named in the detail; retry |
+| `Storage folder ... is already accessed by another instance of Qdrant client.` | The store's own lock is held without ours (older client, deleted lock file) | Translated into `StoreLockedError` (`503` / startup `locked`); stop the other process; run serially |
+| `Application startup failed` with `向量库集合 evidence_text 不存在` | `OBJECTS_DIR` points at a tree without the collection | Run the indexing scripts, or point `OBJECTS_DIR` at the built store |
+| `Application startup failed` with `向量库集合 evidence_text 为空` | The collection exists but holds no evidence unit | Finish indexing before starting the API |
 | Empty search results / "collection not found" | `OBJECTS_DIR` points at an empty or stale tree | Set `OBJECTS_DIR=E:/PAknow/data/objects` |
 | Model download attempts, `OSError` resolving `BAAI/bge-m3`, or slow first call | `HF_HOME` not pointing at the warmed cache | Confirm `settings.hf_home` is `E:\use_model`; set `HF_HOME` before importing `paknow` |
 | `ModuleNotFoundError: paknow` / `scripts` | `PYTHONPATH=.` missing or wrong CWD | Run from the checkout root with `PYTHONPATH=.` |
@@ -351,5 +471,7 @@ server or copy the objects dir per worktree (large).
 `eval_gold.py` (all three modes), `eval_answers.py`, `eval_judge.py`, the
 taxonomy dry run/apply, the claim-alignment dry run/apply and all `smoke_*`
 scripts need the local corpus artifacts above; the answer runner and the judge
-additionally need the cloud key. Only `--help` and the test suite run green
-without them.
+additionally need the cloud key. The quality gate needs the corpus for its
+deterministic mode and the corpus plus the key for `--judge`; a *recorded*
+baseline is refused when the dataset changed. Only `--help` and the test suite
+run green without them.

@@ -81,7 +81,7 @@ class Claim(BaseModel):
     subject_concept_id: str | None = None  # canonical concept when the subject resolves
     predicate: str
     polarity: str = "positive"       # positive | negative | neutral
-    qualifiers: dict[str, Any] = Field(default_factory=dict)  # context, modality, ...
+    qualifiers: dict[str, Any] = Field(default_factory=dict)  # context, modality
     supporting_evidence: list[str] = Field(default_factory=list)
     contradicting_evidence: list[str] = Field(default_factory=list)
     source_scope: str = "author_statement"  # author_statement | operational_def | ...

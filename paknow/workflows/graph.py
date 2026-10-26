@@ -5,10 +5,12 @@ via ``QueryPlan``; framework questions get synthesis generation.
 """
 from __future__ import annotations
 
+import hashlib
+import json
 import threading
 import time
 import uuid
-from typing import Any, TypedDict
+from typing import Any, Sequence, TypedDict
 
 from langgraph.graph import END, START, StateGraph
 
@@ -18,7 +20,7 @@ from paknow.memory.trace import save_trace
 from paknow.retrieval.pipeline import citable_units, citation_binding, retrieve_evidence
 from paknow.workflows.evidence import check_sufficiency
 from paknow.workflows.generate import generate
-from paknow.workflows.router import QueryPlan, retrieval_queries, route
+from paknow.workflows.router import PlanSource, QueryPlan, retrieval_queries, route
 from paknow.workflows.sop_exec import apply_sop
 
 
@@ -26,6 +28,10 @@ class QState(TypedDict, total=False):
     query: str
     images: list[bytes]
     plan: QueryPlan
+    # "frozen" when the caller injected the plan, "routed" otherwise
+    plan_source: PlanSource
+    # the query list retrieval actually submits, captured on the first round
+    queries: list[str]
     intent: str
     is_framework: bool
     routes: list[str]
@@ -35,10 +41,13 @@ class QState(TypedDict, total=False):
     hyde: str
     next_query: str | None
     hits: list[dict[str, Any]]
+    # ranked recall before the answer's diversity cap: the judge's evidence pool
+    candidate_hits: list[dict[str, Any]]
     figures: list[dict[str, Any]]
     round: int
     max_rounds: int
     sufficiency: dict[str, Any]
+    judge_stats: dict[str, int]
     answer: dict[str, Any]
     run_id: str
     t0: float
@@ -67,8 +76,43 @@ class QState(TypedDict, total=False):
     chart_read: dict[str, Any] | None
 
 
+def query_hash(queries: Sequence[str]) -> str:
+    """Stable hash of an assembled query list: order-sensitive, JSON-encoded."""
+    payload = json.dumps(list(queries), ensure_ascii=False)
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def initial_state(
+    query: str,
+    *,
+    images: list[bytes] | None = None,
+    expand_graph: bool = True,
+    plan: QueryPlan | None = None,
+) -> QState:
+    """The state every entry point starts from; ``plan`` is the eval seam."""
+    state: QState = {
+        "query": query,
+        "images": images or [],
+        "run_id": uuid.uuid4().hex,
+        "t0": time.time(),
+        "failures": [],
+        "round": 0,
+        "max_rounds": 3,
+        "acc": {},
+        "expand_graph": expand_graph,
+    }
+    if plan is not None:
+        state["plan"] = plan
+    return state
+
+
 def _route_node(state: QState) -> QState:
-    plan = route(state["query"], state.get("images"))
+    # an injected plan is the evaluation seam: the same fields are derived from
+    # it, but the router model is not asked for one (answer-level evaluation
+    # needs the query list frozen to compare code changes)
+    plan = state.get("plan")
+    state["plan_source"] = "frozen" if plan else "routed"
+    plan = plan or route(state["query"], state.get("images"))
     state["plan"] = plan
     state["intent"] = plan.intent
     state["is_framework"] = plan.is_framework
@@ -129,6 +173,10 @@ def _retrieve_node(state: QState) -> QState:
         if q and q not in seen_q:
             seen_q.add(q)
             queries.append(q)
+    # the assembled set, recorded once: the pipeline submits its first six, and
+    # a later gap-round query must not rewrite what the plan assembled
+    if "queries" not in state:
+        state["queries"] = queries[:6]
 
     result = retrieve_evidence(
         state["query"],
@@ -153,6 +201,7 @@ def _retrieve_node(state: QState) -> QState:
         result.citable_units = result.citable_units[:1]
         result.citation_index = citation_binding(result.citable_units)
     state["hits"] = result.text_hits
+    state["candidate_hits"] = result.candidate_hits
     state["figures"] = result.figures
     state["context_units"] = result.context_units
     state["citable_units"] = result.citable_units
@@ -172,15 +221,19 @@ def _check_node(state: QState) -> QState:
     for req in state.get("sop_evidence_requirements", []):
         if req not in needs:
             needs.append(req)
-    suff = check_sufficiency(
+    suff, judge_view = check_sufficiency(
         state["query"],
         needs[:8],
-        state.get("hits", []),
+        state.get("candidate_hits") or state.get("hits", []),
         round_=state.get("round", 0),
         max_rounds=state.get("max_rounds", 3),
     )
     state["sufficiency"] = suff.model_dump()
     state["next_query"] = suff.next_query
+    # keep the last view the judge actually read: a capped round sends nothing
+    # and must not overwrite the scale with an empty one
+    if judge_view is not None:
+        state["judge_stats"] = judge_view
     return state
 
 
@@ -224,26 +277,41 @@ def _generate_node(state: QState) -> QState:
         ],
         chart_read=state.get("chart_read"),
     )
-    # a degraded answer still ends the run; the reason belongs in the trace
-    failure = (state["answer"] or {}).pop("generate_failure", None)
-    if failure:
-        state.setdefault("failures", []).append(f"generate: {failure}")
+    # a degraded answer still ends the run; its classification belongs in the
+    # trace (the answer dict itself stays in ``output`` with the marker)
+    degradation = (state["answer"] or {}).get("degradation")
+    if degradation:
+        state.setdefault("failures", []).append(
+            f"generate: {degradation['reason']}: {degradation['detail']}"
+        )
     return state
 
 
 def _record_node(state: QState) -> QState:
     ans = state.get("answer") or {}
     ev_ids = ans.get("evidence_ids") or []
+    # the run trace carries the verdict and the size of the view it judged
+    stats = state.get("judge_stats") or {}
+    trace_output = {
+        **ans,
+        "sufficiency": {
+            **state.get("sufficiency", {}),
+            "evidence_items": stats.get("evidence_items", 0),
+            "evidence_chars": stats.get("evidence_chars", 0),
+        },
+    }
     save_trace(
         state["run_id"],
         state["query"],
         intents=[state.get("intent", "knowledge_qa")],
         routes=state.get("routes", []),
         evidence_ids=ev_ids,
-        answer=ans,
+        answer=trace_output,
         failures=state.get("failures", []),
         elapsed_ms=int((time.time() - state["t0"]) * 1000),
         sop_id=state.get("sop_id"),
+        plan_source=state.get("plan_source", "routed"),
+        query_hash=query_hash(state.get("queries", [])),
     )
     # auto memory-optimization (non-blocking; runs the 评价→蒸馏→发布 loop)
     _maybe_auto_optimize()
@@ -287,31 +355,30 @@ def run_query(
     images: list[bytes] | None = None,
     *,
     expand_graph: bool = True,
+    plan: QueryPlan | None = None,
 ) -> dict[str, Any]:
     """Run the full production chain for one stateless question.
 
     ``expand_graph=False`` is the text arm of the answer-level evaluation: the
     flag reaches :func:`paknow.retrieval.pipeline.retrieve_evidence` unchanged
     and every other parameter stays identical to the graph arm.
+
+    ``plan`` is the frozen-query seam: given a plan, the route node derives the
+    same state from it and skips the router model, so two runs over the same
+    questions compare code, not routing luck. Every other step is unchanged.
     """
-    state: QState = {
-        "query": query,
-        "images": images or [],
-        "run_id": uuid.uuid4().hex,
-        "t0": time.time(),
-        "failures": [],
-        "round": 0,
-        "max_rounds": 3,
-        "acc": {},
-        "expand_graph": expand_graph,
-    }
+    state = initial_state(query, images=images, expand_graph=expand_graph, plan=plan)
     final = _graph.invoke(state)
     ans = final.get("answer") or {}
     # only figures the answer actually chose to show (analysis-first, not a gallery)
     cited_figs = set(ans.get("figure_ids") or [])
     figures = [f for f in final.get("figures", []) if f.get("figure_id") in cited_figs]
+    context_units = final.get("context_units", [])
     return {
         "run_id": final["run_id"],
+        "plan_source": final.get("plan_source", "routed"),
+        "queries": list(final.get("queries") or []),
+        "query_hash": query_hash(final.get("queries") or []),
         "intent": final.get("intent"),
         "is_framework": final.get("is_framework", False),
         "routes": final.get("routes", []),
@@ -327,6 +394,14 @@ def run_query(
         # exactly the evidence ids generation rendered as citable [n] units;
         # derived observations never enter the citation binding
         "citable_ids": list(final.get("citation_index", {})),
+        # diagnostics for the optional /query debug block: the verdict the judge
+        # returned, and how the context expansion was partitioned
+        "sufficiency": final.get("sufficiency", {}),
+        "context_unit_counts": {
+            "total": len(context_units),
+            "parents": sum(1 for u in context_units if u.get("is_parent")),
+            "adjacent": sum(1 for u in context_units if u.get("is_adjacent")),
+        },
         "rounds": final.get("round", 0),
         "failures": final.get("failures", []),
     }

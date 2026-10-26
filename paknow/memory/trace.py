@@ -6,6 +6,7 @@ from typing import Any
 from paknow.db import SessionLocal
 from paknow.db.models import RunTraceRow
 from paknow.memory.versions import component_versions
+from paknow.workflows.router import PlanSource
 
 
 def save_trace(
@@ -19,8 +20,17 @@ def save_trace(
     failures: list[str],
     elapsed_ms: int | None,
     sop_id: str | None = None,
+    plan_source: PlanSource = "routed",
+    query_hash: str = "",
 ) -> None:
-    request: dict[str, Any] = {"query": query}
+    """Persist one run trace. ``plan_source`` is ``frozen`` for an injected
+    query plan and ``routed`` when the router model produced it; ``query_hash``
+    is the stable hash of the assembled query list."""
+    request: dict[str, Any] = {
+        "query": query,
+        "plan_source": plan_source,
+        "query_hash": query_hash,
+    }
     if sop_id:
         request["sop"] = sop_id
     with SessionLocal() as s:

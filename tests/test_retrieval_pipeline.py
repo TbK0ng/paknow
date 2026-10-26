@@ -3,12 +3,14 @@ and failures as separate partitions. Assertions are on that return value only.
 """
 from __future__ import annotations
 
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
 
 from paknow.graph import expansion
 from paknow.retrieval import pipeline
+from paknow.retrieval.qdrant_store import StoreLockedError
 
 
 def _unit(eid: str, *, text: str = "text", parent: bool = False, adjacent: bool = False) -> dict:
@@ -201,6 +203,27 @@ def test_text_width_defaults_to_the_production_fourteen(monkeypatch):
     assert seen["top_k"] == 14
 
 
+def test_candidate_pool_keeps_the_ranked_head_before_diversity(monkeypatch):
+    docs = [
+        {"evidence_id": f"e{i}", "text": f"文本{i}", "doc_id": f"d{i}", "score": 1.0 - i / 100}
+        for i in range(40)
+    ]
+    _patched(monkeypatch, hits_by_query={"q": docs})
+
+    result = pipeline.retrieve_evidence("q", ["q"], expand_graph=False)
+
+    assert [h["evidence_id"] for h in result.text_hits] == [f"e{i}" for i in range(14)]
+    # the judge's pool is the ranked head before the diversity cap: the whole
+    # candidate set while it fits the 80-wide rerank pool, not the 14-item
+    # window the answer reads
+    assert [h["evidence_id"] for h in result.candidate_hits] == [
+        f"e{i}" for i in range(40)
+    ]
+    assert {h["evidence_id"] for h in result.text_hits} <= {
+        h["evidence_id"] for h in result.candidate_hits
+    }
+
+
 def test_text_width_must_be_positive():
     with pytest.raises(ValueError, match="text_width"):
         pipeline.retrieve_evidence("q", ["q"], text_width=0)
@@ -312,3 +335,12 @@ def test_diversify_caps_one_book_at_the_doc_limit():
     out = search.diversify(docs, top_k=14, max_per_doc=8)
 
     assert len(out) == 8
+def test_store_lock_conflict_is_not_swallowed_as_a_failure(monkeypatch):
+    # the API answers 503, so the round must not degrade into "no hits, no error"
+    def locked(q, *, top_k=40):
+        raise StoreLockedError(Path("data/objects/qdrant.lock"), "pid=4242")
+
+    monkeypatch.setattr(pipeline, "hybrid_search", locked)
+
+    with pytest.raises(StoreLockedError):
+        pipeline.retrieve_evidence("q", ["q"], expand_graph=False)

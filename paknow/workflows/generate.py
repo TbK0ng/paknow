@@ -7,7 +7,7 @@ from typing import Any, Mapping
 from pydantic import BaseModel, Field
 
 from paknow.chart import ChartRead, is_non_chart
-from paknow.gateway import gateway
+from paknow.gateway import failure_reason, gateway
 from paknow.retrieval.pipeline import citation_binding
 
 _ANSWER_SYSTEM = """你是交易价格行为资料的问答助手。只依据提供的证据回答，逐项绑定证据编号 [n]。
@@ -84,21 +84,24 @@ class Answer(BaseModel):
     uncertainty: list[str] = Field(default_factory=list)
 
 
-def _render_unit_locator(u: dict[str, Any]) -> str:
+def graph_locator(entry: dict[str, Any]) -> str:
+    """Where a unit came from: chapter path plus whatever page/label it has."""
     loc = []
-    if u.get("chapter_path"):
-        loc.append(" › ".join(u["chapter_path"]))
-    if u.get("pdf_page"):
-        loc.append(f"PDF第{u['pdf_page']}页")
-    if u.get("printed_page"):
-        loc.append(f"印刷页{u['printed_page']}")
-    if u.get("figure_label"):
-        loc.append(str(u["figure_label"]))
+    if entry.get("chapter_path"):
+        loc.append(" › ".join(entry["chapter_path"]))
+    if entry.get("pdf_page"):
+        loc.append(f"PDF第{entry['pdf_page']}页")
+    if entry.get("printed_page"):
+        loc.append(f"印刷页{entry['printed_page']}")
+    if entry.get("figure_label"):
+        loc.append(str(entry["figure_label"]))
+    if entry.get("epub_href"):
+        loc.append("EPUB " + str(entry["epub_href"]).rsplit("/", 1)[-1])
     return " · ".join(loc) or "未知出处"
 
 
 def _render_unit(i: int, u: dict[str, Any]) -> str:
-    src = _render_unit_locator(u)
+    src = graph_locator(u)
     tags = []
     if u.get("is_parent"):
         tags.append("父块上下文")
@@ -195,38 +198,22 @@ def build_context(
     )
 
 
-def _graph_locator(entry: dict[str, Any]) -> str:
-    loc = []
-    if entry.get("chapter_path"):
-        loc.append(" › ".join(entry["chapter_path"]))
-    if entry.get("pdf_page"):
-        loc.append(f"PDF第{entry['pdf_page']}页")
-    if entry.get("printed_page"):
-        loc.append(f"印刷页{entry['printed_page']}")
-    if entry.get("figure_label"):
-        loc.append(str(entry["figure_label"]))
-    if entry.get("epub_href"):
-        loc.append("EPUB " + str(entry["epub_href"]).rsplit("/", 1)[-1])
-    return " · ".join(loc) or "未知出处"
+# the only mapping point between what extraction stores and what the prompt
+# renders: qualifiers carry ``context`` (背景) and ``modality`` (语气)
+_QUALIFIER_LABELS = {"context": "背景", "modality": "语气"}
 
 
-def _claim_conditions(claim: dict[str, Any]) -> str:
-    """Compact condition/qualifier text so a conditioned claim never reads absolute."""
+def _claim_conditions(qualifiers: Mapping[str, Any] | None) -> str:
+    """Render a claim's stored qualifiers so it never reads as absolute."""
+    if not isinstance(qualifiers, Mapping):
+        return ""
     parts: list[str] = []
-    for key in ("conditions", "qualifiers", "exceptions"):
-        value = claim.get(key)
-        if not value:
-            continue
-        if isinstance(value, dict):
-            for name, item in value.items():
-                if isinstance(item, (list, tuple)):
-                    item = "、".join(str(x) for x in item)
-                if item:
-                    parts.append(f"{name}={item}")
-        elif isinstance(value, (list, tuple)):
-            parts.extend(str(item) for item in value if item)
-        else:
-            parts.append(str(value))
+    for key, label in _QUALIFIER_LABELS.items():
+        value = qualifiers.get(key)
+        if isinstance(value, (list, tuple)):
+            value = "、".join(str(item) for item in value if item)
+        if value:
+            parts.append(f"{label}={value}")
     return "；".join(parts)
 
 
@@ -235,7 +222,7 @@ def render_graph_context(entries: list[dict[str, Any]]) -> list[str]:
 
     Entries already present in the citable text keep only a ``已见 [n]``
     pointer so the body is never duplicated and the citation binding stays
-    intact. Claim conditions/qualifiers are printed inline so a conditioned
+    intact. A claim's stored qualifiers are printed inline so a conditioned
     claim does not read as an unconditional rule.
     """
     lines: list[str] = []
@@ -244,7 +231,7 @@ def render_graph_context(entries: list[dict[str, Any]]) -> list[str]:
         claim = entry.get("claim")
         if claim:
             desc = f"{claim.get('subject', '')} → {claim.get('predicate', '')}"
-            conditions = _claim_conditions(claim)
+            conditions = _claim_conditions(claim.get("qualifiers"))
             if conditions:
                 desc += f"（条件：{conditions}）"
         elif entry.get("relation"):
@@ -258,7 +245,7 @@ def render_graph_context(entries: list[dict[str, Any]]) -> list[str]:
         else:
             body = f" | {(entry.get('text') or '')[:220]}"
         lines.append(
-            f"- （不可引用·仅理解辅助）[{kind}] {desc} | {ref} | {_graph_locator(entry)}{body}"
+            f"- （不可引用·仅理解辅助）[{kind}] {desc} | {ref} | {graph_locator(entry)}{body}"
         )
     return lines
 
@@ -274,7 +261,7 @@ def render_reading_context(units: list[dict[str, Any]], bound: Mapping[str, int]
         eid = unit.get("evidence_id")
         if not eid or str(eid) in bound:
             continue
-        lines.append(f"- {_render_unit_locator(unit)} {unit.get('text') or ''}")
+        lines.append(f"- {graph_locator(unit)} {unit.get('text') or ''}")
     return lines
 
 
@@ -389,7 +376,13 @@ def generate(
             "uncertainty": [],
             "chart_read": chart_read,
             "chart_read_status": "structured" if chart_read else "unstructured",
-            "generate_failure": f"{type(exc).__name__}: {exc}"[:300],
+            # machine-readable marker: a reader can tell this placeholder from
+            # a genuinely short answer without guessing by length
+            "degraded": True,
+            "degradation": {
+                "reason": failure_reason(exc),
+                "detail": f"{type(exc).__name__}: {exc}"[:300],
+            },
         }
     by_number = {
         index.get(str(unit.get("evidence_id")), position): unit

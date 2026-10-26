@@ -3,11 +3,13 @@ from __future__ import annotations
 
 import io
 import mimetypes
+import re
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, Literal
 
-from fastapi import FastAPI, HTTPException, UploadFile
-from fastapi.responses import FileResponse, Response
+from fastapi import FastAPI, HTTPException, Request, UploadFile
+from fastapi.responses import FileResponse, JSONResponse, Response
 from PIL import Image
 from pydantic import BaseModel, Field
 from qdrant_client.models import FieldCondition, Filter, MatchValue
@@ -18,11 +20,37 @@ from paknow.evidence.citations import resolve_citations
 from paknow.gateway import gateway
 from paknow.ingest.store import object_path
 from paknow.memory.sop import list_sops
+from paknow.retrieval.qdrant_store import StoreLockedError, check_store_ready
 from paknow.retrieval.search import diversify, hybrid_search, point_to_doc, rerank
 from paknow.retrieval.visual import mask_right_bytes
 from paknow.workflows.graph import run_query
 
-app = FastAPI(title="PAknow", version="0.1.0")
+
+@asynccontextmanager
+async def _lifespan(_app: FastAPI):
+    """Refuse to serve a store we cannot answer from.
+
+    A process that is up but replies empty is indistinguishable from a working
+    one, so a missing, empty or locked store stops startup with its own reason
+    instead of degrading into that state.
+    """
+    check_store_ready()
+    yield
+
+
+app = FastAPI(title="PAknow", version="0.1.0", lifespan=_lifespan)
+
+
+@app.exception_handler(StoreLockedError)
+async def _store_locked(_request: Request, exc: StoreLockedError) -> JSONResponse:
+    """The embedded store belongs to another process: retry later, never an empty 200.
+
+    In the shipped FastAPI app startup refusal normally happens first (the
+    lifespan checks the store); this handler is the single mapping point and
+    still covers a lock acquired after startup.
+    """
+    return JSONResponse(status_code=503, content={"detail": str(exc)})
+
 
 _VIEWER_INDEX = Path(__file__).resolve().parent.parent / "viewer" / "index.html"
 
@@ -38,6 +66,8 @@ class ChatTurn(BaseModel):
 class QueryRequest(BaseModel):
     query: str
     history: list[ChatTurn] = Field(default_factory=list)
+    # opt-in: the chain internals are diagnostic, not part of the normal reply
+    debug: bool = False
 
 
 class StandaloneQuery(BaseModel):
@@ -114,6 +144,59 @@ def _graph_entry(entry: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+_FAILURE_REASON = re.compile(r"^(timeout|invalid_structure|no_content)(?:: | \(|$)")
+
+
+def _failure_event(entry: str, degradation: dict[str, Any] | None = None) -> dict[str, str]:
+    """``"stage: reason: detail"`` -> the structured row the debug view returns.
+
+    A failed generation is classified from the answer's own ``degradation``
+    marker, not by re-parsing the failure string; only the other stages still
+    flatten their reason into the string.
+    """
+    stage, _, rest = entry.partition(": ")
+    if stage == "generate":
+        degradation = degradation or {}
+        return {
+            "stage": stage,
+            "category": degradation.get("reason") or "error",
+            "detail": degradation.get("detail") or rest,
+        }
+    match = _FAILURE_REASON.match(rest)
+    if match is None:
+        # retrieval/expansion failures carry no model-output classification
+        return {"stage": stage, "category": "error", "detail": rest}
+    return {
+        "stage": stage,
+        "category": match.group(1),
+        "detail": rest[match.end():].strip(" )"),
+    }
+
+
+def _debug_block(result: dict[str, Any]) -> dict[str, Any]:
+    """Read-only chain internals: what was recalled, judged, and failed."""
+    answer = result.get("answer") or {}
+    return {
+        "hits": [
+            {
+                "evidence_id": hit.get("evidence_id"),
+                "score": hit.get("score"),
+                "block_type": hit.get("block_type"),
+            }
+            for hit in result.get("hits") or []
+        ],
+        "citable_ids": list(result.get("citable_ids") or []),
+        "context_unit_counts": result.get("context_unit_counts") or {},
+        "sufficiency": result.get("sufficiency") or {},
+        "failures": [
+            _failure_event(entry, answer.get("degradation"))
+            for entry in result.get("failures") or []
+        ],
+        "rounds": result.get("rounds"),
+        "graph_stats": result.get("graph_stats") or {},
+    }
+
+
 def _resolve_answer(result: dict[str, Any]) -> dict[str, Any]:
     ans = result.get("answer") or {}
     citations = resolve_citations(ans.get("evidence_ids") or [])
@@ -129,6 +212,9 @@ def _resolve_answer(result: dict[str, Any]) -> dict[str, Any]:
         "rounds": result.get("rounds"),
         "graph_stats": result.get("graph_stats") or {},
         "graph": [_graph_entry(e) for e in (result.get("graph_evidence") or [])],
+        # a placeholder answer is marked, never inferred from its length
+        "degraded": bool(ans.get("degraded")),
+        "degradation": ans.get("degradation"),
     }
 
 
@@ -140,9 +226,12 @@ def health() -> dict[str, str]:
 @app.post("/query")
 def query(req: QueryRequest) -> dict[str, Any]:
     standalone, rewritten = _standalone_query(req.query, req.history)
-    payload = _resolve_answer(run_query(standalone))
+    result = run_query(standalone)
+    payload = _resolve_answer(result)
     payload["query_used"] = standalone
     payload["rewritten"] = rewritten
+    if req.debug:
+        payload["debug"] = _debug_block(result)
     return payload
 
 

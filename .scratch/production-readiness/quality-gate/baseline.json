@@ -1,0 +1,57 @@
+{
+  "dataset": "evals\\gold\\graph_expansion_v2.json",
+  "dataset_sha256": "7cf35d945cfc35572d0fb31b4c96fb4d3fa54adb36859e4186c6e3c0d5d55560",
+  "recorded_at": "20261026T035637Z",
+  "sample": [
+    "enc-01",
+    "mech-01",
+    "enc-11",
+    "enc-20",
+    "mech-11",
+    "mech-20",
+    "exc-01",
+    "exc-10",
+    "cond-01",
+    "cond-10"
+  ],
+  "deterministic": {
+    "arms": {
+      "text": {
+        "items": 10,
+        "hard_pass": 10,
+        "retrieval_errors": 0,
+        "coverage_mean": 0.45
+      },
+      "graph": {
+        "items": 10,
+        "hard_pass": 10,
+        "retrieval_errors": 0,
+        "coverage_mean": 0.45
+      }
+    }
+  },
+  "judge": {
+    "arms": {
+      "text": {
+        "items": 10,
+        "hard_pass": 10,
+        "hard_fail": 0,
+        "judged": 10,
+        "correctness": 1.4,
+        "condition_preservation": 1.6,
+        "citation_support": 1.2,
+        "unsupported_claims_total": 19
+      },
+      "graph": {
+        "items": 10,
+        "hard_pass": 10,
+        "hard_fail": 0,
+        "judged": 10,
+        "correctness": 1.3,
+        "condition_preservation": 1.6,
+        "citation_support": 1.2,
+        "unsupported_claims_total": 20
+      }
+    }
+  }
+}

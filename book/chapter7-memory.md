@@ -152,7 +152,7 @@ LLM 根据失败统计与问题样本产出 `CandidateSOP`（sop_id/意图范围
 | `multi_query` | ❌ 无效：只置 `sop_multi_query=True`，无人读取；多查询来自路由计划的 `sub_queries` |
 | `hyde` | ❌ 无效：只置 `use_hyde=True`，无人读取；假设文档串来自路由计划的 `hyde` 字段 |
 | `expand_figures` | ❌ 无效：只置 `sop_expand_figures=True`，无人读取 |
-| `rerank` | ❌ 无效：只置 `sop_rerank=True`，无人读取；交叉编码器重排在默认流程里无条件执行（`paknow/retrieval/pipeline.py:167-174`） |
+| `rerank` | ❌ 无效：只置 `sop_rerank=True`，无人读取；交叉编码器重排在默认流程里无条件执行（`paknow/retrieval/pipeline.py:216-228`） |
 | `hybrid_search` | — 空操作：默认检索本来就是混合召回 |
 | 未知 operation | 记入 `sop_skipped_ops`（不静默吞掉） |
 

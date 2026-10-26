@@ -74,7 +74,7 @@ out = client.chat_json(
 ### 长截图：条带
 
 手机截图可能远超模型的单图分辨率。上传前按高度切成 **≤8 张全分辨率条带**，并做 JPEG
-重编码以避开 provider 的 32 MB 单图上限（`paknow/gateway.py:21-55`）。条带数会写进读图
+重编码以避开 provider 的 32 MB 单图上限（`paknow/gateway.py:76-97`）。条带数会写进读图
 提示词的前两行，所以每条 `swing`/`level` 都带 `strip` 序号。
 
 模型偶尔会写出越界条带号（如"条带 3/2"）。`_clamp_strips` 把它归到最近的合法条带，
@@ -82,7 +82,7 @@ out = client.chat_json(
 
 ## 4. 读数如何进入检索
 
-`chart_queries()` 从读数里生成最多 3 条子查询（`paknow/chart.py:170-194`）：
+`chart_queries()` 从读数里生成最多 3 条子查询（`paknow/chart.py:150-186`）：
 
 | 来源 | 查询句式 | 目的 |
 |---|---|---|
@@ -116,7 +116,7 @@ out = client.chat_json(
 
 API 侧，`/charts` 与 `/query` 一样返回完整结构化载荷，并额外带 `chart_read` 与
 `chart_read_status`（取值 `structured` / `unstructured` / `unclear`），查看器据此渲染
-可折叠的"读图数据"面板（`apps/api/main.py:194-211`）。
+可折叠的"读图数据"面板（`apps/api/main.py:277-278`）。
 
 ## 6. 非图表：一条显式契约，而不是兜底
 

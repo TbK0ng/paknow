@@ -6,7 +6,7 @@
 """
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -16,6 +16,10 @@ from paknow.retrieval.dictionary import expand_query
 # A route is a recall channel with its own score. Graph expansion is not a
 # route: it runs after recall and never participates in scoring (ADR-0003).
 ROUTE_VOCAB = ("hybrid_text", "toc", "visual_page", "numeric")
+
+#: Which plan produced the query list: the caller's injected ``frozen`` plan or
+#: the router's own ``routed`` one.
+PlanSource = Literal["frozen", "routed"]
 
 _QUERY_SYSTEM = """你是交易资料系统的查询理解与构建器。输入用户问题、已识别术语、附件。输出一个结构化查询计划，字段语义：
 
