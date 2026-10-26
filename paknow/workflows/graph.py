@@ -82,6 +82,30 @@ def query_hash(queries: Sequence[str]) -> str:
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
+def initial_state(
+    query: str,
+    *,
+    images: list[bytes] | None = None,
+    expand_graph: bool = True,
+    plan: QueryPlan | None = None,
+) -> QState:
+    """The state every entry point starts from; ``plan`` is the eval seam."""
+    state: QState = {
+        "query": query,
+        "images": images or [],
+        "run_id": uuid.uuid4().hex,
+        "t0": time.time(),
+        "failures": [],
+        "round": 0,
+        "max_rounds": 3,
+        "acc": {},
+        "expand_graph": expand_graph,
+    }
+    if plan is not None:
+        state["plan"] = plan
+    return state
+
+
 def _route_node(state: QState) -> QState:
     # an injected plan is the evaluation seam: the same fields are derived from
     # it, but the router model is not asked for one (answer-level evaluation
@@ -340,19 +364,7 @@ def run_query(
     same state from it and skips the router model, so two runs over the same
     questions compare code, not routing luck. Every other step is unchanged.
     """
-    state: QState = {
-        "query": query,
-        "images": images or [],
-        "run_id": uuid.uuid4().hex,
-        "t0": time.time(),
-        "failures": [],
-        "round": 0,
-        "max_rounds": 3,
-        "acc": {},
-        "expand_graph": expand_graph,
-    }
-    if plan is not None:
-        state["plan"] = plan
+    state = initial_state(query, images=images, expand_graph=expand_graph, plan=plan)
     final = _graph.invoke(state)
     ans = final.get("answer") or {}
     # only figures the answer actually chose to show (analysis-first, not a gallery)

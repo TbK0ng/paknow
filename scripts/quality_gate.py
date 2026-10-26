@@ -36,7 +36,6 @@ import argparse
 import json
 import sys
 import time
-import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Sequence
@@ -135,18 +134,11 @@ def run_deterministic(items: Sequence[dict]) -> list[dict]:
 
 def _retrieval_record(item: dict, arm: str, expand_graph: bool, graph_module) -> dict:
     expected = list(item.get("expected_evidence") or [])
-    state: dict[str, Any] = {
-        "query": item["question"],
-        "images": [],
-        "run_id": uuid.uuid4().hex,
-        "t0": time.time(),
-        "failures": [],
-        "round": 0,
-        "max_rounds": 3,
-        "acc": {},
-        "expand_graph": expand_graph,
-        "plan": frozen_plan(item),
-    }
+    state = graph_module.initial_state(
+        item["question"],
+        expand_graph=expand_graph,
+        plan=frozen_plan(item),
+    )
     record: dict[str, Any] = {
         "id": item["id"],
         "arm": arm,
