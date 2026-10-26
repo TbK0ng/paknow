@@ -14,7 +14,7 @@
 
 ## Comments
 
-Resolved on `feat/pr-08-judge-evidence` (`2dd3baa`).
+Resolved on `feat/pr-08-judge-evidence` (`2dd3baa`), merged `feat/production-readiness` (`cb1f731`).
 
 - `check_sufficiency` now sends at most 20 units of 400 chars each, one line per unit: `[n] 证据 <evidence_id> | <locator> | <text>` (whitespace normalised so the item count equals the line count). The locator is the shared `generate.graph_locator`, so the judge sees chapter path / PDF page / printed page / figure number. Missing/conflicting/next_query contract and the round cap (3) are untouched; failure still fails open.
 - The pool is new: `RetrievalResult.candidate_hits` keeps the ranked hit list **before** `diversify` (the answer's 14-wide window no longer bounds the judge), and `_check_node` passes it, falling back to `hits` for callers without it. Generation widths are unchanged.
