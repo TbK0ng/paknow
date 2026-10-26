@@ -4,11 +4,14 @@ from __future__ import annotations
 
 import asyncio
 import io
+from pathlib import Path
 
 from fastapi import UploadFile
+from fastapi.testclient import TestClient
 from PIL import Image
 
 from apps.api import main
+from paknow.retrieval.qdrant_store import StoreLockedError
 
 
 class FakeGateway:
@@ -169,3 +172,16 @@ def test_only_the_charts_shape_carries_chart_read(monkeypatch):
 
     assert chart_payload["chart_read"] == read
     assert "chart_read" not in text_payload
+
+
+def test_store_lock_conflict_returns_503_with_a_readable_hint(monkeypatch):
+    def locked(_query, **_kwargs):
+        raise StoreLockedError(Path("data/objects/qdrant.lock"), "pid=4242, cmd=eval.py")
+
+    monkeypatch.setattr(main, "run_query", locked)
+
+    response = TestClient(main.app).post("/query", json={"query": "双底是什么？"})
+
+    assert response.status_code == 503
+    assert "稍后重试" in response.json()["detail"]
+    assert "Traceback" not in response.text

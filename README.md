@@ -127,8 +127,9 @@ cp .env.example .env   # 默认 SQLite + 嵌入式 Qdrant；服务端模式的 U
 ## 默认存储（离线零依赖）
 
 - 权威元数据：SQLite（`data/paknow.db`），`PAKNOW_DB_URL` 可切 Postgres（未实测）。
-- 向量：Qdrant **嵌入式本地模式**（`data/objects/qdrant`），`QDRANT_URL` 可切 server
-  （`docker-compose.yml` 给了 postgres 16 + qdrant 1.12.4）。
+- 向量：Qdrant **嵌入式本地模式**（`data/objects/qdrant`），同一时刻只允许一个进程持有
+  （`data/objects/qdrant.lock`，第二个进程直接 503，不会返回空结果）；`QDRANT_URL` 可切
+  server 并绕过该锁（`docker-compose.yml` 给了 postgres 16 + qdrant 1.12.4）。
 - 派生对象（图片/中间件）：`data/objects/` 内容寻址。
 - 云端：`deepseek-flash`（`ModelGateway` 可换）；图片输入需 `DEEPSEEK_VISION=true`，
   默认 `false` 时上传图片会被直接拒绝。
