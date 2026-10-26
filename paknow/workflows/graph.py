@@ -5,10 +5,12 @@ via ``QueryPlan``; framework questions get synthesis generation.
 """
 from __future__ import annotations
 
+import hashlib
+import json
 import threading
 import time
 import uuid
-from typing import Any, TypedDict
+from typing import Any, Sequence, TypedDict
 
 from langgraph.graph import END, START, StateGraph
 
@@ -26,6 +28,10 @@ class QState(TypedDict, total=False):
     query: str
     images: list[bytes]
     plan: QueryPlan
+    # "frozen" when the caller injected the plan, "routed" otherwise
+    plan_source: str
+    # the query list retrieval actually submits, captured on the first round
+    queries: list[str]
     intent: str
     is_framework: bool
     routes: list[str]
@@ -67,8 +73,19 @@ class QState(TypedDict, total=False):
     chart_read: dict[str, Any] | None
 
 
+def query_hash(queries: Sequence[str]) -> str:
+    """Stable hash of an assembled query list: order-sensitive, JSON-encoded."""
+    payload = json.dumps(list(queries), ensure_ascii=False)
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
 def _route_node(state: QState) -> QState:
-    plan = route(state["query"], state.get("images"))
+    # an injected plan is the evaluation seam: the same fields are derived from
+    # it, but the router model is not asked for one (answer-level evaluation
+    # needs the query list frozen to compare code changes)
+    plan = state.get("plan")
+    state["plan_source"] = "frozen" if plan else "routed"
+    plan = plan or route(state["query"], state.get("images"))
     state["plan"] = plan
     state["intent"] = plan.intent
     state["is_framework"] = plan.is_framework
@@ -129,6 +146,10 @@ def _retrieve_node(state: QState) -> QState:
         if q and q not in seen_q:
             seen_q.add(q)
             queries.append(q)
+    # the assembled set, recorded once: the pipeline submits its first six, and
+    # a later gap-round query must not rewrite what the plan assembled
+    if "queries" not in state:
+        state["queries"] = queries[:6]
 
     result = retrieve_evidence(
         state["query"],
@@ -244,6 +265,8 @@ def _record_node(state: QState) -> QState:
         failures=state.get("failures", []),
         elapsed_ms=int((time.time() - state["t0"]) * 1000),
         sop_id=state.get("sop_id"),
+        plan_source=state.get("plan_source", "routed"),
+        query_hash=query_hash(state.get("queries", [])),
     )
     # auto memory-optimization (non-blocking; runs the 评价→蒸馏→发布 loop)
     _maybe_auto_optimize()
@@ -287,12 +310,17 @@ def run_query(
     images: list[bytes] | None = None,
     *,
     expand_graph: bool = True,
+    plan: QueryPlan | None = None,
 ) -> dict[str, Any]:
     """Run the full production chain for one stateless question.
 
     ``expand_graph=False`` is the text arm of the answer-level evaluation: the
     flag reaches :func:`paknow.retrieval.pipeline.retrieve_evidence` unchanged
     and every other parameter stays identical to the graph arm.
+
+    ``plan`` is the frozen-query seam: given a plan, the route node derives the
+    same state from it and skips the router model, so two runs over the same
+    questions compare code, not routing luck. Every other step is unchanged.
     """
     state: QState = {
         "query": query,
@@ -305,6 +333,8 @@ def run_query(
         "acc": {},
         "expand_graph": expand_graph,
     }
+    if plan is not None:
+        state["plan"] = plan
     final = _graph.invoke(state)
     ans = final.get("answer") or {}
     # only figures the answer actually chose to show (analysis-first, not a gallery)
@@ -312,6 +342,9 @@ def run_query(
     figures = [f for f in final.get("figures", []) if f.get("figure_id") in cited_figs]
     return {
         "run_id": final["run_id"],
+        "plan_source": final.get("plan_source", "routed"),
+        "queries": list(final.get("queries") or []),
+        "query_hash": query_hash(final.get("queries") or []),
         "intent": final.get("intent"),
         "is_framework": final.get("is_framework", False),
         "routes": final.get("routes", []),
