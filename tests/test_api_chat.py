@@ -216,7 +216,14 @@ def _full_result() -> dict:
         "intent": "knowledge_qa",
         "is_framework": False,
         "routes": ["hybrid_text"],
-        "answer": {"answer": "答", "uncertainty": [], "evidence_ids": []},
+        "answer": {
+            "answer": "答",
+            "uncertainty": [],
+            "evidence_ids": [],
+            # the generate failure row must be classified from this marker
+            "degraded": True,
+            "degradation": {"reason": "invalid_structure", "detail": "JSONDecodeError: bad"},
+        },
         "figures": [],
         "rounds": 2,
         "graph_stats": {"enabled": True, "selected": 1},
@@ -274,6 +281,20 @@ def test_a_requested_debug_block_shows_the_chain_internals(monkeypatch):
         {"stage": "chart_read", "category": "timeout", "detail": "page render timed out"},
         {"stage": "generate", "category": "invalid_structure", "detail": "JSONDecodeError: bad"},
     ]
+
+
+def test_the_generate_failure_is_classified_from_the_degradation_marker():
+    """The flattened trace string is not re-parsed for the category."""
+    event = main._failure_event(
+        "generate: no_content: ValueError: stale wording",
+        {"reason": "timeout", "detail": "TimeoutError: slow"},
+    )
+
+    assert event == {
+        "stage": "generate",
+        "category": "timeout",
+        "detail": "TimeoutError: slow",
+    }
 
 
 def test_a_degraded_run_is_visible_in_the_debug_failures(monkeypatch):

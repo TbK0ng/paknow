@@ -147,9 +147,21 @@ def _graph_entry(entry: dict[str, Any]) -> dict[str, Any]:
 _FAILURE_REASON = re.compile(r"^(timeout|invalid_structure|no_content)(?:: | \(|$)")
 
 
-def _failure_event(entry: str) -> dict[str, str]:
-    """``"stage: reason: detail"`` -> the structured row the debug view returns."""
+def _failure_event(entry: str, degradation: dict[str, Any] | None = None) -> dict[str, str]:
+    """``"stage: reason: detail"`` -> the structured row the debug view returns.
+
+    A failed generation is classified from the answer's own ``degradation``
+    marker, not by re-parsing the failure string; only the other stages still
+    flatten their reason into the string.
+    """
     stage, _, rest = entry.partition(": ")
+    if stage == "generate":
+        degradation = degradation or {}
+        return {
+            "stage": stage,
+            "category": degradation.get("reason") or "error",
+            "detail": degradation.get("detail") or rest,
+        }
     match = _FAILURE_REASON.match(rest)
     if match is None:
         # retrieval/expansion failures carry no model-output classification
@@ -163,6 +175,7 @@ def _failure_event(entry: str) -> dict[str, str]:
 
 def _debug_block(result: dict[str, Any]) -> dict[str, Any]:
     """Read-only chain internals: what was recalled, judged, and failed."""
+    answer = result.get("answer") or {}
     return {
         "hits": [
             {
@@ -175,7 +188,10 @@ def _debug_block(result: dict[str, Any]) -> dict[str, Any]:
         "citable_ids": list(result.get("citable_ids") or []),
         "context_unit_counts": result.get("context_unit_counts") or {},
         "sufficiency": result.get("sufficiency") or {},
-        "failures": [_failure_event(entry) for entry in result.get("failures") or []],
+        "failures": [
+            _failure_event(entry, answer.get("degradation"))
+            for entry in result.get("failures") or []
+        ],
         "rounds": result.get("rounds"),
         "graph_stats": result.get("graph_stats") or {},
     }
