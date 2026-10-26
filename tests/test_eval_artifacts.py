@@ -32,6 +32,13 @@ ABLATIONS = (
     "gold-v2-graph-w14.json",
     "gold-v2-graph-w20.json",
 )
+#: the post-tuning recall runs the book quotes as current (same frozen v2, new
+#: rerank/diversity recipe); the ABLATIONS above are the pre-tuning baseline
+SELECTION = ROOT / ".scratch" / "selection-funnel"
+CURRENT_RUNS = {
+    "gold-after2-text-w14.json": "text",
+    "gold-after-graph-w14.json": "graph",
+}
 
 
 def load(path: Path) -> dict:
@@ -125,6 +132,28 @@ def test_chapter14_quotes_the_committed_records():
             assert f"{judged[arm]['scores'][metric]['mean']:.3f}" in text
     for arm in ("text", "graph"):
         assert str(judged[arm]["unsupported_claims"]["total"]) in text
+
+
+@pytest.mark.parametrize("name", CURRENT_RUNS)
+def test_current_recall_records_agree_with_chapter14(name: str):
+    record = load(SELECTION / name)
+    dataset = load(GOLD / "graph_expansion_v2.json")
+    assert Path(record["dataset"].replace("\\", "/")).name == "graph_expansion_v2.json"
+    assert [item["id"] for item in record["items"]] == [
+        item["id"] for item in dataset["items"]
+    ]
+
+    text = re.sub(r"\s+", " ", CHAPTER.read_text(encoding="utf-8"))
+    summary = record["summary"]
+    if CURRENT_RUNS[name] == "text":
+        found = sum(len(item["found"]) for item in record["items"])
+        assert found == summary["expected_found"]
+        assert f"{found} / {summary['expected_total']}" in text, name
+    else:
+        assert (
+            f"{summary['graph_arm_found']} / {summary['expected_total']}" in text
+        ), name
+        assert f"+{summary['net_gain']}" in text, name
 
 
 def test_chart_run_uses_the_frozen_dataset():

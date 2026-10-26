@@ -43,7 +43,7 @@ Sufficiency {
 规则：
 
 - **零命中** → 直接判不足，触发补检索；
-- **达到轮次上限** → 判充分（用现有证据回答），避免无限循环；轮次上限不是硬编码常量，而是路由计划里的 `QueryPlan.max_search_rounds`（默认 3，`paknow/workflows/router.py:52`），由 `paknow/workflows/graph.py:125` 写入运行状态、核验与出边判断各自读取（终止判断在 `graph.py:242`）；
+- **达到轮次上限** → 判充分（用现有证据回答），避免无限循环；轮次上限不是硬编码常量，而是路由计划里的 `QueryPlan.max_search_rounds`（默认 3，`paknow/workflows/router.py:52`），由 `paknow/workflows/graph.py:125` 写入运行状态、核验与出边判断各自读取（终止判断在 `paknow/workflows/graph.py:242`）；
 - **核验器本身失败** → fail-open（按现有证据回答），而不是报错；
 - **判定看真实证据**：最多 20 条、每条 400 字，带证据 id 与出处（章节 / PDF 页 / 印刷页 / 图号）；候选来自多样性之前的候选池，因此不会被生成侧的 14 条窗口截短。实际送审的条数与字符数写进运行轨迹（`output.sufficiency.evidence_items/evidence_chars`），可审计；
 - 补检索的新问句优先级最高（见第 5 章），且证据**跨轮累积**。
