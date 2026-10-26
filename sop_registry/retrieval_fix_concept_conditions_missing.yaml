@@ -1,0 +1,52 @@
+sop_id: retrieval_fix_concept_conditions_missing
+version: 1
+status: candidate
+intent_scope:
+- knowledge_qa
+preconditions:
+- 问题为交易/技术分析概念类知识问答，问的是“需要满足什么条件”“能不能/该不该”“算不算”这类判定规则
+- 问题含专业术语，且术语可能存在别名、中英混用或图表标注差异（如楔形反转/上升楔形、旗形/双顶双底、强突破/假突破）
+- 问题带有时间周期限定（5分钟图、日内图、开盘第一小时），需确认资料是否支持该周期
+steps:
+- operation: expand_terms
+  detail: 对核心术语做别名与上位词扩展：楔形反转→上升/下降楔形、收敛三角形、反转形态确认；双顶双底旗形→旗形整理、双顶/双底、持续形态；强突破→有效突破、假突破、突破回踩；陡峭通道→通道线、趋势线、测试低点
+- operation: step_back
+  detail: 先检索概念的上位定义（反转形态的确认条件、突破有效性的判定标准、通道内逆势交易的风险原则），再下钻到具体子形态，避免直接命中不到子条款就判定无证据
+- operation: multi_query
+  detail: 并行发起三类查询：定义类（是什么）、条件/清单类（满足哪些条件、如何判定）、场景类（5分钟图/日内图/开盘阶段的应用与例外）
+- operation: hybrid_search
+  detail: 关键词与向量混合检索，关键词侧用扩展后的术语列表，向量侧用原问题改写句，兼顾术语精确匹配与语义召回
+- operation: expand_figures
+  detail: 检索并纳入图表标题、图注与配图说明（形态示意图、突破示意），因为条件性知识常写在图注而非正文
+- operation: rerank
+  detail: 按“是否直接给出条件清单/判定标准”排序，优先保留含枚举条款或明确规则的片段，压低仅泛泛描述形态的片段
+- operation: check_evidence
+  detail: 逐项核对是否同时具备：概念定义原文、条件/规则清单、时间周期适用性说明；缺任一项则标记为部分证据并继续补检
+required_evidence:
+- 该概念的定义原文（明确所指形态或行为）
+- 条件/判定标准清单（成条列出，可直接回答“需要满足什么条件”）
+- 针对问题所含时间周期的适用性说明或示例（如5分钟图、日内图、开盘首小时）
+- 图表/图注或案例说明作为佐证
+fallback: 若子形态条件条款检索不到，退回上位概念（反转形态确认条件、突破有效性、通道交易原则）作答，并明确标注“资料未直接给出该子形态的条件”，绝不臆造条件清单；若仅有定义无条件，则只回答定义并说明证据不足。
+stop: 已同时命中1条定义原文与至少1条条件/规则条款且来源可引用时停止；或已用扩展术语+上位概念完成3轮检索仍无可引用条款时停止，并输出证据不足声明。
+failure_patterns:
+- retrieval_error：直接使用原问术语检索，未做别名/中英/图注扩展，导致术语不匹配而召回缺失
+- retrieval_error：跳过上位概念直接下钻子形态，子形态无独立条款时整题召回为空
+- no_evidence：只召回形态描述，未召回条件清单类条款，无法回答“需要满足什么条件”
+- no_evidence：忽略时间周期限定（5分钟图/日内图），检索结果与问题周期不匹配
+- no_evidence：未纳入图表标题与图注，条件性知识实际存在于图注中却被漏检
+compatible_versions:
+  corpus: 2b9b41f6cc0c
+  graph: 1105n/3753e
+  embed_model: BAAI/bge-m3
+  rerank_model: BAAI/bge-reranker-v2-m3
+  visual_model: Qwen/Qwen2.5-VL-3B-Instruct
+  generator_model: deepseek-flash
+validation:
+  dataset: null
+  paired_runs: 0
+  wins: 0
+  losses: 0
+  ties: 0
+  approved: false
+  notes: null

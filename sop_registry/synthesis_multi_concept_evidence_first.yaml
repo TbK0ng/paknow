@@ -1,0 +1,86 @@
+sop_id: synthesis_multi_concept_evidence_first
+version: 1
+status: candidate
+intent_scope:
+- synthesis
+preconditions:
+- 问题需要把多个概念（如回调计数、时段高低点、开盘结构、信号/背景/方向过滤条件）综合成一个结论
+- 提问用口语化或行话表述（如“一条腿”“数到第几次”“完美信号”），字面检索命中率低
+- 单一文档或单一片段无法覆盖全部子概念
+steps:
+- operation: expand_terms
+  params:
+    terms:
+    - 回调
+    - 腿
+    - 波段
+    - 回撤
+    - 时段高低点
+    - 前高前低
+    - 开盘结构
+    - 信号过滤
+    - 背景
+    - 方向
+    note: 为每个行话术语补充同义词与上位概念，形成检索词表
+  purpose: 解决口语化术语导致的字面检索失败
+- operation: step_back
+  params:
+    rewrite_to: 把具体问法抽象为原则性问题，如“回调计数与趋势延续性的判定规则”“时段边界支撑阻力的作用机制”“多重条件过滤下的不交易规则”
+  purpose: 提升到原则层，避免只在具体表述上检索
+- operation: multi_query
+  params:
+    queries_per_concept: 2
+    concepts:
+    - 回调/腿的计数
+    - 时段高低点作用
+    - 开盘半小时结构类型
+    - 信号+背景+方向之外的不交易条件
+  purpose: 逐子概念分开检索，保证覆盖而非单点命中
+- operation: hybrid_search
+  params:
+    combine:
+    - keyword
+    - vector
+    top_k: 20
+  purpose: 术语与语义并行，减少检索错误
+- operation: expand_figures
+  params:
+    trigger: 命中文本引用了图表、结构示意图或表格
+    action: 拉取对应图注与图表上下文
+  purpose: 结构与时段类问题常在图表中给答案
+- operation: check_evidence
+  params:
+    per_concept: 至少 1 条独立证据
+    require_source_span: true
+  purpose: 显式校验每个子概念都有证据，防止部分覆盖就作答
+- operation: rerank
+  params:
+    criterion:
+    - 与子概念的直接对应度
+    - 原则性表述优先于个例
+  purpose: 把最贴合综合答案的片段排前
+required_evidence:
+- 覆盖每个子概念的独立证据片段（回调计数规则、时段高低点作用、开盘结构类型、信号之外的不交易条件）
+- 至少一条原则层表述，而不仅是举例
+- 术语与问题行话之间的对应证据（证明同义理解正确）
+fallback: 若某子概念检索为空：先对其单独再执行一次 expand_terms + step_back 重检；仍为空则明确标注该子概念无证据，只用已有子概念作答，并说明结论不完整，不得用常识补全。
+stop: 当每个子概念均至少命中 1 条独立证据且已 rerank 出原则层片段时停止；或两次重检后仍缺证据，则带缺口说明输出。
+failure_patterns:
+- retrieval_error：行话术语直接字面检索导致漏检
+- no_evidence：多概念综合题只命中部分子概念即作答
+- 把个例描述当原则结论，缺少可依据的规则性证据
+compatible_versions:
+  corpus: 2b9b41f6cc0c
+  graph: 1105n/3753e
+  embed_model: BAAI/bge-m3
+  rerank_model: BAAI/bge-reranker-v2-m3
+  visual_model: Qwen/Qwen2.5-VL-3B-Instruct
+  generator_model: deepseek-flash
+validation:
+  dataset: null
+  paired_runs: 0
+  wins: 0
+  losses: 0
+  ties: 0
+  approved: false
+  notes: null
