@@ -135,6 +135,17 @@ carries `plan_source` (`frozen` / `routed`), the assembled query list `queries`
 `request` JSON records the same source and hash. Without a plan the router still
 produces it, so production behaviour is unchanged.
 
+`--frozen-queries` uses that seam: each item's plan is built from the gold item
+itself (`question` + `expanded_queries`), so routing never runs and two runs of
+the same code over the same dataset share the per-item query list, rounds and
+coverage. Every record carries `plan_source` (`frozen` / `routed`), `queries`
+and `query_hash`; `summary.json` carries `plan_source` and `dataset_sha256`, so
+two runs are comparable only when both match. Without the flag the router
+produces the plan and the record says `plan_source: "routed"`, exactly as
+before. A degraded answer stays readable in the record (`degraded`,
+`degradation`), so a gate can tell a generation placeholder from a short real
+answer.
+
 Artifacts go to `.scratch/retrieval-eval-parity/answers/<UTC-timestamp>/`:
 `records.jsonl` (one small record per item/arm, no retrieved text),
 `summary.json` (per-arm summaries, paired graph-vs-text delta, wall time) and
@@ -153,6 +164,12 @@ PYTHONPATH=. E:/PAknow/.venv/Scripts/python.exe scripts/eval_answers.py
 PAKNOW_DB_URL=sqlite:///E:/PAknow/data/paknow.db \
 OBJECTS_DIR=E:/PAknow/data/objects \
 PYTHONPATH=. E:/PAknow/.venv/Scripts/python.exe scripts/eval_answers.py --limit 2
+
+# frozen queries: same dataset + same code, identical query list/rounds/coverage
+PAKNOW_DB_URL=sqlite:///E:/PAknow/data/paknow.db \
+OBJECTS_DIR=E:/PAknow/data/objects \
+PYTHONPATH=. E:/PAknow/.venv/Scripts/python.exe scripts/eval_answers.py \
+  --frozen-queries --out .scratch/retrieval-eval-parity/answers/<timestamp>-frozen
 
 # resume an interrupted batch (same --out directory)
 PAKNOW_DB_URL=sqlite:///E:/PAknow/data/paknow.db \

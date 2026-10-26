@@ -24,9 +24,17 @@ Checkpointing is per (item, arm): one JSON line is appended as soon as an arm
 finishes, so ``--resume`` only reruns what is missing or errored. A failed item
 is recorded and the batch continues.
 
+``--frozen-queries`` builds each item's plan from the gold item itself (its
+``question`` plus ``expanded_queries``) and injects it, so the router model is
+never asked: same code plus same dataset must reproduce the same query list,
+rounds and coverage. Every record carries ``plan_source`` (``frozen`` /
+``routed``), the assembled ``queries`` and their ``query_hash``; the summary
+carries the dataset hash, so an edited dataset or plan shows up immediately.
+
 Usage:
     python scripts/eval_answers.py
     python scripts/eval_answers.py --limit 4 --out .scratch/retrieval-eval-parity/answers/dev
+    python scripts/eval_answers.py --frozen-queries --out .scratch/retrieval-eval-parity/answers/frozen
     python scripts/eval_answers.py --resume --out <same dir as the interrupted run>
 """
 from __future__ import annotations
@@ -53,6 +61,8 @@ from scripts.eval_common import (  # noqa: E402
     write_jsonl,
 )
 
+from paknow.workflows.router import QueryPlan  # noqa: E402
+
 DEFAULT_DATASET = ROOT / "evals" / "gold" / "graph_expansion_v2.json"
 ANSWERS_DIR = ROOT / ".scratch" / "retrieval-eval-parity" / "answers"
 
@@ -74,6 +84,15 @@ def load_dataset(path: Path) -> dict:
 def select_items(dataset: Mapping[str, Any], limit: int = 0) -> list[dict]:
     items = list(dataset["items"])
     return items[:limit] if limit else items
+
+
+def frozen_plan(item: Mapping[str, Any]) -> QueryPlan:
+    """The gold item's own queries as a plan, so routing never runs.
+
+    ``expanded_queries[0]`` is the question itself (dataset contract); the rest
+    become sub-queries, so ``retrieval_queries`` rebuilds that exact list.
+    """
+    return QueryPlan(sub_queries=list(item.get("expanded_queries") or [])[1:])
 
 
 # ---------------------------------------------------------------------------
@@ -137,7 +156,7 @@ def coverage_bucket(ratio: float) -> str:
 # ---------------------------------------------------------------------------
 
 
-def _record(item: Mapping[str, Any], arm: str) -> dict:
+def _record(item: Mapping[str, Any], arm: str, plan_source: str) -> dict:
     """The fields both a successful and an errored arm always carry."""
     expected = list(item.get("expected_evidence", []))
     return {
@@ -145,7 +164,14 @@ def _record(item: Mapping[str, Any], arm: str) -> dict:
         "arm": arm,
         "category": item.get("category"),
         "question": item["question"],
+        # which plan produced the query list, and that list's hash: the two
+        # runs are comparable only when both match
+        "plan_source": plan_source,
+        "queries": [],
+        "query_hash": "",
         "answer": "",
+        "degraded": False,
+        "degradation": None,
         "cited_evidence_ids": [],
         "citable_ids": [],
         "graph_evidence_ids": [],
@@ -163,9 +189,11 @@ def _record(item: Mapping[str, Any], arm: str) -> dict:
     }
 
 
-def error_record(item: Mapping[str, Any], arm: str, error: str, elapsed: float) -> dict:
+def error_record(
+    item: Mapping[str, Any], arm: str, error: str, elapsed: float, plan_source: str
+) -> dict:
     return {
-        **_record(item, arm),
+        **_record(item, arm, plan_source),
         "status": "error",
         "error": error,
         "failures": [error],
@@ -177,16 +205,26 @@ def run_item(
     item: Mapping[str, Any],
     arm: str,
     run_query: Callable[..., Mapping[str, Any]],
+    *,
+    frozen: bool = False,
 ) -> dict:
-    """One stateless production-chain call plus the deterministic constraints."""
+    """One stateless production-chain call plus the deterministic constraints.
+
+    ``frozen`` injects the item's own plan (``--frozen-queries``): the router
+    model is not consulted, so the query list is a property of the dataset.
+    """
     expand_graph = dict(ARMS)[arm]
+    plan_source = "frozen" if frozen else "routed"
+    plan = frozen_plan(item) if frozen else None
     started = time.monotonic()
     try:
         # generation sees the question and its own retrieval result only; the
         # expected evidence below is never passed into the chain
-        result = run_query(item["question"], expand_graph=expand_graph)
+        result = run_query(item["question"], expand_graph=expand_graph, plan=plan)
     except Exception as e:  # noqa: BLE001
-        return error_record(item, arm, f"{type(e).__name__}: {e}", time.monotonic() - started)
+        return error_record(
+            item, arm, f"{type(e).__name__}: {e}", time.monotonic() - started, plan_source
+        )
 
     elapsed = time.monotonic() - started
     answer = result.get("answer") or {}
@@ -201,9 +239,17 @@ def run_item(
     checks = citation_checks(cited, citable, graph_ids)
     coverage = expected_coverage(expected, citable)
     return {
-        **_record(item, arm),
+        **_record(item, arm, plan_source),
         "status": "ok",
+        # the chain's own provenance wins over the flag we passed
+        "plan_source": result.get("plan_source") or plan_source,
+        "queries": list(result.get("queries") or []),
+        "query_hash": result.get("query_hash") or "",
         "answer": answer.get("answer") or "",
+        # a degraded answer (generation failed) stays distinguishable from a
+        # genuinely short one, so the gate can reject empty answers
+        "degraded": bool(answer.get("degraded")),
+        "degradation": answer.get("degradation"),
         "cited_evidence_ids": cited,
         "citable_ids": citable,
         "graph_evidence_ids": graph_ids,
@@ -370,6 +416,7 @@ def build_payload(
     records: Sequence[Mapping[str, Any]],
     limit: int,
     timestamp: str,
+    plan_source: str = "routed",
 ) -> dict:
     delta = summarize_delta(records)
     errors = [
@@ -382,6 +429,7 @@ def build_payload(
         "dataset_sha256": digest,
         "timestamp": timestamp,
         "limit": limit,
+        "plan_source": plan_source,
         "arms": {name: {"expand_graph": flag} for name, flag in ARMS},
         "summary": delta,
         "errors": errors,
@@ -390,6 +438,10 @@ def build_payload(
 
 def print_summary(payload: Mapping[str, Any]) -> None:
     summary = payload["summary"]
+    print(
+        f"plan: {payload['plan_source']} "
+        f"dataset {payload['dataset_sha256'][:12]} ({payload['dataset']})"
+    )
     for name in ("text", "graph"):
         s = summary[name]
         print(
@@ -427,12 +479,18 @@ def main() -> None:
     ap.add_argument("--out", type=Path, default=None, help="artifact directory (UTC timestamp by default)")
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--resume", action="store_true", help="reuse the --out checkpoint and run missing arms")
+    ap.add_argument(
+        "--frozen-queries",
+        action="store_true",
+        help="build each plan from the gold item's question + expanded_queries (no routing)",
+    )
     args = ap.parse_args()
 
     from paknow.workflows.graph import run_query  # noqa: E402
 
     if args.resume and args.out is None:
         ap.error("--resume needs --out pointing at the interrupted run's directory")
+    plan_source = "frozen" if args.frozen_queries else "routed"
     out_dir = args.out or _default_out()
     out_dir.mkdir(parents=True, exist_ok=True)
     checkpoint_path = out_dir / "checkpoint.jsonl"
@@ -445,7 +503,7 @@ def main() -> None:
 
     started = time.monotonic()
     for index, (item, arm) in enumerate(todo, 1):
-        record = run_item(item, arm, run_query)
+        record = run_item(item, arm, run_query, frozen=args.frozen_queries)
         append_checkpoint(checkpoint_path, record)
         checkpoint[record_key(record)] = record
         status = "ok" if record["status"] == "ok" else "ERROR"
@@ -466,6 +524,7 @@ def main() -> None:
         records=records,
         limit=args.limit,
         timestamp=timestamp,
+        plan_source=plan_source,
     )
     summary_path = out_dir / "summary.json"
     previous_wall = 0.0
