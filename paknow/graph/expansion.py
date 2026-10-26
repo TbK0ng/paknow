@@ -276,8 +276,6 @@ def load_mechanism_candidates(
                     "subject": claim.subject,
                     "predicate": claim.predicate,
                     "qualifiers": claim.qualifiers or {},
-                    "conditions": (claim.qualifiers or {}).get("conditions") or [],
-                    "exceptions": (claim.qualifiers or {}).get("exceptions") or [],
                 },
                 "origin": EdgeOrigin.claim_extract.value,
                 "concept": concept,
