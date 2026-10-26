@@ -686,6 +686,7 @@ def test_retrieve_node_hands_prior_graph_evidence_back_and_keeps_it(monkeypatch)
         return SimpleNamespace(
             acc={},
             text_hits=[],
+            candidate_hits=[],
             figures=[],
             context_units=[],
             citable_units=[],

@@ -191,7 +191,7 @@ def build_context(
     )
 
 
-def _graph_locator(entry: dict[str, Any]) -> str:
+def graph_locator(entry: dict[str, Any]) -> str:
     loc = []
     if entry.get("chapter_path"):
         loc.append(" › ".join(entry["chapter_path"]))
@@ -254,7 +254,7 @@ def render_graph_context(entries: list[dict[str, Any]]) -> list[str]:
         else:
             body = f" | {(entry.get('text') or '')[:220]}"
         lines.append(
-            f"- （不可引用·仅理解辅助）[{kind}] {desc} | {ref} | {_graph_locator(entry)}{body}"
+            f"- （不可引用·仅理解辅助）[{kind}] {desc} | {ref} | {graph_locator(entry)}{body}"
         )
     return lines
 

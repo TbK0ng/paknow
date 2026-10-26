@@ -391,8 +391,12 @@ def _chart_chain(monkeypatch: pytest.MonkeyPatch, *, read, failures=()) -> dict[
     monkeypatch.setattr(
         graph_module,
         "check_sufficiency",
-        lambda *a, **k: SimpleNamespace(
-            next_query=None, model_dump=lambda: {"sufficient": True, "next_query": None}
+        lambda *a, **k: (
+            SimpleNamespace(
+                next_query=None,
+                model_dump=lambda: {"sufficient": True, "next_query": None},
+            ),
+            None,
         ),
     )
 

@@ -8,6 +8,8 @@ Partitions are explicit on :class:`RetrievalResult`:
 
 - ``text_hits``: scored text recall, the only rank order the answer uses and
   the only channel that produces citable citations;
+- ``candidate_hits``: the same recall before the diversity cap, so the
+  sufficiency judge sees the ranked candidates rather than the 14 that survive;
 - ``graph_evidence``: graph expansion entries, accumulated across gap rounds.
   They are understanding aids only: ``provenance="graph"``,
   ``non_citable=True``, and never merged into the citable units the answer
@@ -45,6 +47,9 @@ class RetrievalResult:
     """Everything one retrieval round produced, partitioned by use."""
 
     text_hits: list[dict[str, Any]] = field(default_factory=list)
+    # ranked head before the diversity cap; the sufficiency judge reads this so
+    # the answer's 14-wide window never limits what it is allowed to see
+    candidate_hits: list[dict[str, Any]] = field(default_factory=list)
     graph_evidence: list[dict[str, Any]] = field(default_factory=list)
     context_units: list[dict[str, Any]] = field(default_factory=list)
     citable_units: list[dict[str, Any]] = field(default_factory=list)
@@ -172,6 +177,7 @@ def retrieve_evidence(
                 h["reranked"] = True
         except Exception as e:  # noqa: BLE001
             failures.append(f"rerank: {e}")
+    candidate_hits = hits
     hits = diversify(hits, top_k=text_width, max_per_doc=5)
 
     ev_ids = [h["evidence_id"] for h in hits if h.get("evidence_id")]
@@ -286,6 +292,7 @@ def retrieve_evidence(
 
     return RetrievalResult(
         text_hits=hits,
+        candidate_hits=candidate_hits,
         graph_evidence=graph_entries,
         context_units=context_units,
         citable_units=units,
