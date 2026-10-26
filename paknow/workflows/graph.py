@@ -221,7 +221,7 @@ def _check_node(state: QState) -> QState:
     for req in state.get("sop_evidence_requirements", []):
         if req not in needs:
             needs.append(req)
-    suff, sent = check_sufficiency(
+    suff, judge_view = check_sufficiency(
         state["query"],
         needs[:8],
         state.get("candidate_hits") or state.get("hits", []),
@@ -232,8 +232,8 @@ def _check_node(state: QState) -> QState:
     state["next_query"] = suff.next_query
     # keep the last view the judge actually read: a capped round sends nothing
     # and must not overwrite the scale with an empty one
-    if sent is not None:
-        state["judge_stats"] = sent
+    if judge_view is not None:
+        state["judge_stats"] = judge_view
     return state
 
 
