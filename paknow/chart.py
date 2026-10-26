@@ -10,9 +10,9 @@ from __future__ import annotations
 import json
 from typing import Any, Literal, Mapping
 
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel
 
-from paknow.gateway import gateway, strip_count
+from paknow.gateway import failure_reason, gateway, strip_count
 
 #: Total budget for the read call; the SDK timeout is the only deadline owner.
 READ_TIMEOUT_S = 120
@@ -80,14 +80,6 @@ def is_non_chart(read: Mapping[str, Any] | None) -> bool:
     )
 
 
-def _failure_reason(exc: Exception) -> str:
-    if isinstance(exc, TimeoutError) or type(exc).__name__ == "APITimeoutError":
-        return "timeout"
-    if isinstance(exc, (ValidationError, ValueError)):
-        return "invalid_structure"
-    return "no_content"
-
-
 def _clamp_strips(read: ChartRead, strip_count: int) -> ChartRead:
     """A strip outside 1..N is a reading error, not a new location.
 
@@ -141,7 +133,7 @@ def read_chart(
         detail = f"{type(exc).__name__}: {exc}"
         if isinstance(exc, json.JSONDecodeError):
             detail = f"invalid JSON: {detail}"
-        return None, {"reason": _failure_reason(exc), "detail": detail[:300]}
+        return None, {"reason": failure_reason(exc), "detail": detail[:300]}
     return _clamp_strips(out, strip_total), None
 
 

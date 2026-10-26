@@ -71,7 +71,7 @@ curl -s -X POST http://localhost:8000/query \
   -d '{"query":"市场周期通常是如何转换的？"}'
 ```
 
-返回结构（字段齐全、数值仅示意，长数组已截断；`apps/api/main.py:122-139` 组装，`:148-155` 补两个改写字段）：
+返回结构（字段齐全、数值仅示意，长数组已截断；`apps/api/main.py:124-143` 组装，`:151-158` 补两个改写字段）：
 
 ```json
 {
@@ -115,7 +115,9 @@ curl -s -X POST http://localhost:8000/query \
     }
   ],
   "query_used": "市场周期通常是如何转换的？",
-  "rewritten": false
+  "rewritten": false,
+  "degraded": false,
+  "degradation": null
 }
 ```
 
@@ -124,6 +126,7 @@ curl -s -X POST http://localhost:8000/query \
 - `answer` 是**扁平字符串**（markdown），不是嵌套对象；`uncertainty` 与 `citations` 与它平级。
 - 响应里**没有** `hits` / `barrefs` / `wants_examples`——它们是内部 `run_query` 的返回字段。想看原始证据用独立的 `POST /search`。
 - `graph` 里每条都是 `non_citable` 的理解辅助，不进 `[n]` 引用编号；`seen_index` 非空表示这条证据已作为可引用单元出现过，所以 `text` 为空。
+- 生成失败不会 500：答案正文是「本次生成失败…请重试」的占位文字，同时 `degraded: true`、`degradation.reason` 给出失败分类（`timeout` / `invalid_structure` / `no_content`，与读图失败同一套词）。判断占位请看这两个字段，不要靠答案长度猜。
 
 ### 3.2 定义类问题
 

@@ -137,6 +137,9 @@ def _resolve_answer(result: dict[str, Any]) -> dict[str, Any]:
         "rounds": result.get("rounds"),
         "graph_stats": result.get("graph_stats") or {},
         "graph": [_graph_entry(e) for e in (result.get("graph_evidence") or [])],
+        # a placeholder answer is marked, never inferred from its length
+        "degraded": bool(ans.get("degraded")),
+        "degradation": ans.get("degradation"),
     }
 
 

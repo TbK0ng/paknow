@@ -126,6 +126,15 @@ and expected-evidence coverage (`covered / expected`, with the missing ids) is
 computed per item. Coverage is reported as a distribution, not folded into the
 hard verdict.
 
+The chain itself accepts an injected plan: `run_query(question, plan=<QueryPlan>)`
+makes the route node derive the same state (`intent`, `is_framework`, `routes`,
+`evidence_needs`, `sub_queries`, `step_back`, `hyde`, `max_rounds`, SOP) from
+that plan and skip the router model; every later step is untouched. The result
+carries `plan_source` (`frozen` / `routed`), the assembled query list `queries`
+(at most the six retrieval slots) and its stable `query_hash`; the run trace's
+`request` JSON records the same source and hash. Without a plan the router still
+produces it, so production behaviour is unchanged.
+
 Artifacts go to `.scratch/retrieval-eval-parity/answers/<UTC-timestamp>/`:
 `records.jsonl` (one small record per item/arm, no retrieved text),
 `summary.json` (per-arm summaries, paired graph-vs-text delta, wall time) and

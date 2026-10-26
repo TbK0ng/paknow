@@ -32,7 +32,7 @@ description: "12 个 API 路由、多轮对话契约、MCP 适配器、存储选
 - 带 `history` 时，服务先做一次**独立问句改写**调用（`apps/api/main.py:52-104`，只取最后 `MAX_HISTORY_TURNS = 8` 轮），把"那它呢"补成可独立检索的问句；改写失败回退原问题，对话不报错，只是丢掉上下文；
 - 因此这条路由比其他路由多两个响应字段：`query_used`（实际检索用的问句）与 `rewritten`（是否真的改写过）。
 
-响应键完整清单（`apps/api/main.py:122-139` + `:148-155`）：
+响应键完整清单（`apps/api/main.py:124-143` + `:151-158`）：
 
 | 键 | 内容 |
 |---|---|
@@ -46,6 +46,8 @@ description: "12 个 API 路由、多轮对话契约、MCP 适配器、存储选
 | `rounds` | 补检索轮次 |
 | `graph_stats` | 图谱扩展规模 |
 | `graph` | 逐条扩展证据（文本截断到 240 字） |
+| `degraded` | `true` 表示这次答案是「本次生成失败…请重试」的占位，不是模型答案 |
+| `degradation` | 降级原因 `{reason, detail}`；`reason` 与读图失败同一套分类 |
 | `query_used` / `rewritten` | 仅当请求带 `history` 才有实际内容 |
 
 **接口不返回什么**：`hits`、`barrefs`、`wants_examples` 都只存在于内部 `run_query` 的返回 dict，接口层**没有透出**。要检索结果走 `POST /search`；`chart_read` 只挂在 `POST /charts` 上，`POST /query` 保持纯文本答案的形状。
