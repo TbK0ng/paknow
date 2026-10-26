@@ -3,12 +3,14 @@ and failures as separate partitions. Assertions are on that return value only.
 """
 from __future__ import annotations
 
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
 
 from paknow.graph import expansion
 from paknow.retrieval import pipeline
+from paknow.retrieval.qdrant_store import StoreLockedError
 
 
 def _unit(eid: str, *, text: str = "text", parent: bool = False, adjacent: bool = False) -> dict:
@@ -215,3 +217,14 @@ def test_graph_off_does_not_report_seed_failures(monkeypatch):
 
     assert [h["evidence_id"] for h in result.text_hits] == ["e1"]
     assert result.failures == []
+
+
+def test_store_lock_conflict_is_not_swallowed_as_a_failure(monkeypatch):
+    # the API answers 503, so the round must not degrade into "no hits, no error"
+    def locked(q, *, top_k=40):
+        raise StoreLockedError(Path("data/objects/qdrant.lock"), "pid=4242")
+
+    monkeypatch.setattr(pipeline, "hybrid_search", locked)
+
+    with pytest.raises(StoreLockedError):
+        pipeline.retrieve_evidence("q", ["q"], expand_graph=False)

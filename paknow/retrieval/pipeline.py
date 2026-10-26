@@ -18,6 +18,11 @@ Partitions are explicit on :class:`RetrievalResult`:
   re-derives the ordering rule;
 - ``figures`` / ``toc_context`` / ``barrefs``: auxiliary recall;
 - ``failures``: non-fatal failures; retrieval never raises for one bad step.
+  The one exception is
+  :class:`~paknow.retrieval.qdrant_store.StoreLockedError`: another process
+  owning the embedded store means this round cannot answer at all, so it
+  propagates instead of degrading into an empty result (the API turns it into
+  503).
 """
 from __future__ import annotations
 
@@ -29,6 +34,7 @@ from paknow.db import SessionLocal
 from paknow.db.models import FigureAssetRow
 from paknow.graph import expansion
 from paknow.retrieval.barref import barref_lookup
+from paknow.retrieval.qdrant_store import StoreLockedError
 from paknow.retrieval.search import (
     caption_search,
     diversify,
@@ -88,6 +94,18 @@ def citation_binding(units: Sequence[Mapping[str, Any]]) -> dict[str, int]:
             index[str(evidence_id)] = position
         position += 1
     return index
+
+
+def _record_failure(failures: list[str], step: str, exc: Exception) -> None:
+    """Record a non-fatal step failure, except a store-lock conflict.
+
+    A lock conflict is not degraded retrieval: it means this process cannot
+    answer at all until the holder exits, so it propagates to the API's 503
+    instead of degrading into an empty result set.
+    """
+    if isinstance(exc, StoreLockedError):
+        raise exc
+    failures.append(f"{step}: {exc}")
 
 
 def retrieve_evidence(
@@ -153,12 +171,12 @@ def retrieve_evidence(
                     if eid and eid not in seen:
                         seen[eid] = d
             except Exception as e:  # noqa: BLE001
-                failures.append(f"retrieve: {e}")
+                _record_failure(failures, "retrieve", e)
         if seed_future is not None:
             try:
                 query_seeds = seed_future.result()
             except Exception as e:  # noqa: BLE001
-                failures.append(f"graph_seed: {e}")
+                _record_failure(failures, "graph_seed", e)
     finally:
         if pool is not None:
             pool.shutdown()
@@ -171,7 +189,7 @@ def retrieve_evidence(
             for h in hits:
                 h["reranked"] = True
         except Exception as e:  # noqa: BLE001
-            failures.append(f"rerank: {e}")
+            _record_failure(failures, "rerank", e)
     hits = diversify(hits, top_k=text_width, max_per_doc=5)
 
     ev_ids = [h["evidence_id"] for h in hits if h.get("evidence_id")]
@@ -191,25 +209,25 @@ def retrieve_evidence(
             if u.get("is_parent") or u.get("is_adjacent")
         ]
     except Exception as e:  # noqa: BLE001
-        failures.append(f"expand_evidence: {e}")
+        _record_failure(failures, "expand_evidence", e)
 
     toc_context: list[dict[str, Any]] = []
     if "toc" in routes or "toc" in needs:
         try:
             toc_context = toc_recall(query)
         except Exception as e:  # noqa: BLE001
-            failures.append(f"toc_recall: {e}")
+            _record_failure(failures, "toc_recall", e)
 
     barrefs: list[dict[str, Any]] = []
     try:
         barrefs = barref_lookup(query)
     except Exception as e:  # noqa: BLE001
-        failures.append(f"barref_lookup: {e}")
+        _record_failure(failures, "barref_lookup", e)
     if barrefs:
         try:
             figures = _merge_figures(figures, {b["figure_id"] for b in barrefs if b.get("figure_id")})
         except Exception as e:  # noqa: BLE001
-            failures.append(f"barref_figures: {e}")
+            _record_failure(failures, "barref_figures", e)
 
     # "show me examples": recall caption units so the answer can pick real
     # figures by id (their figure_ids feed the catalog)
@@ -222,7 +240,7 @@ def retrieve_evidence(
             if cap_fig_ids:
                 figures = _merge_figures(figures, cap_fig_ids)
         except Exception as e:  # noqa: BLE001
-            failures.append(f"caption_search: {e}")
+            _record_failure(failures, "caption_search", e)
 
     # citation indices must match generate()'s rendered unit list exactly
     units = citable_units(hits, context_units)

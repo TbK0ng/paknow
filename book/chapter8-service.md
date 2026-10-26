@@ -29,10 +29,10 @@ description: "12 个 API 路由、多轮对话契约、MCP 适配器、存储选
 
 请求体是 `QueryRequest`：`query` + `history`（`ChatTurn{role: "user"|"assistant", content}`，默认空列表）。
 
-- 带 `history` 时，服务先做一次**独立问句改写**调用（`apps/api/main.py:44-96`，只取最后 `MAX_HISTORY_TURNS = 8` 轮），把"那它呢"补成可独立检索的问句；改写失败回退原问题，对话不报错，只是丢掉上下文；
+- 带 `history` 时，服务先做一次**独立问句改写**调用（`apps/api/main.py:52-104`，只取最后 `MAX_HISTORY_TURNS = 8` 轮），把"那它呢"补成可独立检索的问句；改写失败回退原问题，对话不报错，只是丢掉上下文；
 - 因此这条路由比其他路由多两个响应字段：`query_used`（实际检索用的问句）与 `rewritten`（是否真的改写过）。
 
-响应键完整清单（`apps/api/main.py:114-131` + `:140-147`）：
+响应键完整清单（`apps/api/main.py:122-139` + `:148-155`）：
 
 | 键 | 内容 |
 |---|---|
@@ -108,7 +108,7 @@ description: "12 个 API 路由、多轮对话契约、MCP 适配器、存储选
 | 单次问答总耗时 | 20–60s（云端生成占大头） |
 | 路由 LLM 调用 | 1 次；带 `history` 时 2 次（1 次独立问句改写 + 1 次路由） |
 | 混合召回 | 6 条查询 × 2 路 |
-| 重排 | 本地 GPU 交叉编码器（`paknow/retrieval/pipeline.py:167-174`），首次调用含模型加载 |
+| 重排 | 本地 GPU 交叉编码器（`paknow/retrieval/pipeline.py:185-192`），首次调用含模型加载 |
 | 证据核验 | 0–3 次 LLM 调用（受 `QueryPlan.max_search_rounds` 约束） |
 | 生成 | 1 次 LLM 调用 |
 | 首次查询 | 额外包含 BGE-M3 加载 |

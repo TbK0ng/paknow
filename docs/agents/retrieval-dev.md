@@ -320,11 +320,18 @@ serialized window as the eval (see below).
 
 ## Embedded Qdrant is single-process
 
-The default local-mode client locks its storage folder. A second client on the
-same `data/objects/qdrant` fails with:
+The embedded store belongs to one process at a time. `get_client`
+(`paknow/retrieval/qdrant_store.py`) takes an exclusive, non-blocking lock on
+`<OBJECTS_DIR>/qdrant.lock` before opening the client and holds it for the life
+of the process; the holder's pid, acquisition time and command sit beside it in
+`qdrant.lock.holder`.
+
+A second process does not queue and does not degrade into empty results: it
+raises `StoreLockedError` naming the holder, retrieval propagates that instead
+of recording it as a step failure, and the API answers `503`:
 
 ```
-Storage folder ... is already accessed by another instance of Qdrant client.
+内嵌向量库已被占用（pid=..., since=..., cmd=...）；评测或脚本正在占用存储，请稍后重试。
 ```
 
 Serialize every retrieval/eval/smoke run: stop `uvicorn` (and any notebook or
@@ -332,14 +339,15 @@ script holding the client) before starting another. Never run two evals, an eval
 plus a smoke run, or two agents' retrieval work against the same objects dir
 concurrently. Two checks may read the DB concurrently; only the vector store is
 locked. For parallel work, either give one process `QDRANT_URL=http://localhost:6333`
-server or copy the objects dir per worktree (large).
+(a server bypasses the lock) or copy the objects dir per worktree (large).
 
 ## Failure lookup
 
 | Symptom | Cause | Fix |
 |---|---|---|
 | `sqlite3.OperationalError: unable to open database file`, or "no such table" | `PAKNOW_DB_URL` relative and resolved against the worktree CWD / absent `data/` | Set the absolute main-repo URL |
-| `Storage folder ... is already accessed by another instance of Qdrant client.` | Embedded client already open (API server, eval, smoke) | Stop the other process; run serially |
+| `503` with `内嵌向量库已被占用（pid=...）` | Another process holds `<OBJECTS_DIR>/qdrant.lock` (API server, eval, smoke) | Stop the process named in the detail; retry |
+| `Storage folder ... is already accessed by another instance of Qdrant client.` | The store's own lock is held without ours (older client, deleted lock file) | Stop the other process; run serially |
 | Empty search results / "collection not found" | `OBJECTS_DIR` points at an empty or stale tree | Set `OBJECTS_DIR=E:/PAknow/data/objects` |
 | Model download attempts, `OSError` resolving `BAAI/bge-m3`, or slow first call | `HF_HOME` not pointing at the warmed cache | Confirm `settings.hf_home` is `E:\use_model`; set `HF_HOME` before importing `paknow` |
 | `ModuleNotFoundError: paknow` / `scripts` | `PYTHONPATH=.` missing or wrong CWD | Run from the checkout root with `PYTHONPATH=.` |

@@ -6,8 +6,8 @@ import mimetypes
 from pathlib import Path
 from typing import Any, Literal
 
-from fastapi import FastAPI, HTTPException, UploadFile
-from fastapi.responses import FileResponse, Response
+from fastapi import FastAPI, HTTPException, Request, UploadFile
+from fastapi.responses import FileResponse, JSONResponse, Response
 from PIL import Image
 from pydantic import BaseModel, Field
 from qdrant_client.models import FieldCondition, Filter, MatchValue
@@ -18,11 +18,19 @@ from paknow.evidence.citations import resolve_citations
 from paknow.gateway import gateway
 from paknow.ingest.store import object_path
 from paknow.memory.sop import list_sops
+from paknow.retrieval.qdrant_store import StoreLockedError
 from paknow.retrieval.search import diversify, hybrid_search, point_to_doc, rerank
 from paknow.retrieval.visual import mask_right_bytes
 from paknow.workflows.graph import run_query
 
 app = FastAPI(title="PAknow", version="0.1.0")
+
+
+@app.exception_handler(StoreLockedError)
+async def _store_locked(_request: Request, exc: StoreLockedError) -> JSONResponse:
+    """The embedded store belongs to another process: retry later, never an empty 200."""
+    return JSONResponse(status_code=503, content={"detail": str(exc)})
+
 
 _VIEWER_INDEX = Path(__file__).resolve().parent.parent / "viewer" / "index.html"
 
