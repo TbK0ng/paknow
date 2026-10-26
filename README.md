@@ -18,7 +18,8 @@
   （`SUPPORTED_BY`、`ILLUSTRATED_BY`、`INVALIDATED_BY`、`TRANSITIONS_TO`、`PART_OF`、`EXCEPTION_TO`），
   有界 BFS 扩展，结果不可引用。
 - **SOP 记忆**：`candidate → replay_validated → shadow → active → superseded/retired`
-  生命周期 + git 版本；当前两个 SOP 分别停在 `candidate` / `shadow`。
+  生命周期 + git 版本；`sop_registry/` 现有 5 份（库里 6 条记录：5 `candidate` / 1 `shadow`），
+  `active` 需要离线回放才升得上去。
 - **来源定位**：PDF 保留物理页 / 章内印刷页 / 章节 / 图号分别存储；EPUB 保留
   spine 阅读顺序 + 锚点 + 图注邻接。
 
@@ -59,10 +60,10 @@
 评测（数据集入库，产物在 `.scratch/`）：
 
 - 3 个冻结集：20 题（v1）、60 题 / 4 层（v2）、10 张图（chart），均带 SHA-256。
-- 检索：同宽度下图谱扩展把期望证据命中从 41/123 提到 55/123（+14）；60/60 题触到
-  ≤14 条证据截断；并集探针 73/123，说明链路损耗 18 条。
-- 答案：60 题 × 2 臂，硬约束 60/60 通过；覆盖率 0.2333 vs 0.2500；盲评正确性 1.183 vs 1.250（满分 2），
-  无支撑主张 146 vs 119；配对 10 好 / 6 差 / 44 平。
+- 检索：同宽度下图谱扩展把期望证据命中从 50/123 提到 63/123（净 +13，21 题的证据只在图谱侧）；
+  60/60 题触到 ≤14 条证据截断；并集探针 73/123，说明链路损耗 10 条。
+- 答案：60 题 × 2 臂，硬约束 60/60 通过；调优后文本臂覆盖率 0.3486；盲评（调优前那次）
+  正确性 1.183 vs 1.250（满分 2），无支撑主张 146 vs 119；配对 10 好 / 6 差 / 44 平。
 - 图表：10 题全量，价位漏读 1.8%（3/164）、多读 8.0%、漂移 0；金标准是一次模型初读，
   **尚未人工确认**，所以三个率只能当回归基线。
 - **分层短板**：20 道机制题覆盖率 ≈0，沿边扩展补不了论证链。
@@ -71,14 +72,16 @@
 
 ## 未闭环 / 未接线
 
-- **评测门槛只覆盖确定性部分**：`tests/test_eval_artifacts.py` 守住数据集↔旁车↔运行记录↔
-  [评测](book/chapter14-evaluation.md) 的数字；检索与生成要有索引和 API key 才跑得起来，
-  所以质量变差仍不会阻塞合入。
+- **质量门禁不在 CI 里**：`scripts/quality_gate.py` 在本地跑生产链（10 题分层抽样、硬约束退非零、
+  软指标按实测噪声地板、基线入库）；CI 只跑它的确定性单测与 `tests/test_eval_artifacts.py`
+  （数据集↔旁车↔运行记录↔数字的一致性）。所以质量变差要靠提交前跑门禁，而不是 CI 变红。
 - **SOP 8 个操作名里 5 个空转**：只有 `expand_terms` 与 `check_evidence` 生效；
   `step_back` / `multi_query` / `hyde` / `expand_figures` / `rerank` 只写状态，`hybrid_search`
   是空操作，`stop` 无人消费。
 - **SOP 对照回放**：`record_replay` 有接口、无数据，`active` 晋升因此关闭。
-- **条件化主张半接线**：库里 `context`/`modality` 有值，消费端读 `conditions`/`exceptions`（0 条），条件只透传不筛选。
+- **条件化主张只接线了渲染**：库里 `context`/`modality` 有值，`_claim_conditions(qualifiers)`
+  一处把它们映射成「背景 / 语气」并与主张同行渲染，无条件的主张不出现条件字样；但条件仍不参与
+  候选筛选，"按条件筛"还没做。
 - **元数据过滤**：`QueryPlan.metadata` 已生成，检索层没有消费。
 - **空路由**：`visual_page` / `numeric` 出现在 QueryPlan 里，主链路没有实现。
 - **视觉集合**：`page_visual` 集合 0 点；只有“文本描述找图”，没有图像相似检索。
@@ -186,9 +189,10 @@ paknow-mcp --transport streamable-http --port 8765
 
 ```bash
 .venv/Scripts/python.exe scripts/eval_gold.py       # 召回（3 种口径，可 --text-width）
-.venv/Scripts/python.exe scripts/eval_answers.py    # 答案双臂（可断点续跑）
+.venv/Scripts/python.exe scripts/eval_answers.py --frozen-queries   # 答案双臂（冻结查询口径，可断点续跑）
 .venv/Scripts/python.exe scripts/eval_judge.py      # 盲评
 .venv/Scripts/python.exe scripts/eval_chart.py      # 图表价位
+.venv/Scripts/python.exe scripts/quality_gate.py    # 质量门禁（默认确定性档；--judge 追加盲评）
 ```
 
 ## 技术文档站
@@ -212,7 +216,7 @@ at the same price"，并区分 micro double bottom bear flag 反例，`uncertain
 ## 未完成 / 待补
 
 - 真实行情数据 + 回测（暂缓）。
-- 生产链回归门槛、SOP 对照回放、机制题检索——三件按顺序解锁。
+- 把本地门禁搬进 CI、SOP 对照回放、机制题检索——三件按顺序解锁。
 - 视觉观察覆盖 927 张图资产（观察式索引，非图像相似检索）。
 
 ## 视觉方案说明（Blackwell 适配）

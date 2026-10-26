@@ -47,7 +47,7 @@ flowchart LR
 
 `price: float | None` 是整页最重要的一个类型决定：**缺失是一等公民**。没有它，模型只有
 "编一个"和"漏掉"两个选项；有了它，"看不清"可以如实传递到答案第一层，并且不参与任何
-相似度计算（`scripts/eval_chart.py:110-113` 把 `None` 直接从可读位里排除，不算漏读）。
+相似度计算（`scripts/eval_chart.py:105-108` 把 `None` 直接从可读位里排除，不算漏读）。
 
 ## 3. 一次调用，失败不重试
 
@@ -65,7 +65,7 @@ out = client.chat_json(
 - **`max_tokens=8192`。** 推理 token 与输出共享预算，密集图在出 JSON 之前就烧掉约 5k；
   4096 稳定截断成非法 JSON。
 - **失败不抛。** `read_chart` 返回 `(None, {"reason", "detail"})`，`_read_node` 把
-  `chart_read: <reason>` 写进 `failures`，检索照常走纯文本路径（`paknow/workflows/graph.py:89-110`）。
+  `chart_read: <reason>` 写进 `failures`，检索照常走纯文本路径（`paknow/workflows/graph.py:133-153`）。
   一张读不懂的图不该让整个问答挂掉。
 
 失败分类只有三种：`timeout` / `invalid_structure` / `no_content`，前端与 trace 看到的是
@@ -90,7 +90,7 @@ out = client.chat_json(
 | `focus` 价位（拼接） | `"7519.75 7488 关键位 支撑 阻力"` | 让"这个位为什么重要"有原文支撑 |
 | `annotations`（≤160 字符） | `"2 @ 7519.75 图上标注 含义"` | 图上手写标注的术语解释 |
 
-它们被插在 `plan_queries[0]` 之后，与计划查询**共享 6 条上限**（`paknow/workflows/graph.py:112-135`）。
+它们被插在 `plan_queries[0]` 之后，与计划查询**共享 6 条上限**（`paknow/workflows/graph.py:160-164`）。
 这意味着读图查询优先于多数量化改写，但不会挤掉用户原问题。
 
 `levels` 为空时 `chart_queries` 直接返回空——非图表不产生任何检索扰动。
@@ -116,7 +116,7 @@ out = client.chat_json(
 
 API 侧，`/charts` 与 `/query` 一样返回完整结构化载荷，并额外带 `chart_read` 与
 `chart_read_status`（取值 `structured` / `unstructured` / `unclear`），查看器据此渲染
-可折叠的"读图数据"面板（`apps/api/main.py:277-278`）。
+可折叠的"读图数据"面板（`apps/api/main.py:298-299`）。
 
 ## 6. 非图表：一条显式契约，而不是兜底
 

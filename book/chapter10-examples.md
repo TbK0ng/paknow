@@ -18,7 +18,7 @@ uv pip install --python .venv -e ".[dev]"
 cp .env.example .env   # 填 DEEPSEEK_API_KEY；HF_HOME 默认 E:\use_model
 ```
 
-**注意**：本地模式不需要动这两个变量。`paknow/config.py:28-34` 的默认值就是 SQLite + 内嵌 Qdrant；`.env.example` 里已经把两行基础设施 URL **注释掉**。不要写成 `PAKNOW_DB_URL=`（空串会覆盖默认值，SQLite 默认不会生效），要切服务端模式再取消注释并填 `postgresql+psycopg://…` 与 `http://localhost:6333`。
+**注意**：本地模式不需要动这两个变量。`paknow/config.py:25-27` 的默认值就是 SQLite + 内嵌 Qdrant；`.env.example` 里已经把两行基础设施 URL **注释掉**。不要写成 `PAKNOW_DB_URL=`（空串会覆盖默认值，SQLite 默认不会生效），要切服务端模式再取消注释并填 `postgresql+psycopg://…` 与 `http://localhost:6333`。
 
 ## 2. 离线构建
 
@@ -39,6 +39,7 @@ cp .env.example .env   # 填 DEEPSEEK_API_KEY；HF_HOME 默认 E:\use_model
 
 # 数据一致性维护（按需）
 .venv/Scripts/python.exe scripts/backfill_adjacency.py          # 邻接回填
+.venv/Scripts/python.exe scripts/backfill_parent_chunks.py      # 父块回填（子块 → 所属整段，回填后父块不建索引）
 .venv/Scripts/python.exe scripts/backfill_figure_links.py       # 图↔文本反向链接
 .venv/Scripts/python.exe scripts/link_captions_to_figures.py    # 图注几何/标签链接
 .venv/Scripts/python.exe scripts/fix_observations.py            # 观察污染清洗
@@ -71,7 +72,7 @@ curl -s -X POST http://localhost:8000/query \
   -d '{"query":"市场周期通常是如何转换的？"}'
 ```
 
-返回结构（字段齐全、数值仅示意，长数组已截断；`apps/api/main.py:182-197` 组装，`:210-211` 补两个改写字段）：
+返回结构（字段齐全、数值仅示意，长数组已截断；`apps/api/main.py:200-218` 的 `_resolve_answer` 组装，`:231-232` 补两个改写字段）：
 
 ```json
 {
@@ -197,4 +198,6 @@ git log --oneline -- sop_registry/
 | 首次查询很慢 | BGE-M3 / 重排模型加载 | 预热一次即可 |
 | 图例为空 | 未做图文链接回填 | 运行 `link_captions_to_figures.py` + `backfill_figure_links.py` |
 | 稀疏检索突然变差 | 改过分词器但未重索引 | 运行 `reindex_sparse.py` |
+| 服务起不来，报「内嵌向量库已被占用（pid=…）」 | 另一个进程（评测/脚本/旧 API）占着 `data/objects/qdrant` | 等它结束或停掉它；`QDRANT_URL` 切 server 可绕开该锁 |
+| 服务起不来，报「集合不存在 / 为空」 | 还没建库，或入库中断 | 先跑入库与索引脚本；启动自检是只读的，不会替你建集合 |
 | `database is locked`（并发） | SQLite 写锁 | 降低并发或启用 WAL |

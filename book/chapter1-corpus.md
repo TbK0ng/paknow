@@ -35,7 +35,7 @@ description: "7 份资料的审计结论、证据单元的定位字段、EPUB/Py
 | `figure_ids` / `figure_label` | 回答"这个形态的图在哪" |
 | `block_type`（paragraph/heading/caption/footer） | 决定是否索引、是否可作为证据、是否参与邻接 |
 | `provenance`（native_text/ocr/derived_observation） | 记录文本来源；派生观察不得冒充原文 |
-| `adjacent_ids` | 阅读顺序上下文（替代失败的父块检索） |
+| `adjacent_ids` | 阅读顺序上下文（与父块并存：父块答"原来属于哪一整段"，邻接答"前后读什么"） |
 | `text_hash` | 去重与幂等摄入 |
 
 > **设计取舍**：没有把"书名/作者"直接冗余进每个单元，而是通过 `doc_id` 关联 `documents` 表。理由是元数据会修正（例如补充 PDF 的 title/author），冗余会导致不一致。
@@ -61,7 +61,7 @@ description: "7 份资料的审计结论、证据单元的定位字段、EPUB/Py
 | pdfplumber | 表格强 | 速度慢、图片信息弱 | ❌ |
 | OCR 全量 | 不依赖文本层 | 慢、错字多、坐标不可靠 | ❌（仅对无文本层页面保留模块） |
 
-**为什么保留 OCR 但不接线**：解析器的判据是 `native_text < 3 and page.get_text().strip() == ""`（`paknow/ingest/pdf.py:63-64`）——注意这是两个条件的**合取**：一页要既几乎没解析出段落块、又整页取不到文本，才算 OCR 候选。换句话说它是"空白页/无文本层"的筛子，不是"文本量偏少"的筛子。当前库里没有任何 `provenance=ocr` 的单元（只有 `native_text` 90,308 与 `derived_observation` 927），所以模块保留、不接入主链路——既不浪费算力，也不假装已支持扫描件。
+**为什么保留 OCR 但不接线**：解析器的判据是 `native_text < 3 and page.get_text().strip() == ""`（`paknow/ingest/pdf.py:63-64`）——注意这是两个条件的**合取**：一页要既几乎没解析出段落块、又整页取不到文本，才算 OCR 候选。换句话说它是"空白页/无文本层"的筛子，不是"文本量偏少"的筛子。当前库里没有任何 `provenance=ocr` 的单元（只有 `native_text` 91,051 与 `derived_observation` 927），所以模块保留、不接入主链路——既不浪费算力，也不假装已支持扫描件。
 
 ## 4. 分块策略与一次真实事故
 

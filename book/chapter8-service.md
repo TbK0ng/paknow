@@ -12,18 +12,18 @@ description: "12 个 API 路由、多轮对话契约、MCP 适配器、存储选
 
 | 路由 | 作用 | 关键设计 |
 |---|---|---|
-| `GET /health` (`:160`) | 存活探针 | 只回 `{"status": "ok"}`，不碰库、不碰模型 |
-| `POST /query` (`:165`) | 问答 | 支持多轮 `history`；返回引用、图、图谱扩展 |
-| `POST /search` (`:174`) | 只检索不生成 | 不路由、不生成，agent 可低成本查证据；支持 `doc_id` / `block_type` 过滤 |
-| `GET /documents` (`:199`) | 语料清单 | 书名、作者、译者、页数、条目数 |
-| `POST /charts` (`:219`) | 上传图表分析 | `cutoff` 参数遮罩未来数据；额外返回 `chart_read` |
-| `GET /evidence/{id}` (`:239`) | 单条证据 | 完整文本 + 定位 + 关联图 |
-| `GET /sources/{doc_id}` (`:269`) | 来源信息 | 书、章节、页、证据数、图数 |
-| `GET /runs/{run_id}` (`:291`) | 审计 trace | 意图、路由、证据、失败、耗时 |
-| `GET /sops` (`:308`) | SOP 列表与版本 | 记忆审计 |
-| `GET /` (`:313`) | 查看器 | 单页应用（`include_in_schema=False`） |
-| `GET /figures/{figure_id}/image` (`:318`) | 图资产 | 让远程 agent 客户端直接取图，不必自己解析本地路径 |
-| `GET /sources/{doc_id}/page/{page}/image` (`:334`) | PDF 页渲染 | 查看器点引用即可看原页 |
+| `GET /health` (`:221`) | 存活探针 | 只回 `{"status": "ok"}`，不碰库、不碰模型 |
+| `POST /query` (`:226`) | 问答 | 支持多轮 `history`；返回引用、图、图谱扩展 |
+| `POST /search` (`:238`) | 只检索不生成 | 不路由、不生成，agent 可低成本查证据；支持 `doc_id` / `block_type` 过滤 |
+| `GET /documents` (`:263`) | 语料清单 | 书名、作者、译者、页数、条目数 |
+| `POST /charts` (`:283`) | 上传图表分析 | `cutoff` 参数遮罩未来数据；额外返回 `chart_read` |
+| `GET /evidence/{id}` (`:303`) | 单条证据 | 完整文本 + 定位 + 关联图 |
+| `GET /sources/{doc_id}` (`:333`) | 来源信息 | 书、章节、页、证据数、图数 |
+| `GET /runs/{run_id}` (`:355`) | 审计 trace | 意图、路由、证据、失败、耗时 |
+| `GET /sops` (`:372`) | SOP 列表与版本 | 记忆审计 |
+| `GET /` (`:377`) | 查看器 | 单页应用（`include_in_schema=False`） |
+| `GET /figures/{figure_id}/image` (`:382`) | 图资产 | 让远程 agent 客户端直接取图，不必自己解析本地路径 |
+| `GET /sources/{doc_id}/page/{page}/image` (`:398`) | PDF 页渲染 | 查看器点引用即可看原页 |
 
 **启动自检**（`apps/api/main.py:29` 的 `_lifespan`，`paknow/retrieval/qdrant_store.py` 的 `check_store_ready`）：进程起来之前先只读地确认 `evidence_text` 集合存在且可计数。三种情况各有独立的可读原因，**服务拒绝启动**（uvicorn 报 `Application startup failed` 并退出），不做"活着但答案永远为空"的半死服务：
 
@@ -31,7 +31,7 @@ description: "12 个 API 路由、多轮对话契约、MCP 适配器、存储选
 |---|---|---|
 | 集合不存在（没建库） | `missing` | `向量库集合 evidence_text 不存在（…/qdrant）：尚未建库，先运行入库脚本。` |
 | 集合存在但没有证据单元 | `empty` | `向量库集合 evidence_text 为空（…/qdrant）：入库未完成，入库完成后再启动服务。` |
-| 被其它进程占用 | `locked` | `内嵌向量库已被占用（pid=…, cmd=…）；评测或脚本正在占用存储，请稍后重试。` |
+| 被其它进程占用 | `locked` | `内嵌向量库已被占用（pid=…, since=…, cmd=…）；评测或脚本正在占用存储，请稍后重试。锁文件：…/qdrant.lock` |
 
 两个细节决定了它是"自检"而不是"初始化"：**不走 `ensure_collections`**（那条路径会静默建集合，把没建库伪装成正常），并且**不创建任何集合**——`check_store_ready` 只调用 `collection_exists` 与 `count`。因此 `/health` 的语义是"能起来就是可用的"：进程只在存储就绪后才接受请求，不存在 `ok` 但答不出的状态。
 
@@ -39,10 +39,10 @@ description: "12 个 API 路由、多轮对话契约、MCP 适配器、存储选
 
 请求体是 `QueryRequest`：`query` + `history`（`ChatTurn{role: "user"|"assistant", content}`，默认空列表）+ `debug`（布尔，默认 `false`；显式置 `true` 才返回排障块）。
 
-- 带 `history` 时，服务先做一次**独立问句改写**调用（`apps/api/main.py:79-118`，只取最后 `MAX_HISTORY_TURNS = 8` 轮），把"那它呢"补成可独立检索的问句；改写失败回退原问题，对话不报错，只是丢掉上下文；
+- 带 `history` 时，服务先做一次**独立问句改写**调用（`apps/api/main.py:84` 的 `_standalone_query`，只取最后 `MAX_HISTORY_TURNS = 8` 轮），把"那它呢"补成可独立检索的问句；改写失败回退原问题，对话不报错，只是丢掉上下文；
 - 因此这条路由比其他路由多两个响应字段：`query_used`（实际检索用的问句）与 `rewritten`（是否真的改写过）。
 
-响应键完整清单（`apps/api/main.py:182-197` + `:210-211`，`debug` 块由 `:159-176` 组装）：
+响应键完整清单（`apps/api/main.py:200-218` 的 `_resolve_answer` + `:231-232` 的 `query_used` / `rewritten`，`debug` 块由 `:176-198` 的 `_debug_block` 组装）：
 
 | 键 | 内容 |
 |---|---|
@@ -89,7 +89,7 @@ description: "12 个 API 路由、多轮对话契约、MCP 适配器、存储选
 
 **默认值的两个坑，先说清楚**：
 
-- 嵌入式 Qdrant 的容量不是"理论上限"。本地库快照 2026-10-24 的 `evidence_text` 集合有 **81,809 points**，客户端一启动就打印 `Local mode is not recommended for collections with more than 20,000 points`（`data/link_log.txt:1`）——也就是说当前规模已经超出推荐值 4 倍，本地模式的性能与内存表现不再有任何保障；
+- 嵌入式 Qdrant 的容量不是"理论上限"。本地库快照 2026-10-25 的 `evidence_text` 集合有 **81,809 points**，客户端一启动就打印 `Local mode is not recommended for collections with more than 20,000 points`（`data/link_log.txt:1`）——也就是说当前规模已经超出推荐值 4 倍，本地模式的性能与内存表现不再有任何保障；
 - `page_visual` 集合是**空的**：页面视觉检索只有代码路径，没有数据。
 
 **切服务端是唯一出路**：`docker-compose.yml` 起 `postgres:16-alpine` 与 `qdrant/qdrant:v1.12.4`，然后把 `PAKNOW_DB_URL`、`QDRANT_URL` 指过去。切换只改环境变量，不改代码——这是当初选这两个组件的主要理由。

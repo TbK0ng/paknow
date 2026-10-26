@@ -25,13 +25,13 @@ description: "单次 QueryPlan、Step-Back/Multi-query/HyDE、双语词典消歧
 | `missing_fields` | 声明问题里缺少哪些信息 |
 | `max_search_rounds` | 检索轮数上限，默认 3——**这个旋钮是 3 轮循环的真正上界** |
 
-字段定义在 `paknow/workflows/router.py:36-48`。其中 `max_search_rounds` 被实际消费：落到 `state["max_rounds"]`（`paknow/workflows/graph.py:81`），由 `state["round"] >= state["max_rounds"]` 终止循环（`paknow/workflows/graph.py:189`）。
+字段定义在 `paknow/workflows/router.py:36-52`。其中 `max_search_rounds` 被实际消费：落到 `state["max_rounds"]`（`paknow/workflows/graph.py:125`），由 `state["round"] >= state["max_rounds"]` 终止循环（`paknow/workflows/graph.py:242`）。
 
 **但另外三个字段是"只进不出"**：`metadata`、`data_state`、`missing_fields` 只有模型契约与提示词里的说明，检索与生成代码都不读取它们——`data_state` 在提示词里写了"请求数值但无行情数据时不得走 numeric"（`paknow/workflows/router.py:31`），而这句话并没有对应的代码约束。要把它们当真，得先补消费方。
 
 ### 1.1 多轮：`history` 存在时多一次改写调用
 
-所以"单次"的准确口径是**单轮请求**：`POST /query` 的 `history` 非空时，系统在规划之前先做一次独立的"追问 → 独立问句"改写（`apps/api/main.py:79-118`，只取最近 `MAX_HISTORY_TURNS=8` 轮）。它解决的问题是检索层只看得到最终问句——"那它呢"这种指代与省略会让召回静默劣化。
+所以"单次"的准确口径是**单轮请求**：`POST /query` 的 `history` 非空时，系统在规划之前先做一次独立的"追问 → 独立问句"改写（`apps/api/main.py:84` 的 `_standalone_query`，只取最近 `MAX_HISTORY_TURNS=8` 轮）。它解决的问题是检索层只看得到最终问句——"那它呢"这种指代与省略会让召回静默劣化。
 
 - 输出口径：响应里 `query_used` 是实际用于检索的问句，`rewritten` 标记是否真的改写成功（未改或改回原句都是 `false`）；
 - 降级：任何异常、空输出或与原文相同都回落到原问题，对话仍然可用，只是丢了上下文指代；
@@ -76,7 +76,7 @@ description: "单次 QueryPlan、Step-Back/Multi-query/HyDE、双语词典消歧
 
 > 代价：在 6 条配额通常已被占满的情况下，"排在最后"实际等于"从不执行"——见 §5。
 
-## 4. 双语词典：从 53 到 233 个概念
+## 4. 双语词典：从手写术语长到 233 个概念
 
 ### 4.1 词边界匹配
 
@@ -90,9 +90,9 @@ ASCII 别名要求词边界（`TR` 不能命中 `trading`，`H2` 不能命中 `H
 第 17 章：双底牛旗（Double Bottom Bull Flag, DBBF）/ 双顶熊旗（Double Top Bear Flag, DTBF）
 ```
 
-用正则确定性提取 **180 对**术语（不调用 LLM，结果可复现），追加到 `terms.yaml`，标记 `auto_*` canonical 并保留出处 `context`。随后同步 233 个概念到 `concept_aliases` 表。
+用正则确定性提取 **180 条**双语对齐词条（178 个不同 canonical；不调用 LLM，结果可复现），追加到 `terms.yaml`，标记 `auto_*` canonical 并保留出处 `context`。随后把这批概念同步进 `concept_aliases` 表（该表当前 2,703 行，其中 233 个 canonical 来自词典）。
 
-**233 的口径**：它数的是**概念（去重后的 canonical）**，不是词条行数。`configs/terms.yaml` 现有 236 条词条，`load_terms()` 按 canonical 合并重复块（`broad_channel` / `auto_undershoot` / `auto_room_veto` 各出现两次，别名取并集），`paknow/retrieval/dictionary.py:30-51`。别再顺手把"233 个概念"说成"233 个词条"，也别把它当别名表的行数：`concept_aliases` 现有 2,703 行 `canonical_concept`、3,019 条别名（全部 `pending`，本地库快照 2026-10-24），那是图谱侧的对齐记录；概念身份的唯一来源仍是 `configs/terms.yaml`。
+**233 的口径**：它数的是**概念（去重后的 canonical）**，不是词条行数。`configs/terms.yaml` 现有 236 条词条（178 个 `auto_*` + 55 个手工，合计 233 个不同 canonical），`load_terms()` 按 canonical 合并重复块（`broad_channel` / `auto_undershoot` / `auto_room_veto` 各出现两次，别名取并集），`paknow/retrieval/dictionary.py:30-51`。别再顺手把"233 个概念"说成"233 个词条"，也别把它当别名表的行数：`concept_aliases` 现有 2,703 行 `canonical_concept`、3,019 条别名（全部 `pending`，本地库快照 2026-10-25），其中只有 233 个 canonical 是词典概念，其余是标题语法抽出的 `auto_*` 与编号类对齐记录；概念身份的唯一来源仍是 `configs/terms.yaml`。
 
 **为什么不用 LLM 抽术语**：LLM 会引入幻觉与不稳定（同一语料两次结果不同），而标题对齐是**免费且精确**的信号。LLM 只用于语料里没有显式对齐的部分（本项目未使用）。
 

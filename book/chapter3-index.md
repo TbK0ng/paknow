@@ -62,7 +62,7 @@ description: "BGE-M3 dense + 自研 TF 稀疏的索引设计、领域分词与�
 1. **单进程只有一个 client**：嵌入式 Qdrant 同一个 path 只允许一个实例；除 `lru_cache` 单例外，`get_client`（`paknow/retrieval/qdrant_store.py`）还在 `<objects>/qdrant.lock` 上加进程级独占文件锁。第二个进程立即抛 `StoreLockedError`（带持锁 pid、时间与命令）；API 在启动自检（`_lifespan`）里就调 `check_store_ready`，所以第二个 API 进程**带着可读的原因拒绝启动**——不会出现"进程活着但只回 200 空命中"。
 2. **规模超过官方建议值，且没测过**：客户端自己会打警告原文——"Local mode is not recommended for collections with more than 20,000 points. Collection <evidence_text> contains 81809 points."（`data/link_log.txt:1`）。`evidence_text` 实有 81,809 点，约为建议上限的 **4 倍**；本项目**没有做过**该规模下的延迟/内存基准，所以不能宣称"能跑"就等于"性能可接受"。
 
-**切 server 的开关**：`settings.qdrant_url` 非空即走远程（`paknow/retrieval/qdrant_store.py:120-121`），环境变量 `QDRANT_URL`，配套 `docker-compose.yml` 里已有 `qdrant/qdrant:v1.12.4`（与 postgres 16 同文件）。默认值 `""` 表示嵌入式，与 `paknow/config.py:28-34` 一致。切 server 不看这把锁，也能解掉"单 client"限制，但**换不来已验证的性能结论**——那需要一次基准，不在这份文档里。
+**切 server 的开关**：`settings.qdrant_url` 非空即走远程（`paknow/retrieval/qdrant_store.py:134-135`），环境变量 `QDRANT_URL`，配套 `docker-compose.yml` 里已有 `qdrant/qdrant:v1.12.4`（与 postgres 16 同文件）。默认值 `""` 表示嵌入式（`paknow/config.py:27`）。切 server 不看这把锁，也能解掉"单 client"限制，但**换不来已验证的性能结论**——那需要一次基准，不在这份文档里。
 
 ## 3. 索引范围与 payload
 
@@ -70,6 +70,7 @@ description: "BGE-M3 dense + 自研 TF 稀疏的索引设计、领域分词与�
 |---|---|---|
 | paragraph / heading / caption | ✅ | 主要内容 |
 | footer | ❌ | 版式噪声（9,426 条） |
+| 父块（`child_ids` 非空，743 条） | ❌ | 正文与子块重复，只在命中子块后回查；索引它会让同一段被召回两次（`paknow/retrieval/index.py` 的行过滤） |
 | 观察单元（caption, derived） | ✅ | 视觉召回依赖它 |
 | TOC | ❌ | 目录召回走数据库派生索引，不占向量库 |
 
@@ -86,7 +87,7 @@ payload 字段：`evidence_id / doc_id / block_type / text / figure_ids / chapte
 | 观察单元存了提示词 | 按文本匹配计数（当时 725 条） | 剥离 + 重嵌入 |
 | 稀疏向量含子串污染 | 分词器变更后人工审计 | 全量 sparse 重索引 |
 | 单元 `figure_ids` 为空 | 逐单元判空：`link_captions_to_figures.py` 把 caption/paragraph 全量拉到内存里按 `locator.bbox` 过滤（不是一条 SQL）；只有"取非空"那一步用到 SQL，在 `scripts/backfill_figure_links.py:22` 的 `func.json_array_length(...) > 0` | 图文链接回填 + payload 同步 |
-| 邻接为空 | 邻接字段逐条判空（Python 侧读 `adjacent_ids`） | 阅读顺序回填 81,809 |
+| 邻接为空 | 邻接字段逐条判空（Python 侧读 `adjacent_ids`） | 阅读顺序回填（当时 81,809 条；现覆盖 91,978 条、非空 82,552） |
 | 父块悬空 | 解析率 0 / 1,670 | 2026-10-25 回填 743 个父块（`scripts/backfill_parent_chunks.py`），解析率 1,670 / 1,670；`chunk_units` 改为保留父块 |
 
 > **经验**：每次改分词器、词典、链接规则，都要问一句"索引里的旧数据还一致吗"。另外注意上一行那类"检测方式"——库里存的是 JSON 数组，空数组和有元素在 SQL 里长得一样容易骗人，真正的判空是在 Python 里把 JSON 解析出来数的。

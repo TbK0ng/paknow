@@ -23,10 +23,10 @@ description: "RunTrace 运行轨迹、SOP 生命周期与 git 版本管理、评
 | 字段 | 用途 |
 |---|---|
 | `run_id` | 审计锚点 |
-| `request` | 原问题 + 使用的 SOP |
+| `request` | 原问题 + 使用的 SOP + **`plan_source`（frozen / routed）与 `query_hash`（装配后查询列表的稳定哈希）** |
 | `intents` / `routes` | 路由结果 |
 | `evidence_ids` | 实际引用的证据 |
-| `output` | 答案、引用、不确定性 |
+| `output` | 答案、引用、不确定性、降级标记（`degraded` / `degradation`）、充分性判定与判定视图规模（`sufficiency.evidence_items` / `evidence_chars`） |
 | `failures` | 各组件异常（降级记录） |
 | `elapsed_ms` | 延迟 |
 | `version_snapshot` | **corpus 指纹 + graph 规模 + 各模型名** |
@@ -146,9 +146,9 @@ LLM 根据失败统计与问题样本产出 `CandidateSOP`（sop_id/意图范围
 
 | 操作 | 实际效果 |
 |---|---|
-| `expand_terms` | ✅ 生效：词典扩展出最多 3 条补充查询，写入 `sop_extra_queries`，检索时排在计划查询之前（`paknow/workflows/graph.py:121-127`） |
-| `check_evidence` | ✅ 生效：`required_evidence` 追加进核验器的 `needs`，截断到前 8 条（`paknow/workflows/graph.py:171-175`） |
-| `step_back` | ❌ 无效：把**原问题**写进 `state["step_back"]`，但检索只读路由给出的 `QueryPlan.step_back`，没有任何代码读这个 state 键 |
+| `expand_terms` | ✅ 生效：词典扩展出最多 3 条补充查询，写入 `sop_extra_queries`，检索时排在计划查询之前（`paknow/workflows/sop_exec.py:43`，消费点 `paknow/workflows/graph.py:169`） |
+| `check_evidence` | ✅ 生效：`required_evidence` 追加进核验器的 `needs`，截断到前 8 条（`paknow/workflows/sop_exec.py:35`，截断点 `paknow/workflows/graph.py:226`） |
+| `step_back` | ❌ 无效：把**原问题**写进 `state["step_back"]`（`paknow/workflows/sop_exec.py:26-27`），但检索只读路由计划经 `retrieval_queries(plan, …)` 组装的查询，没有任何代码读这个 state 键 |
 | `multi_query` | ❌ 无效：只置 `sop_multi_query=True`，无人读取；多查询来自路由计划的 `sub_queries` |
 | `hyde` | ❌ 无效：只置 `use_hyde=True`，无人读取；假设文档串来自路由计划的 `hyde` 字段 |
 | `expand_figures` | ❌ 无效：只置 `sop_expand_figures=True`，无人读取 |
@@ -156,7 +156,7 @@ LLM 根据失败统计与问题样本产出 `CandidateSOP`（sop_id/意图范围
 | `hybrid_search` | — 空操作：默认检索本来就是混合召回 |
 | 未知 operation | 记入 `sop_skipped_ops`（不静默吞掉） |
 
-`stop` 同样只写不读：`apply_sop` 把它放进 `state["sop_stop"]`（`paknow/workflows/sop_exec.py:46-47`），而 `sop_stop` 除了在状态类型里声明（`paknow/workflows/graph.py:52`）之外没有任何读取点——**停止条件不影响运行，只是被记录下来**。
+`stop` 同样只写不读：`apply_sop` 把它放进 `state["sop_stop"]`（`paknow/workflows/sop_exec.py:46-47`），而 `sop_stop` 除了在状态类型里声明（`paknow/workflows/graph.py:61`）之外没有任何读取点——**停止条件不影响运行，只是被记录下来**。
 
 **为什么不做"完整步骤自动执行器"**：默认检索流程（step-back / multi-query / hyde / 混合召回 / 重排）是由**路由计划**驱动的，不是由 SOP 步骤驱动的；SOP 目前的真实增量只有两项参数化：补充查询与证据要求，外加可追溯性（trace 记录使用了哪条 SOP）。把 SOP 吹成"可编程 Agent"会引入不可控的执行路径——这也正是为什么这张表要写得这么直白：**读文档的人应该先知道哪两个 op 能用**。
 

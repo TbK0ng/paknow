@@ -41,9 +41,9 @@ description: "系统目标边界、四条设计原则（出处可验证、派生
 
 ### 2.3 条件化知识必须保留条件
 
-书中大量知识是条件式的："在强趋势中，回调是买入机会；在交易区间中，同样的回调常常是陷阱。" 系统用 `ClaimRow.qualifiers` 保留条件：**实际入库的键只有 `context` / `modality`**（1,888 条主张里这两个键各出现 1,888 次），条件随主张原样进入生成上下文。
+书中大量知识是条件式的："在强趋势中，回调是买入机会；在交易区间中，同样的回调常常是陷阱。" 系统用 `ClaimRow.qualifiers` 保留条件：**实际入库的键只有 `context` / `modality`**——1,888 条主张里 `modality` 全部有值，`context` 1,445 条有值（443 条只给语气）。
 
-需要说清口径：图谱扩展代码只读 `conditions` / `exceptions` 两个键（`paknow/graph/expansion.py:277-278`），而这两键当前在库里一条都没有——所以条件**不参与筛选或排序**，只是作为 `qualifiers` 字段整体带进上下文。主张真正被截断的顺序是 **种子概念顺序 → `extraction_confidence` 降序 → `claim_id`**（`paknow/graph/expansion.py:238-243`），没有"主题匹配 > 谓词匹配 > 条件匹配"这层逻辑。
+需要说清口径：消费端只有一处映射——`_claim_conditions(qualifiers)` 把 `context` 读成「背景」、`modality` 读成「语气」，与该主张同一行渲染；没有条件的主张不出现任何条件字样。图谱扩展层过去读的 `conditions` / `exceptions` 两个键从未被写入（库里 0 条），该读取已删除。条件**不参与筛选或排序**，主张真正被截断的顺序是 **种子概念顺序 → `extraction_confidence` 降序 → `claim_id`**（`paknow/graph/expansion.py:236-243`），没有"主题匹配 > 谓词匹配 > 条件匹配"这层逻辑。
 
 **为什么**：去掉条件的知识图谱会产出危险的建议。系统因此把条件作为主张的一等字段。
 
@@ -92,7 +92,7 @@ flowchart TB
 | 向量库 | Qdrant 嵌入式（本地模式） | 支持**命名向量**（dense+sparse 同点）、payload 过滤、`QDRANT_URL` 一改即切 server | FAISS：无 payload 过滤、混合检索要自己拼；Milvus：需要 Docker；`sqlite-vss`：生态弱。**代价**：客户端自己警告"Local mode is not recommended for collections with more than 20,000 points"（`data/link_log.txt:1`），而 `evidence_text` 实测 81,809 点，约为建议上限的 4 倍，且未做性能基准 |
 | 嵌入 | BGE-M3（dense）+ 自研 TF 稀疏 | dense 1024 维、中英多语；稀疏侧自建（FNV 哈希 + jieba），见第 3 章 | 双模型（bge-large + BM25）：多一次加载与维护；E5：中文领域词表现不如 BGE-M3 |
 | 重排 | bge-reranker-v2-m3 | 本地 GPU、跨语言、延迟可控 | LLM rerank：每问多一次云端调用，延迟/成本翻倍；ColBERT：需要 late-interaction 索引，Qdrant 嵌入式支持成本高 |
-| 生成 | `deepseek-flash`（云端，`paknow/config.py:18` 默认值） | 中文强、成本低；`ModelGateway` 可替换；三种生成模式 `extractive` / `synthesis` / `chart`（`paknow/workflows/graph.py:194-201`）。图表问答的"结构化图读"也走这个网关，需要 `deepseek_vision=True`；默认 `False` 时 `_attach_images` 直接抛错（`paknow/gateway.py:213-219`），图读失败、退回纯文本路径 | 本地 LLM：16GB 显存下质量与速度都不可接受；微调：资料版权与数据量都不支持 |
+| 生成 | `deepseek-flash`（云端，`paknow/config.py:18` 默认值） | 中文强、成本低；`ModelGateway` 可替换；三种生成模式 `extractive` / `synthesis` / `chart`（`paknow/workflows/graph.py:252-254`）。图表问答的"结构化图读"也走这个网关，需要 `deepseek_vision=True`；默认 `False` 时 `_attach_images` 直接抛错（`paknow/gateway.py:213-219`），图读失败、退回纯文本路径 | 本地 LLM：16GB 显存下质量与速度都不可接受；微调：资料版权与数据量都不支持 |
 | 编排 | LangGraph | 状态机 + 条件边，天然表达"检索→核验→补检索→生成" | 手写 while 循环：可读性差；LangChain Agent：对固定流程过重、不可控 |
 | 视觉 | Qwen2.5-VL-3B（观察式） | Blackwell sm_120 + transformers 5.x 可用 | ColPali/ColQwen2：实测崩溃/依赖冲突（见第 2 章） |
 | 记忆版本 | git（`sop_registry/`） | 每次变更可 diff、可回溯、可 blame | 数据库版本表：可回滚但不能 diff；对象存储：重 |
