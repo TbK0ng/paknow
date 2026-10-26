@@ -1,4 +1,4 @@
-**Status:** ready-for-agent
+**Status:** resolved
 **Review base:** 6ce5d7e
 
 # 可上生产：可判定、可排障、可并发，外加两处质量修
@@ -112,3 +112,12 @@
 - 判定噪声地板已实测：同一批答案隔两天重判，37%~40% 的记录至少一个维度变化，臂均值 95% CI 半宽每维度 ±0.07~0.12、无据主张总数 ±15~31。门禁的软阈值直接引用这组数，不再另估。
 - 与既有 ADR 的关系：派生观察仍不可引用（ADR-0002）；图谱仍只作扩展层、不参与打分（ADR-0003）；门禁基线与运行记录入库（ADR-0004）。
 - 术语按 `GLOSSARY.md`：证据单元、父单元/子单元、充分性、有界补检索、并集探针、生产等价基线、召回宽度、净增益、运行轨迹。
+
+## Comments
+
+Closed on `feat/production-readiness` (tip `6089608`, branched from `6ce5d7e`). All nine tickets resolved; `pytest tests -q` → 404 passed; `scripts/check_scratch.py` → 31 files OK.
+
+- Merge order: 01 → 03 → 08 → 05 → 02 → 07 → 04+06 → 09, one `--no-ff` merge per ticket with the full suite gated between merges.
+- Review: two-axis `code-review` against `6ce5d7e`. Eight findings fixed in `dd2ce4a..6089608`; the P1 was that frozen mode still allowed a judge-driven gap round, so `frozen_plan` now caps `max_search_rounds` at 1 and the contract test makes the judge demand another round to prove it cannot.
+- Recorded baseline (real index, worktree code): deterministic text/graph 10/10 hard, coverage 0.450 both arms; judge text corr 1.40 / cond 1.60 / cite 1.20 / unsupported 19, graph 1.30 / 1.60 / 1.20 / 20. Artifacts under `quality-gate/`.
+- Known limits left as documented: the gate has no checkpoint/resume, so a mid-run judge error loses that invocation; graph-expansion entries are not in the judge pool (rides the non-citable contract, ADR-0002).
