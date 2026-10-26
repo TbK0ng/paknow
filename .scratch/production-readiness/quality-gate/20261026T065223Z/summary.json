@@ -1,0 +1,71 @@
+{
+  "dataset": "evals\\gold\\graph_expansion_v2.json",
+  "dataset_sha256": "7cf35d945cfc35572d0fb31b4c96fb4d3fa54adb36859e4186c6e3c0d5d55560",
+  "answers_sha256": "a369f454dd89b672614fa8cffdcb9b3786ff9ee2dc162a9b63a55ff1fbee4ff2",
+  "judge_sha256": "6bf607731cb296a7cb422e46a71a5269c32cde88584bb38b4d572666343a1626",
+  "sample": [
+    "enc-01",
+    "mech-01",
+    "enc-11",
+    "enc-20",
+    "mech-11",
+    "mech-20",
+    "exc-01",
+    "exc-10",
+    "cond-01",
+    "cond-10"
+  ],
+  "modes": [
+    "deterministic",
+    "judge"
+  ],
+  "baseline": ".scratch\\production-readiness\\quality-gate\\baseline.json",
+  "recorded": false,
+  "wall_time_s": 793.6,
+  "blocks": {
+    "deterministic": {
+      "arms": {
+        "text": {
+          "items": 10,
+          "hard_pass": 10,
+          "retrieval_errors": 0,
+          "coverage_mean": 0.55
+        },
+        "graph": {
+          "items": 10,
+          "hard_pass": 10,
+          "retrieval_errors": 0,
+          "coverage_mean": 0.55
+        }
+      }
+    },
+    "judge": {
+      "arms": {
+        "text": {
+          "items": 10,
+          "hard_pass": 9,
+          "hard_fail": 1,
+          "judged": 9,
+          "correctness": 1.4444,
+          "condition_preservation": 1.4444,
+          "citation_support": 1.4444,
+          "unsupported_claims_total": 11
+        },
+        "graph": {
+          "items": 10,
+          "hard_pass": 10,
+          "hard_fail": 0,
+          "judged": 10,
+          "correctness": 1.6,
+          "condition_preservation": 1.8,
+          "citation_support": 1.4,
+          "unsupported_claims_total": 12
+        }
+      }
+    }
+  },
+  "failures": [
+    "cond-01 text: empty_answer",
+    "judge text: hard_pass 9 < baseline 10"
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "dataset": "evals\\gold\\graph_expansion_v2.json",
+  "dataset_sha256": "7cf35d945cfc35572d0fb31b4c96fb4d3fa54adb36859e4186c6e3c0d5d55560",
+  "answers_sha256": "3e825890236df269dd4c9567faa582cd2c1c586df3415719198c970c289a58a2",
+  "judge_sha256": "cea70c0dc5cbdb86b8bbf739b448e2583f94b07635394d3841d9c0aab999cda9",
+  "sample": [
+    "enc-01",
+    "mech-01",
+    "enc-11",
+    "enc-20",
+    "mech-11",
+    "mech-20",
+    "exc-01",
+    "exc-10",
+    "cond-01",
+    "cond-10"
+  ],
+  "modes": [
+    "deterministic",
+    "judge"
+  ],
+  "baseline": ".scratch\\production-readiness\\quality-gate\\baseline.json",
+  "recorded": false,
+  "wall_time_s": 905.3,
+  "blocks": {
+    "deterministic": {
+      "arms": {
+        "text": {
+          "items": 10,
+          "hard_pass": 10,
+          "retrieval_errors": 0,
+          "coverage_mean": 0.55
+        },
+        "graph": {
+          "items": 10,
+          "hard_pass": 10,
+          "retrieval_errors": 0,
+          "coverage_mean": 0.55
+        }
+      }
+    },
+    "judge": {
+      "arms": {
+        "text": {
+          "items": 10,
+          "hard_pass": 10,
+          "hard_fail": 0,
+          "judged": 10,
+          "correctness": 1.5,
+          "condition_preservation": 1.6,
+          "citation_support": 1.4,
+          "unsupported_claims_total": 18
+        },
+        "graph": {
+          "items": 10,
+          "hard_pass": 10,
+          "hard_fail": 0,
+          "judged": 10,
+          "correctness": 1.6,
+          "condition_preservation": 1.5,
+          "citation_support": 1.5,
+          "unsupported_claims_total": 20
+        }
+      }
+    }
+  },
+  "failures": []
+}
