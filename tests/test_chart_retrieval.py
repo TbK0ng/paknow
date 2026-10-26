@@ -66,13 +66,14 @@ def _plan(intent: str = "chart_analysis") -> QueryPlan:
 
 
 def _checks(sequence: Iterator[bool]):
-    def fake(*_args: Any, **_kwargs: Any) -> SimpleNamespace:
+    def fake(*_args: Any, **_kwargs: Any):
         sufficient = next(sequence)
         next_query = None if sufficient else "缺口：区间边缘怎么处理"
-        return SimpleNamespace(
+        verdict = SimpleNamespace(
             next_query=next_query,
             model_dump=lambda: {"sufficient": sufficient, "next_query": next_query},
         )
+        return verdict, None
 
     return fake
 

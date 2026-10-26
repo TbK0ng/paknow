@@ -64,9 +64,10 @@ def _stub_chain(monkeypatch: pytest.MonkeyPatch) -> Chain:
 
     def fake_check(query: str, needs: list[str], hits: list[Any], **kwargs: Any) -> Any:
         chain.checks.append({"query": query, "needs": list(needs), **kwargs})
-        return SimpleNamespace(
+        verdict = SimpleNamespace(
             next_query=None, model_dump=lambda: {"sufficient": True, "next_query": None}
         )
+        return verdict, None
 
     def fake_generate(*_args: Any, **kwargs: Any) -> dict[str, Any]:
         chain.generations.append(kwargs)
