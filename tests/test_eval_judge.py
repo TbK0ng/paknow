@@ -216,6 +216,23 @@ def test_an_errored_answer_run_is_a_hard_failure():
     assert record["judged"] is False
 
 
+def test_a_degraded_placeholder_is_an_empty_answer():
+    record = eval_judge.judge_record(
+        _record(
+            answer="本次生成失败，请稍后重试。",
+            degraded=True,
+            degradation={"reason": "timeout", "detail": "read timed out"},
+        ),
+        ITEM,
+        EVIDENCE,
+        _ask(_payload()),
+    )
+
+    assert record["hard_verdict"] == "fail"
+    assert record["hard_reasons"] == ["empty_answer"]
+    assert record["judged"] is False
+
+
 # ---------------------------------------------------------------------------
 # expected points
 # ---------------------------------------------------------------------------
