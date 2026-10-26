@@ -111,6 +111,37 @@ def test_graph_disabled_is_reported_as_such(monkeypatch):
     assert payload["rewritten"] is False
 
 
+def test_degraded_answer_is_marked_in_the_response(monkeypatch):
+    degradation = {"reason": "invalid_structure", "detail": "JSONDecodeError: bad"}
+    monkeypatch.setattr(
+        main,
+        "run_query",
+        lambda q: {
+            "answer": {
+                "answer": "本次生成失败：模型输出被截断或结构非法，没有可展示的答案。请重试本问题。",
+                "evidence_ids": [],
+                "degraded": True,
+                "degradation": degradation,
+            }
+        },
+    )
+
+    payload = main.query(main.QueryRequest(query="双底是什么？"))
+
+    assert payload["degraded"] is True
+    assert payload["degradation"] == degradation
+    assert "本次生成失败" in payload["answer"]
+
+
+def test_a_short_real_answer_is_not_flagged(monkeypatch):
+    monkeypatch.setattr(main, "run_query", lambda q: {"answer": {"answer": "资料未说明"}})
+
+    payload = main.query(main.QueryRequest(query="双底是什么？"))
+
+    assert payload["degraded"] is False
+    assert payload["degradation"] is None
+
+
 def test_only_the_charts_shape_carries_chart_read(monkeypatch):
     read = {
         "market_state": "trend_up",

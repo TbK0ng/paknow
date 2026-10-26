@@ -221,10 +221,13 @@ def _generate_node(state: QState) -> QState:
         ],
         chart_read=state.get("chart_read"),
     )
-    # a degraded answer still ends the run; the reason belongs in the trace
-    failure = (state["answer"] or {}).pop("generate_failure", None)
-    if failure:
-        state.setdefault("failures", []).append(f"generate: {failure}")
+    # a degraded answer still ends the run; its classification belongs in the
+    # trace (the answer dict itself stays in ``output`` with the marker)
+    degradation = (state["answer"] or {}).get("degradation")
+    if degradation:
+        state.setdefault("failures", []).append(
+            f"generate: {degradation['reason']}: {degradation['detail']}"
+        )
     return state
 
 
