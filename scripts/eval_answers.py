@@ -61,7 +61,7 @@ from scripts.eval_common import (  # noqa: E402
     write_jsonl,
 )
 
-from paknow.workflows.router import QueryPlan  # noqa: E402
+from paknow.workflows.router import PlanSource, QueryPlan  # noqa: E402
 
 DEFAULT_DATASET = ROOT / "evals" / "gold" / "graph_expansion_v2.json"
 ANSWERS_DIR = ROOT / ".scratch" / "retrieval-eval-parity" / "answers"
@@ -161,7 +161,7 @@ def coverage_bucket(ratio: float) -> str:
 # ---------------------------------------------------------------------------
 
 
-def _record(item: Mapping[str, Any], arm: str, plan_source: str) -> dict:
+def _record(item: Mapping[str, Any], arm: str, plan_source: PlanSource) -> dict:
     """The fields both a successful and an errored arm always carry."""
     expected = list(item.get("expected_evidence", []))
     return {
@@ -195,7 +195,7 @@ def _record(item: Mapping[str, Any], arm: str, plan_source: str) -> dict:
 
 
 def error_record(
-    item: Mapping[str, Any], arm: str, error: str, elapsed: float, plan_source: str
+    item: Mapping[str, Any], arm: str, error: str, elapsed: float, plan_source: PlanSource
 ) -> dict:
     return {
         **_record(item, arm, plan_source),
@@ -219,7 +219,7 @@ def run_item(
     model is not consulted, so the query list is a property of the dataset.
     """
     expand_graph = dict(ARMS)[arm]
-    plan_source = "frozen" if frozen else "routed"
+    plan_source: PlanSource = "frozen" if frozen else "routed"
     plan = frozen_plan(item) if frozen else None
     started = time.monotonic()
     try:
@@ -421,7 +421,7 @@ def build_payload(
     records: Sequence[Mapping[str, Any]],
     limit: int,
     timestamp: str,
-    plan_source: str = "routed",
+    plan_source: PlanSource = "routed",
 ) -> dict:
     delta = summarize_delta(records)
     errors = [
@@ -495,7 +495,7 @@ def main() -> None:
 
     if args.resume and args.out is None:
         ap.error("--resume needs --out pointing at the interrupted run's directory")
-    plan_source = "frozen" if args.frozen_queries else "routed"
+    plan_source: PlanSource = "frozen" if args.frozen_queries else "routed"
     out_dir = args.out or _default_out()
     out_dir.mkdir(parents=True, exist_ok=True)
     checkpoint_path = out_dir / "checkpoint.jsonl"

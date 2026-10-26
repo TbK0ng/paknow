@@ -20,7 +20,7 @@ from paknow.memory.trace import save_trace
 from paknow.retrieval.pipeline import citable_units, citation_binding, retrieve_evidence
 from paknow.workflows.evidence import check_sufficiency
 from paknow.workflows.generate import generate
-from paknow.workflows.router import QueryPlan, retrieval_queries, route
+from paknow.workflows.router import PlanSource, QueryPlan, retrieval_queries, route
 from paknow.workflows.sop_exec import apply_sop
 
 
@@ -29,7 +29,7 @@ class QState(TypedDict, total=False):
     images: list[bytes]
     plan: QueryPlan
     # "frozen" when the caller injected the plan, "routed" otherwise
-    plan_source: str
+    plan_source: PlanSource
     # the query list retrieval actually submits, captured on the first round
     queries: list[str]
     intent: str
