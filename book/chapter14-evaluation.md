@@ -174,9 +174,9 @@ v2 全量结果（60 题 × 2 臂，2026-10-23，串行，embedded Qdrant 单进
 | 类别 | 来源 | 是否入库 |
 |---|---|---|
 | 语料/图谱规模 | `data/paknow.db`（SQLite，本地快照 2026-10-25，父块回填后） | 否（`.gitignore`，128 MB） |
-| 检索与答案评测 | `.scratch/retrieval-eval-parity/*.json`、`.scratch/production-readiness/gold/*.json` | **是**（含逐题 `records.jsonl`） |
+| 检索与答案评测 | `.scratch/retrieval-eval-parity/*.json`、`.scratch/selection-funnel/gold-after*.json` | **是**（含逐题 `records.jsonl`） |
 | 盲评 | `.scratch/retrieval-eval-parity/judgements/*/summary.json` | **是**（两次全量 + 两次 spot） |
-| 图表评测 | `.scratch/chart-analysis/eval/20261024T125057Z/summary.json` | **是**（10 题全量；`eval/dev` 是口径不符的旧试跑，不引用） |
+| 图表评测 | `.scratch/chart-analysis/eval/20261024T125057Z/summary.json` | **是**（10 题全量；早先 `limit:2` 的口径不符试跑已删除） |
 | 质量门禁 | `.scratch/production-readiness/quality-gate/`（`baseline.json` + 每次运行的 `records.jsonl` / `summary.json`） | **是**（基线只由 `--record` 显式重录） |
 | 数据集本身 | `evals/gold/*.json` + `.sha256` | **是** |
 

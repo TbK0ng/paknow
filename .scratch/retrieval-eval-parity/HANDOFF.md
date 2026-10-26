@@ -77,7 +77,7 @@ PYTHONPATH=. python scripts/eval_judge.py --resume --out .scratch/retrieval-eval
 ## Open items
 
 - **生产召回宽度**仍是 14；若要改成 20，必须单独开变更并评估提示词增长（本 spec 明确排除）。
-- 判定分数在 temperature 0 下重跑仍会漂移，只作诊断，不能当门禁；若要做门禁，先解决判定稳定性。
+- 判定分数在 temperature 0 下重跑仍会漂移，只作诊断，不能当门禁——这一点没有变。生产链门禁后来落地在 `scripts/quality_gate.py`（`.scratch/production-readiness/`），用已测噪声地板（判定分单维 0.12、无据主张 15 条）把"漂移"和"退化"分开，而不是要求判定分数稳定。
 - 回答的「引用越界 / 引用图谱 id」两项硬约束在当前 `generate()` 实现下结构上难以触发；保留为不变量护栏。
 - PR #1（`feat/graph-expansion`）与本分支都已合并进 `main`；合并顺序的约束已解除。
 - tracker 没有 `blocked` 状态：阻塞票只能用 `needs-triage` 暂存，前置完成后手动翻 `ready-for-agent`（`check_scratch.py` 的约束）。

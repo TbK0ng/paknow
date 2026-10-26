@@ -9,6 +9,8 @@ integrations/paknow-mcp/dist/
 *.pyc
 .pytest_cache/
 .ruff_cache/
+# 评测的断点续跑状态（可由 records.jsonl 重建，不是记录本身）
+.scratch/**/checkpoint.jsonl
 data/objects/
 data/models/
 data/market/
