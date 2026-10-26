@@ -116,7 +116,7 @@ out = client.chat_json(
 
 API 侧，`/charts` 与 `/query` 一样返回完整结构化载荷，并额外带 `chart_read` 与
 `chart_read_status`（取值 `structured` / `unstructured` / `unclear`），查看器据此渲染
-可折叠的"读图数据"面板（`apps/api/main.py:205-222`）。
+可折叠的"读图数据"面板（`apps/api/main.py:249-266`）。
 
 ## 6. 非图表：一条显式契约，而不是兜底
 

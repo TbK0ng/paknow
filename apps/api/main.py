@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import io
 import mimetypes
+import re
 from pathlib import Path
 from typing import Any, Literal
 
@@ -46,6 +47,8 @@ class ChatTurn(BaseModel):
 class QueryRequest(BaseModel):
     query: str
     history: list[ChatTurn] = Field(default_factory=list)
+    # opt-in: the chain internals are diagnostic, not part of the normal reply
+    debug: bool = False
 
 
 class StandaloneQuery(BaseModel):
@@ -122,6 +125,43 @@ def _graph_entry(entry: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+_FAILURE_REASON = re.compile(r"^(timeout|invalid_structure|no_content)(?:: | \(|$)")
+
+
+def _failure_event(entry: str) -> dict[str, str]:
+    """``"stage: reason: detail"`` -> the structured row the debug view returns."""
+    stage, _, rest = entry.partition(": ")
+    match = _FAILURE_REASON.match(rest)
+    if match is None:
+        # retrieval/expansion failures carry no model-output classification
+        return {"stage": stage, "category": "error", "detail": rest}
+    return {
+        "stage": stage,
+        "category": match.group(1),
+        "detail": rest[match.end():].strip(" )"),
+    }
+
+
+def _debug_block(result: dict[str, Any]) -> dict[str, Any]:
+    """Read-only chain internals: what was recalled, judged, and failed."""
+    return {
+        "hits": [
+            {
+                "evidence_id": hit.get("evidence_id"),
+                "score": hit.get("score"),
+                "block_type": hit.get("block_type"),
+            }
+            for hit in result.get("hits") or []
+        ],
+        "citable_ids": list(result.get("citable_ids") or []),
+        "context_unit_counts": result.get("context_unit_counts") or {},
+        "sufficiency": result.get("sufficiency") or {},
+        "failures": [_failure_event(entry) for entry in result.get("failures") or []],
+        "rounds": result.get("rounds"),
+        "graph_stats": result.get("graph_stats") or {},
+    }
+
+
 def _resolve_answer(result: dict[str, Any]) -> dict[str, Any]:
     ans = result.get("answer") or {}
     citations = resolve_citations(ans.get("evidence_ids") or [])
@@ -151,9 +191,12 @@ def health() -> dict[str, str]:
 @app.post("/query")
 def query(req: QueryRequest) -> dict[str, Any]:
     standalone, rewritten = _standalone_query(req.query, req.history)
-    payload = _resolve_answer(run_query(standalone))
+    result = run_query(standalone)
+    payload = _resolve_answer(result)
     payload["query_used"] = standalone
     payload["rewritten"] = rewritten
+    if req.debug:
+        payload["debug"] = _debug_block(result)
     return payload
 
 

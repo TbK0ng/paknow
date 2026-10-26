@@ -27,12 +27,12 @@ description: "12 个 API 路由、多轮对话契约、MCP 适配器、存储选
 
 ### 1.1 `POST /query` 的真实契约
 
-请求体是 `QueryRequest`：`query` + `history`（`ChatTurn{role: "user"|"assistant", content}`，默认空列表）。
+请求体是 `QueryRequest`：`query` + `history`（`ChatTurn{role: "user"|"assistant", content}`，默认空列表）+ `debug`（布尔，默认 `false`；显式置 `true` 才返回排障块）。
 
-- 带 `history` 时，服务先做一次**独立问句改写**调用（`apps/api/main.py:52-104`，只取最后 `MAX_HISTORY_TURNS = 8` 轮），把"那它呢"补成可独立检索的问句；改写失败回退原问题，对话不报错，只是丢掉上下文；
+- 带 `history` 时，服务先做一次**独立问句改写**调用（`apps/api/main.py:65-105`，只取最后 `MAX_HISTORY_TURNS = 8` 轮），把"那它呢"补成可独立检索的问句；改写失败回退原问题，对话不报错，只是丢掉上下文；
 - 因此这条路由比其他路由多两个响应字段：`query_used`（实际检索用的问句）与 `rewritten`（是否真的改写过）。
 
-响应键完整清单（`apps/api/main.py:124-143` + `:151-158`）：
+响应键完整清单（`apps/api/main.py:165-183` + `:191-201`，`debug` 块由 `:145-162` 组装）：
 
 | 键 | 内容 |
 |---|---|
@@ -49,8 +49,11 @@ description: "12 个 API 路由、多轮对话契约、MCP 适配器、存储选
 | `degraded` | `true` 表示这次答案是「本次生成失败…请重试」的占位，不是模型答案 |
 | `degradation` | 降级原因 `{reason, detail}`；`reason` 与读图失败同一套分类 |
 | `query_used` / `rewritten` | 仅当请求带 `history` 才有实际内容 |
+| `debug` | 仅当请求带 `debug: true` 时才出现；见下 |
 
-**接口不返回什么**：`hits`、`barrefs`、`wants_examples` 都只存在于内部 `run_query` 的返回 dict，接口层**没有透出**。要检索结果走 `POST /search`；`chart_read` 只挂在 `POST /charts` 上，`POST /query` 保持纯文本答案的形状。
+`debug` 块只读、不额外落库，字段：`hits`（每条只留 `evidence_id` / `score` / `block_type`，不含正文）、`citable_ids`（与生成侧同一份引用绑定，派生观察永不进入）、`context_unit_counts`（`total` / `parents` / `adjacent`）、`sufficiency`（核验器判定）、`failures`（结构化清单，每条 `{stage, category, detail}`；`category` 用 `timeout` / `invalid_structure` / `no_content` 三类，其余链路失败记 `error`，降级答案正因此可见）、`rounds`、`graph_stats`。
+
+**接口默认不返回什么**：`hits`、`barrefs`、`wants_examples` 都只存在于内部 `run_query` 的返回 dict；只有显式 `debug: true` 时 `hits` 的 id/分数/块类型才出现在 `debug` 块里。要完整检索结果走 `POST /search`；`chart_read` 只挂在 `POST /charts` 上，`POST /query` 保持纯文本答案的形状。
 
 **为什么 `figures` 只返回答案选中的图**：查看器不再成为"图库"，而是"答案配图"。理解类问题返回空是正确行为。
 

@@ -358,6 +358,7 @@ def run_query(
     # only figures the answer actually chose to show (analysis-first, not a gallery)
     cited_figs = set(ans.get("figure_ids") or [])
     figures = [f for f in final.get("figures", []) if f.get("figure_id") in cited_figs]
+    context_units = final.get("context_units", [])
     return {
         "run_id": final["run_id"],
         "plan_source": final.get("plan_source", "routed"),
@@ -378,6 +379,14 @@ def run_query(
         # exactly the evidence ids generation rendered as citable [n] units;
         # derived observations never enter the citation binding
         "citable_ids": list(final.get("citation_index", {})),
+        # diagnostics for the optional /query debug block: the verdict the judge
+        # returned, and how the context expansion was partitioned
+        "sufficiency": final.get("sufficiency", {}),
+        "context_unit_counts": {
+            "total": len(context_units),
+            "parents": sum(1 for u in context_units if u.get("is_parent")),
+            "adjacent": sum(1 for u in context_units if u.get("is_adjacent")),
+        },
         "rounds": final.get("round", 0),
         "failures": final.get("failures", []),
     }

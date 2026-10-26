@@ -19,7 +19,7 @@ from scripts import eval_answers
 # ---------------------------------------------------------------------------
 
 
-def _stub_chain(monkeypatch, *, units, citation_index):
+def _stub_chain(monkeypatch, *, units, citation_index, context_units=()):
     """Replace every model/DB step of the production chain with a stub."""
     calls: list[dict] = []
 
@@ -27,6 +27,7 @@ def _stub_chain(monkeypatch, *, units, citation_index):
         calls.append({"query": query, "queries": list(queries), **kwargs})
         return RetrievalResult(
             text_hits=[u for u in units if u.get("provenance") != "derived_observation"],
+            context_units=list(context_units),
             citable_units=list(units),
             citation_index=dict(citation_index),
             acc={},
@@ -96,6 +97,32 @@ def test_run_query_exposes_citable_ids_without_derived_observations(monkeypatch)
     assert "e2" not in result["citable_ids"]
     assert result["rounds"] == 1
     assert result["failures"] == []
+
+
+def test_run_query_exposes_the_verdict_and_context_unit_counts(monkeypatch):
+    units = [
+        {"evidence_id": "e1", "text": "a", "provenance": "text"},
+        {"evidence_id": "e2", "text": "visual", "provenance": "derived_observation"},
+    ]
+    context_units = [
+        {"evidence_id": "p1", "text": "父块", "provenance": "native_text", "is_parent": True},
+        {"evidence_id": "n1", "text": "邻接", "provenance": "native_text", "is_adjacent": True},
+        {"evidence_id": "n2", "text": "邻接二", "provenance": "native_text", "is_adjacent": True},
+    ]
+    _stub_chain(
+        monkeypatch,
+        units=units,
+        citation_index=citation_binding(units),
+        context_units=context_units,
+    )
+
+    result = graph_module.run_query("q")
+
+    assert result["sufficiency"] == {"sufficient": True, "next_query": None}
+    assert result["context_unit_counts"] == {"total": 3, "parents": 1, "adjacent": 2}
+    # the debug view reports the same binding generation uses
+    assert result["citable_ids"] == ["e1"]
+    assert "e2" not in result["citable_ids"]
 
 
 # ---------------------------------------------------------------------------

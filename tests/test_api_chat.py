@@ -185,3 +185,112 @@ def test_store_lock_conflict_returns_503_with_a_readable_hint(monkeypatch):
     assert response.status_code == 503
     assert "稍后重试" in response.json()["detail"]
     assert "Traceback" not in response.text
+
+
+# ---------------------------------------------------------------------------
+# optional debug block
+# ---------------------------------------------------------------------------
+
+_QUERY_KEYS = {
+    "run_id",
+    "intent",
+    "is_framework",
+    "routes",
+    "answer",
+    "uncertainty",
+    "citations",
+    "figures",
+    "rounds",
+    "graph_stats",
+    "graph",
+    "degraded",
+    "degradation",
+    "query_used",
+    "rewritten",
+}
+
+
+def _full_result() -> dict:
+    return {
+        "run_id": "r1",
+        "intent": "knowledge_qa",
+        "is_framework": False,
+        "routes": ["hybrid_text"],
+        "answer": {"answer": "答", "uncertainty": [], "evidence_ids": []},
+        "figures": [],
+        "rounds": 2,
+        "graph_stats": {"enabled": True, "selected": 1},
+        "graph_evidence": [{"evidence_id": "g1", "from_label": "双底", "text": "x"}],
+        "hits": [
+            {"evidence_id": "e1", "score": 0.8, "block_type": "paragraph", "text": "长" * 800},
+            {"evidence_id": "e2", "score": 0.4, "block_type": "caption", "text": "短"},
+        ],
+        "citable_ids": ["e1", "e2"],
+        "context_unit_counts": {"total": 3, "parents": 1, "adjacent": 2},
+        "sufficiency": {
+            "sufficient": False,
+            "missing": ["定义"],
+            "conflicting": [],
+            "next_query": "双底 定义",
+            "reason": "缺定义",
+        },
+        "failures": [
+            "retrieve: RuntimeError: index offline",
+            "chart_read: timeout (page render timed out)",
+            "generate: invalid_structure: JSONDecodeError: bad",
+        ],
+    }
+
+
+def test_the_debug_block_is_opt_in_and_leaves_the_other_keys_alone(monkeypatch):
+    monkeypatch.setattr(main, "run_query", lambda q: _full_result())
+
+    plain = main.query(main.QueryRequest(query="双底是什么？"))
+    verbose = main.query(main.QueryRequest(query="双底是什么？", debug=True))
+
+    assert "debug" not in plain
+    assert set(plain) == _QUERY_KEYS
+    # nothing else appears or disappears when the block is requested
+    assert set(verbose) == _QUERY_KEYS | {"debug"}
+
+
+def test_a_requested_debug_block_shows_the_chain_internals(monkeypatch):
+    monkeypatch.setattr(main, "run_query", lambda q: _full_result())
+
+    block = main.query(main.QueryRequest(query="双底是什么？", debug=True))["debug"]
+
+    assert block["hits"] == [
+        {"evidence_id": "e1", "score": 0.8, "block_type": "paragraph"},
+        {"evidence_id": "e2", "score": 0.4, "block_type": "caption"},
+    ]
+    assert block["citable_ids"] == ["e1", "e2"]
+    assert block["context_unit_counts"] == {"total": 3, "parents": 1, "adjacent": 2}
+    assert block["sufficiency"]["sufficient"] is False
+    assert block["sufficiency"]["missing"] == ["定义"]
+    assert block["rounds"] == 2
+    assert block["graph_stats"] == {"enabled": True, "selected": 1}
+    assert block["failures"] == [
+        {"stage": "retrieve", "category": "error", "detail": "RuntimeError: index offline"},
+        {"stage": "chart_read", "category": "timeout", "detail": "page render timed out"},
+        {"stage": "generate", "category": "invalid_structure", "detail": "JSONDecodeError: bad"},
+    ]
+
+
+def test_a_degraded_run_is_visible_in_the_debug_failures(monkeypatch):
+    result = _full_result()
+    result["answer"] = {
+        "answer": "本次生成失败：模型输出被截断或结构非法，没有可展示的答案。请重试本问题。",
+        "evidence_ids": [],
+        "degraded": True,
+        "degradation": {"reason": "invalid_structure", "detail": "JSONDecodeError: bad"},
+    }
+    monkeypatch.setattr(main, "run_query", lambda q: result)
+
+    payload = main.query(main.QueryRequest(query="双底是什么？", debug=True))
+
+    assert payload["degraded"] is True
+    assert {
+        "stage": "generate",
+        "category": "invalid_structure",
+        "detail": "JSONDecodeError: bad",
+    } in payload["debug"]["failures"]
