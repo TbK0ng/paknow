@@ -25,6 +25,7 @@ baseline. Run records (``*.records.jsonl`` + ``summary.json``) are written to
 
 Usage:
     python scripts/quality_gate.py
+    python scripts/quality_gate.py --deterministic   # the same, named explicitly
     python scripts/quality_gate.py --judge
     python scripts/quality_gate.py --record --out .scratch/production-readiness/quality-gate/baseline-<stamp>
     python scripts/quality_gate.py --record --judge   # records the judge block too
@@ -417,7 +418,13 @@ def _default_out() -> Path:
 
 def main(argv: Sequence[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument(
+    mode = ap.add_mutually_exclusive_group()
+    mode.add_argument(
+        "--deterministic",
+        action="store_true",
+        help="deterministic checks only, no cloud call (default)",
+    )
+    mode.add_argument(
         "--judge", action="store_true", help="append the blind judge (needs the cloud key)"
     )
     ap.add_argument(

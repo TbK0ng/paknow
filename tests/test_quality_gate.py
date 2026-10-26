@@ -167,6 +167,18 @@ def test_a_run_matching_the_recorded_baseline_exits_zero(tmp_path, monkeypatch, 
     assert code == 0, capsys.readouterr().out
 
 
+def test_the_deterministic_flag_is_the_explicit_default(tmp_path, monkeypatch, capsys):
+    baseline = tmp_path / "baseline.json"
+    _write_baseline(baseline, blocks={"deterministic": _baseline_block()})
+    monkeypatch.setattr(quality_gate, "run_deterministic", Runner())
+
+    code = quality_gate.main(
+        ["--deterministic", "--baseline", str(baseline), "--out", str(tmp_path / "run")]
+    )
+
+    assert code == 0, capsys.readouterr().out
+
+
 def test_a_hard_constraint_failure_exits_nonzero(tmp_path, monkeypatch, capsys):
     baseline = tmp_path / "baseline.json"
     _write_baseline(baseline, blocks={"deterministic": _baseline_block()})
