@@ -545,7 +545,15 @@ def test_edge_budget_keeps_mechanism_before_taxonomy_at_the_boundary():
 # ---------------------------------------------------------------------------
 
 
-def test_rendered_claim_prints_its_condition_and_exceptions():
+def test_claim_conditions_maps_the_stored_qualifier_keys():
+    assert (
+        generate._claim_conditions({"context": ["强趋势", "缩量"], "modality": "may"})
+        == "背景=强趋势、缩量；语气=may"
+    )
+    assert generate._claim_conditions({}) == ""
+
+
+def test_conditioned_claim_renders_condition_and_claim_on_one_line():
     line = generate.render_graph_context(
         [
             {
@@ -555,8 +563,6 @@ def test_rendered_claim_prints_its_condition_and_exceptions():
                     "subject": "突破",
                     "predicate": "常常失败",
                     "qualifiers": {"context": ["强趋势"], "modality": "usually"},
-                    "conditions": ["区间边缘"],
-                    "exceptions": ["突破后有跟随"],
                 },
                 "text": "图谱正文",
                 "seen_index": None,
@@ -565,9 +571,26 @@ def test_rendered_claim_prints_its_condition_and_exceptions():
     )[0]
 
     assert "突破 → 常常失败" in line
-    assert "条件" in line
-    for expected in ("强趋势", "usually", "区间边缘", "突破后有跟随"):
-        assert expected in line
+    assert "条件：背景=强趋势；语气=usually" in line
+
+
+def test_unconditional_claim_renders_without_condition_wording():
+    line = generate.render_graph_context(
+        [
+            {
+                "evidence_id": "g1",
+                "source": "mechanism",
+                "claim": {"subject": "突破", "predicate": "常常失败", "qualifiers": {}},
+                "text": "图谱正文",
+                "seen_index": None,
+            }
+        ]
+    )[0]
+
+    assert "突破 → 常常失败" in line
+    assert "条件" not in line
+    assert "无条件" not in line
+    assert "通常在" not in line
 
 
 # ---------------------------------------------------------------------------

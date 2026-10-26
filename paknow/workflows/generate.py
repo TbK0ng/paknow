@@ -206,23 +206,22 @@ def _graph_locator(entry: dict[str, Any]) -> str:
     return " · ".join(loc) or "未知出处"
 
 
-def _claim_conditions(claim: dict[str, Any]) -> str:
-    """Compact condition/qualifier text so a conditioned claim never reads absolute."""
+# the only mapping point between what extraction stores and what the prompt
+# renders: qualifiers carry ``context`` (背景) and ``modality`` (语气)
+_QUALIFIER_LABELS = {"context": "背景", "modality": "语气"}
+
+
+def _claim_conditions(qualifiers: Mapping[str, Any] | None) -> str:
+    """Render a claim's stored qualifiers so it never reads as absolute."""
+    if not isinstance(qualifiers, Mapping):
+        return ""
     parts: list[str] = []
-    for key in ("conditions", "qualifiers", "exceptions"):
-        value = claim.get(key)
-        if not value:
-            continue
-        if isinstance(value, dict):
-            for name, item in value.items():
-                if isinstance(item, (list, tuple)):
-                    item = "、".join(str(x) for x in item)
-                if item:
-                    parts.append(f"{name}={item}")
-        elif isinstance(value, (list, tuple)):
-            parts.extend(str(item) for item in value if item)
-        else:
-            parts.append(str(value))
+    for key, label in _QUALIFIER_LABELS.items():
+        value = qualifiers.get(key)
+        if isinstance(value, (list, tuple)):
+            value = "、".join(str(item) for item in value if item)
+        if value:
+            parts.append(f"{label}={value}")
     return "；".join(parts)
 
 
@@ -231,7 +230,7 @@ def render_graph_context(entries: list[dict[str, Any]]) -> list[str]:
 
     Entries already present in the citable text keep only a ``已见 [n]``
     pointer so the body is never duplicated and the citation binding stays
-    intact. Claim conditions/qualifiers are printed inline so a conditioned
+    intact. A claim's stored qualifiers are printed inline so a conditioned
     claim does not read as an unconditional rule.
     """
     lines: list[str] = []
@@ -240,7 +239,7 @@ def render_graph_context(entries: list[dict[str, Any]]) -> list[str]:
         claim = entry.get("claim")
         if claim:
             desc = f"{claim.get('subject', '')} → {claim.get('predicate', '')}"
-            conditions = _claim_conditions(claim)
+            conditions = _claim_conditions(claim.get("qualifiers"))
             if conditions:
                 desc += f"（条件：{conditions}）"
         elif entry.get("relation"):
