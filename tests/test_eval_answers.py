@@ -272,6 +272,32 @@ def test_run_item_frozen_passes_the_plan_and_records_provenance():
     assert record["query_hash"] == graph_module.query_hash(item["expanded_queries"])
 
 
+def test_run_item_keeps_the_degradation_marker_readable():
+    item = _gold_item()
+    degradation = {"reason": "timeout", "detail": "TimeoutError: slow"}
+
+    def fake_run_query(query, *, expand_graph, plan=None):
+        return {
+            "answer": {
+                "answer": "本次生成失败，请重试",
+                "evidence_ids": [],
+                "degraded": True,
+                "degradation": dict(degradation),
+            },
+            "citable_ids": [],
+            "graph_evidence": [],
+            "routes": [],
+            "rounds": 1,
+            "failures": ["generate: timeout: TimeoutError: slow"],
+        }
+
+    record = eval_answers.run_item(item, "graph", fake_run_query)
+
+    assert record["degraded"] is True
+    assert record["degradation"] == degradation
+    assert record["failures"] == ["generate: timeout: TimeoutError: slow"]
+
+
 def test_two_frozen_runs_agree_per_item_without_routing(monkeypatch):
     """The determinism contract: same code + same dataset → same numbers.
 
