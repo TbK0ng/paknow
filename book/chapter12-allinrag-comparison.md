@@ -333,14 +333,16 @@ Docker，且 Qdrant 的命名向量刚好满足“同点 dense+sparse + RRF”�
 | 索引缓存 | FAISS 本地缓存 | Qdrant 持久化；无启动缓存层 | 等价 |
 | 流式输出 | 有流式示例 | 未实现 | **未实现** |
 | 查询缓存 | 未覆盖 | 未实现 | 未实现 |
-| 鉴权/多用户 | 未覆盖 | 未实现（单用户本地） | 不适用 |
-| 容器化/Postgres | Docker/Milvus | SQLite + Qdrant 嵌入式；可切 Postgres/server | 权衡替代 |
+| 鉴权/多用户 | 未覆盖 | 未实现（单用户本地，服务端零鉴权） | 不适用（边界见 [上线与交付](chapter15-deployment.md) §8） |
+| 容器化/Postgres | Docker/Milvus | SQLite + Qdrant 嵌入式；可切 Postgres/server；服务无镜像 | 权衡替代 |
+| 发布/回滚 | 未覆盖 | 文档站 CI + MCP 门禁；服务层无产物可回滚 | 部分（见 [上线与交付](chapter15-deployment.md)） |
+| 日志/指标 | Phoenix / OTel 示例 | 无应用日志、无指标端点；`run_traces` 当埋点表 | **未落地** |
 | 文档站 | MkDocs/Docsify | MkDocs Material + 本对照章 | 已采用 |
 
 **复盘**：SOP 是 PAknow 相对教程的“加法”，但加法也有欠账：`UserFactRow`、`ImportJobRow`
 两张表没有接入主链路；`record_replay` 有接口但没有评测数据；`active` 晋升关闭。工程层
 最强的部分是**可审计性**（trace + 版本快照 + 引用定位），最弱的是**体验与规模化**
-（无流式、无缓存、无鉴权、无 Docker 部署）。
+（无流式、无缓存、无鉴权、无 Docker 部署；逐项对账见 [上线与交付](chapter15-deployment.md)）。
 
 ## 14. 哪些是“没想到”，哪些是“权衡”
 
@@ -356,6 +358,7 @@ Docker，且 Qdrant 的命名向量刚好满足“同点 dense+sparse + RRF”�
 | 流式输出 / 查询缓存 | 未实现 | 体验与并发成本 |
 | 表格抽取 | 未实现 | 扩语料到表格类资料会漏 |
 | 用户事实/作业表接线 | 未实现 | 表存在但不参与业务 |
+| 指标聚合与成本口径 | 未实现 | `run_traces` 有埋点但只存不聚合；`cost_usd` 从未赋值，成本不可测量 |
 
 ### 14.2 有理由的“权衡替代”
 

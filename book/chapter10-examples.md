@@ -201,3 +201,5 @@ git log --oneline -- sop_registry/
 | 服务起不来，报「内嵌向量库已被占用（pid=…）」 | 另一个进程（评测/脚本/旧 API）占着 `data/objects/qdrant` | 等它结束或停掉它；`QDRANT_URL` 切 server 可绕开该锁 |
 | 服务起不来，报「集合不存在 / 为空」 | 还没建库，或入库中断 | 先跑入库与索引脚本；启动自检是只读的，不会替你建集合 |
 | `database is locked`（并发） | SQLite 写锁 | 降低并发或启用 WAL |
+| SOP 明明在库里却不生效 | 语料指纹变了，`compatible_versions` 不匹配 → 静默跳过 | 见 [上线与交付](chapter15-deployment.md) §9.2；重新注册并刷新指纹 |
+| 想知道线上跑的是哪一版 | `/health` 只回 `{"status": "ok"}`，不带版本 | 用 `git log` + trace 里的 `version_snapshot` 对照；见 [上线与交付](chapter15-deployment.md) §5 |

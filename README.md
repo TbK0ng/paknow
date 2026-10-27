@@ -18,7 +18,7 @@
   （`SUPPORTED_BY`、`ILLUSTRATED_BY`、`INVALIDATED_BY`、`TRANSITIONS_TO`、`PART_OF`、`EXCEPTION_TO`），
   有界 BFS 扩展，结果不可引用。
 - **SOP 记忆**：`candidate → replay_validated → shadow → active → superseded/retired`
-  生命周期 + git 版本；`sop_registry/` 现有 5 份（库里 6 条记录：5 `candidate` / 1 `shadow`），
+  生命周期 + git 版本；`sop_registry/` 现有 4 份（库里 5 条记录：4 `candidate` / 1 `shadow`），
   `active` 需要离线回放才升得上去。
 - **来源定位**：PDF 保留物理页 / 章内印刷页 / 章节 / 图号分别存储；EPUB 保留
   spine 阅读顺序 + 锚点 + 图注邻接。

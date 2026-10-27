@@ -31,6 +31,7 @@ description: "逐项列出可验证的已完成能力，以及按「能否解锁
 | 服务 | FastAPI 12 个路由 + 单页查看器 + PDF 页渲染 + 截点遮罩；启动自检（存储缺失/被占用/空库拒启）、`/query` 可选 `debug` 块 | 接口实测 |
 | 集成 | MCP 适配器（11 个工具，走 HTTP，不依赖内部包） | 独立进程实测 |
 | 文档 | 本技术文档站 | `mkdocs build` |
+| 交付 | 文档站 CI 自动发布；MCP 适配器五道门禁 + `SHA256SUMS` + `git_commit`；组件指纹写入每条 trace | 见 [上线与交付](chapter15-deployment.md) |
 
 ## 2. 待补充
 
@@ -45,6 +46,7 @@ description: "逐项列出可验证的已完成能力，以及按「能否解锁
 | 把门禁搬进 CI | 门禁已在本地覆盖生产链（`scripts/quality_gate.py`，10 题分层、硬约束退非零、软指标按噪声地板、基线入库），但 CI 只跑确定性单测，变差不会自动红 | 需要一台能跑索引与模型的 runner；CI 侧已有 `tests/test_quality_gate.py` 与 `tests/test_eval_artifacts.py` |
 | 图表金标准人工确认 | 10 题已全量跑完（漏读 1.8%、多读 8.0%、漂移 0），但 `expected_levels` 是一次模型初读：三个率可作回归，不能当绝对精度 | 需要人工逐页核对金标准价位 |
 | 机制题覆盖 | 20 道机制题覆盖率 ≈0：沿边扩展补得了概念，补不了论证链 | 已定位，未设计 |
+| SOP 指纹失效的可观测性 | 指纹不符的 SOP 被 `select_sop` 静默跳过，不写日志、不写 trace——记忆失效没有任何信号 | 见 [上线与交付](chapter15-deployment.md) §9.2；要改的是跳过分支，不是 yaml |
 
 ### P2：效果与鲁棒性
 
@@ -67,7 +69,11 @@ description: "逐项列出可验证的已完成能力，以及按「能否解锁
 | SQLite WAL | 后台优化线程与查询并发时的写锁抖动 |
 | OCR 接线 | 当前 0 页需要；扫描版 PDF 才有用 |
 | pabook 元数据 | PDF 无 title/author，需手工补 |
-| 多用户 / 权限 | 当前单用户本地系统 |
+| 多用户 / 权限 | 当前单用户本地系统；服务端零鉴权，`streamable-http` 只能绑回环（[上线与交付](chapter15-deployment.md) §8） |
+| 成本口径 | `run_traces.cost_usd` 列存在，641 条 trace 全为 NULL：没有用量回传，成本只能按 token 预算估 |
+| 指标聚合 | 指标定义与 SQL 已就绪，但无 `/metrics`、无看板；`elapsed_ms` 只存不聚合 |
+| 版本可识别性 | `/health` 不返回版本，MCP 客户端的 `server_version` 恒为 `None`；版本号三处硬编码、无 tag |
+| 服务产物 | 无 Dockerfile、无镜像、无部署清单——服务层无法回滚到上一版，只能 git 回退后重建 |
 
 ## 3. 明确"不做"
 

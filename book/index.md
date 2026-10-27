@@ -121,6 +121,15 @@ description: "PAknow：可追溯出处的多模态 RAG、条件化证据图谱�
 
     [:octicons-arrow-right-24: 阅读](chapter8-service.md)
 
+-   :material-truck-delivery-outline:{ .lg .middle } **上线与交付**
+
+    ---
+
+    九个交付维度逐个对账：构建、发布、更新、指纹式版本管理、
+    灰度替代、埋点表与指标、鉴权边界，以及两次真实排查。
+
+    [:octicons-arrow-right-24: 阅读](chapter15-deployment.md)
+
 -   :material-chart-candlestick:{ .lg .middle } **结构化读图**
 
     ---
@@ -192,6 +201,8 @@ description: "PAknow：可追溯出处的多模态 RAG、条件化证据图谱�
 | API 与查看器 | `apps/api/main.py`、`apps/viewer/` | 第 8 章 |
 | 评测 | `scripts/eval_*.py`、`scripts/quality_gate.py`、`evals/gold/` | 第 14 章 |
 | MCP 适配器 | `integrations/paknow-mcp/` | 第 8 章 |
+| 交付与发版 | `.github/workflows/`、`integrations/paknow-mcp/scripts/` | [上线与交付](chapter15-deployment.md) |
+| 运行轨迹与指标 | `paknow/memory/trace.py`、`run_traces` 表 | [上线与交付](chapter15-deployment.md) §7 |
 
 ## 快速开始
 

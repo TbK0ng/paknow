@@ -58,6 +58,7 @@ nav:
       - 6. 证据核验与生成: chapter6-generation.md
       - 7. SOP 记忆与自动优化: chapter7-memory.md
       - 8. 服务与工程化: chapter8-service.md
+      - 上线与交付: chapter15-deployment.md
       - 结构化读图: chapter13-chart.md
       - All-in-RAG 全链路对照: chapter12-allinrag-comparison.md
   - 验证与结果:
