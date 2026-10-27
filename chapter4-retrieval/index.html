@@ -1,0 +1,1763 @@
+
+<!doctype html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="混合召回 + RRF + 交叉编码重排 + 多样性，以及邻接、toc、图谱、BarRef 多路召回和 60 题宽度消融的实测结果。">
+      
+      
+        <meta name="author" content="TbK0ng">
+      
+      
+        <link rel="canonical" href="https://tbk0ng.github.io/paknow/chapter4-retrieval/">
+      
+      
+        <link rel="prev" href="../chapter3-index/">
+      
+      
+        <link rel="next" href="../chapter5-query/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/logo.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.0">
+    
+    
+      
+        <title>4. 检索优化 - PAknow 技术文档</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+    
+    
+      <link rel="stylesheet" href="../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  <meta property="og:type" content="website">
+<meta property="og:site_name" content="PAknow 技术文档">
+<meta property="og:title" content="4. 检索优化 - PAknow 技术文档">
+<meta property="og:description" content="混合召回 + RRF + 交叉编码重排 + 多样性，以及邻接、toc、图谱、BarRef 多路召回和 60 题宽度消融的实测结果。">
+<meta property="og:url" content="https://tbk0ng.github.io/paknow/chapter4-retrieval/">
+<meta property="og:image" content="https://tbk0ng.github.io/paknow/assets/images/og/chapter4-retrieval.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="4. 检索优化 - PAknow 技术文档">
+<meta name="twitter:description" content="混合召回 + RRF + 交叉编码重排 + 多样性，以及邻接、toc、图谱、BarRef 多路召回和 60 题宽度消融的实测结果。">
+<meta name="twitter:image" content="https://tbk0ng.github.io/paknow/assets/images/og/chapter4-retrieval.png">
+</head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#4" class="md-skip">
+          跳转至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="页眉">
+    <a href=".." title="PAknow 技术文档" class="md-header__button md-logo" aria-label="PAknow 技术文档" data-md-component="logo">
+      
+  <img src="../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            PAknow 技术文档
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              4. 检索优化
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="teal"  aria-label="切换到深色模式"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="切换到深色模式" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="teal"  aria-label="切换到浅色模式"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="切换到浅色模式" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜索" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="查找">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="分享" aria-label="分享" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="清空当前内容" aria-label="清空当前内容" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜索引擎
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/TbK0ng/paknow" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    TbK0ng/paknow
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="标签" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  首页
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../chapter0-architecture/" class="md-tabs__link">
+          
+  
+  
+  设计流程
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../chapter14-evaluation/" class="md-tabs__link">
+          
+  
+  
+  验证与结果
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="导航栏" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="PAknow 技术文档" class="md-nav__button md-logo" aria-label="PAknow 技术文档" data-md-component="logo">
+      
+  <img src="../assets/logo.svg" alt="logo">
+
+    </a>
+    PAknow 技术文档
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/TbK0ng/paknow" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    TbK0ng/paknow
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    首页
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    设计流程
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    设计流程
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter0-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0. 系统架构与设计原则
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter1-corpus/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1. 资料审计与证据单元
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter2-multimodal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2. 多模态证据构建
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter3-index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3. 索引构建
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4. 检索优化
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4. 检索优化
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. 全景
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-rrf" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. 混合检索与 RRF
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. 交叉编码重排
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. 多样性控制
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. 上下文扩展：父块 + 邻接
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-toc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. 目录（toc）召回
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. 图谱扩展
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7. 图谱扩展">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#71" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.1 种子与边
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#72" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.2 预算与截断
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#73" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.3 不可引用与非重复
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#74" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.4 能力边界与回归数字
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-barref" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. BarRef 召回
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-caption" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. caption 定向召回（要图例时）
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. 跨轮证据累积与查询优先级
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="10. 跨轮证据累积与查询优先级">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#101" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10.1 两个真实缺陷
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. 失败隔离
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12. 本章小结
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter5-query/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5. 查询构建与改写
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter6-generation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6. 证据核验与生成
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter7-memory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7. SOP 记忆与自动优化
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter8-service/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8. 服务与工程化
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter15-deployment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    上线与交付
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter13-chart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    结构化读图
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter12-allinrag-comparison/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    All-in-RAG 全链路对照
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    验证与结果
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    验证与结果
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter14-evaluation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    评测
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter9-status/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    已完成与待补充
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter10-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    运行示例
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter11-ai-review/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AI 评价
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. 全景
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-rrf" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. 混合检索与 RRF
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. 交叉编码重排
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. 多样性控制
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. 上下文扩展：父块 + 邻接
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-toc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. 目录（toc）召回
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. 图谱扩展
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7. 图谱扩展">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#71" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.1 种子与边
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#72" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.2 预算与截断
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#73" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.3 不可引用与非重复
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#74" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.4 能力边界与回归数字
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-barref" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. BarRef 召回
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-caption" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. caption 定向召回（要图例时）
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. 跨轮证据累积与查询优先级
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="10. 跨轮证据累积与查询优先级">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#101" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10.1 两个真实缺陷
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. 失败隔离
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12. 本章小结
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/TbK0ng/paknow/edit/main/book/chapter4-retrieval.md" title="编辑此页" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="4">4. 检索优化<a class="headerlink" href="#4" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>检索是 RAG 的胜负手。本章按"召回 → 融合 → 重排 → 后处理 → 多路补充"的顺序讲，并给出每个取舍的实测依据。</p>
+</blockquote>
+<h2 id="1">1. 全景<a class="headerlink" href="#1" title="Permanent link">&para;</a></h2>
+<pre class="mermaid"><code>flowchart LR
+    Q[查询集 6 条&lt;br/&gt;next_query 优先] --&gt; H[混合召回&lt;br/&gt;dense+sparse RRF]
+    H --&gt; R[交叉编码重排&lt;br/&gt;候选池 80 · 按召回查询打分]
+    R --&gt; D[多样性&lt;br/&gt;近重复+每书配额]
+    D --&gt; A[邻接上下文&lt;br/&gt;最多 4 条]
+    D --&gt; C[整段上下文&lt;br/&gt;父块 ≤6 · 不可引用]
+    Q --&gt; G[图谱扩展&lt;br/&gt;非打分·不可引用]
+    D -.-&gt;|命中概念| G
+    Q --&gt; T[toc 召回&lt;br/&gt;章节框架]
+    Q --&gt; B[BarRef 召回&lt;br/&gt;K线编号]
+    Q --&gt; K[caption 定向召回&lt;br/&gt;要图例时]
+    A --&gt; S[证据集 14 + 上下文]
+    C --&gt; S
+    G --&gt; P[生成提示·图谱辅助块]
+    T --&gt; S
+    B --&gt; S
+    K --&gt; S</code></pre>
+<h2 id="2-rrf">2. 混合检索与 RRF<a class="headerlink" href="#2-rrf" title="Permanent link">&para;</a></h2>
+<p>每路召回 40 条，RRF 融合。<strong>为什么用 RRF 而不是加权分数融合</strong>：</p>
+<ul>
+<li>dense 分数是余弦相似度（0~1），sparse 分数是点积（可大于 1），两者量纲不同；</li>
+<li>加权融合需要归一化与调参，且参数随查询分布漂移；</li>
+<li>RRF 只用<strong>排名</strong>，对量纲不敏感，鲁棒。</li>
+</ul>
+<blockquote>
+<p>代价：RRF 丢弃了"分差"信息。如果某条 dense 结果遥遥领先，RRF 无法体现。当前数据规模下这个损失小于调参带来的不稳定性。</p>
+</blockquote>
+<h2 id="3">3. 交叉编码重排<a class="headerlink" href="#3" title="Permanent link">&para;</a></h2>
+<ul>
+<li>模型：<code>bge-reranker-v2-m3</code>（本地 GPU；首次加载耗时未做基准测量，不作为指标引用）；</li>
+<li>输入：累积候选里 RRF 前 80 条（<code>paknow/retrieval/pipeline.py:54</code>）；</li>
+<li>打分口径：<strong>用真正把这条证据召回来的那条查询打分</strong>，跨查询取最高分（<code>paknow/retrieval/search.py:82</code>）。被 Step-Back 或子查询召回的单元不因为原问句措辞不合而被压低；跨轮次继承、没有归属的单元回退到改写后的原问句；</li>
+<li>输出：重排后的 80 条，再交给多样性控制取 14 条；</li>
+<li>判定器另有一份视图：多样性之前的候选池（<code>RetrievalResult.candidate_hits</code>），供证据充分性核验使用，不影响生成取 14 条；</li>
+<li>失败降级：任何异常都追加到 <code>failures</code>，保留 RRF 顺序继续。</li>
+</ul>
+<blockquote>
+<p>2026-10-25 之前是「用改写原问句给前 20 条打分」，实测把候选池里已有的期望证据丢掉 32 个；改成「按召回它的查询打分 + 池 80」后，同一批金题的文本臂 41/123 → 50/123（<code>.scratch/selection-funnel/</code>）。</p>
+</blockquote>
+<p><strong>为什么不用 LLM 重排</strong>：每问多一次云端调用（延迟 +1~3s、成本翻倍），而本地 cross-encoder 已能解决"词汇相近但背景不同"的主要误排。</p>
+<p><strong>为什么不上 ColBERT</strong>：需要 late-interaction 索引与独立存储，与"嵌入式 Qdrant + 命名向量"的简洁路线冲突，收益在当前 9 万单元规模下不明显。</p>
+<h2 id="4_1">4. 多样性控制<a class="headerlink" href="#4_1" title="Permanent link">&para;</a></h2>
+<p>两个规则：</p>
+<ol>
+<li><strong>近重复抑制</strong>：文本归一化（去空白）后取前 200 字做哈希，同哈希只保留排名最高的一条；</li>
+<li><strong>每书配额</strong>：同一 <code>doc_id</code> 最多 8 条。</li>
+</ol>
+<p><strong>为什么需要</strong>：同一概念在 7 份资料、中英版本中反复出现；术语表式的段落更是几乎逐字重复。不做控制时，top-14 可能被同一本书的同一段解释占满。</p>
+<p><strong>为什么是 200 字 / 8 条</strong>：原来是 80 字 / 5 条。实测（<code>.scratch/selection-funnel/</code>）发现两个具体伤害：不同章节的同名标题共享前 80 字（"交易区间开盘：多头突破失败"在多章重复），同哈希只留排名最高的一条，而金标准要的常是另一条；另外百科一本书提供 123 个期望点里的 50 个，5 条配额直接把重排第 3 名的答案挤掉。放宽后这两类丢失消失，且没有让任何一层变差（百科 20/34、例外 9→15）。</p>
+<p><strong>为什么不做 embedding 聚类</strong>：聚类要离线跑全量相似度或引入聚类索引，成本高；200 字哈希 + 配额已经能消除"同一段重复"这一主要问题，且零额外依赖。</p>
+<h2 id="5">5. 上下文扩展：父块 + 邻接<a class="headerlink" href="#5" title="Permanent link">&para;</a></h2>
+<p>命中后展开两类上下文：</p>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>上限</th>
+<th>编号</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>邻接单元</td>
+<td>4</td>
+<td>有（可引用，标"邻接段落"）</td>
+<td>解释性段落的前后文</td>
+</tr>
+<tr>
+<td>父块</td>
+<td>6</td>
+<td><strong>无（不可引用）</strong></td>
+<td>子块被切开的整段原文（<code>paknow/retrieval/search.py:198-267</code>）；父块不入索引，只在命中子块后回查；超 2,400 字符按上下文截断；以"整段上下文"块单独渲染（<code>paknow/workflows/generate.py:315</code>）</td>
+</tr>
+</tbody>
+</table>
+<p><strong>为什么父块不占引用编号</strong>：父块的文本包含命中子块自己的文字，两边都编号等于把同一段渲染两次——实测 114 条答案记录里 39 条同时引用了某父块和它自己的子块，而引父块的记录引用支撑分（1.06）低于不引的（1.18）。父块仍要送给模型（"这段话原来属于哪一整段"是解释性段落的必要前后文），但它不提供子块之外的新证据，因此只作上下文、不作引用来源。</p>
+<p><strong>为什么是邻接</strong>：父块回查曾经在数据上无效——1,670 个单元带 <code>parent_id</code>，其中 0 个能解析到父单元（本地库快照 2026-10-24），所以先做了按阅读顺序生成的邻接（当时 91,235/91,235 个证据单元携带 <code>adjacent_ids</code>，非空 82,552）。2026-10-25 父块回填后两条并存，单元总数 91,978：父块回答"这段话原来属于哪一整段"，邻接回答"这段话前后读什么"。</p>
+<h2 id="6-toc">6. 目录（toc）召回<a class="headerlink" href="#6-toc" title="Permanent link">&para;</a></h2>
+<p>实现：从数据库派生的<strong>章节索引</strong>（每个 <code>(doc_id, chapter_path)</code> 去重），用 jieba 词项与查询求重叠，按"重叠数 ×（1 + 0.15 × 路径深度）"打分。</p>
+<p><strong>为什么不把目录写成向量单元</strong>：目录条目极短，嵌入区分度低；而章节名与查询的词项重叠本身就很强。DB 派生零索引成本，且章节新增时无需重建。</p>
+<p><strong>效果</strong>：框架问题（"市场周期如何转换"）会召回"第 5 章：趋势如何诞生、运行与衰亡"等章节路径，给生成器提供全书框架定位。</p>
+<h2 id="7">7. 图谱扩展<a class="headerlink" href="#7" title="Permanent link">&para;</a></h2>
+<p>图谱不是一条打分路由，也不参与 RRF 融合（ADR-0003）。文本召回结束后，系统以概念为种子沿边补取证据，作为独立分区进入提示词；排序仍只由文本通道决定。</p>
+<h3 id="71">7.1 种子与边<a class="headerlink" href="#71" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>种子两支</strong>：查询词经词典命中的概念与文本召回并发；文本命中证据里出现的概念在召回返回后补一次。同一概念在一个请求里只展开一次，缺口轮只为新出现的概念补跑。</li>
+<li><strong>概念分类 1 跳</strong>：<code>PART_OF</code> / <code>EXCEPTION_TO</code> / <code>INVALIDATED_BY</code> / <code>TRANSITIONS_TO</code>。证据取解析该边时留下的源头标题，因此仍能回到原文定位。</li>
+<li><strong>机制链 2 跳</strong>：概念 → 对齐后的主张 → <code>SUPPORTED_BY</code> 证据。</li>
+<li><strong>标题解析是确定性的</strong>：先按「同文档归一化文本相同留首次、出现 ≥5 次视为页眉」去重，再以「：」切分情境与条目；「失败」映射 <code>INVALIDATED_BY</code>，「随后」映射 <code>TRANSITIONS_TO</code>，「但…恢复/继续」与「例外」映射 <code>EXCEPTION_TO</code>，识别不出明确上级概念的条目直接丢弃，不兜底成 <code>PART_OF</code>。</li>
+</ul>
+<p><strong>为什么用词典桥接</strong>：查询说"市场周期"，图节点标签是"趋势生命周期"；只有通过词典的别名集合（两者同属 <code>market_cycle</code>）才能对上。</p>
+<h3 id="72">7.2 预算与截断<a class="headerlink" href="#72" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>预算</th>
+<th>上限</th>
+<th>常量</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>种子概念</td>
+<td>8</td>
+<td><code>MAX_SEED_CONCEPTS</code></td>
+</tr>
+<tr>
+<td>边</td>
+<td>32</td>
+<td><code>MAX_EDGES</code></td>
+</tr>
+<tr>
+<td>回取证据</td>
+<td><strong>14</strong></td>
+<td><code>MAX_EVIDENCE</code></td>
+</tr>
+<tr>
+<td>图块（估算 tokens）</td>
+<td>1,200</td>
+<td><code>MAX_CONTEXT_TOKENS</code></td>
+</tr>
+</tbody>
+</table>
+<p>四个上限硬编码在 <code>paknow/graph/expansion.py:34-37</code>。机制链优先于分类树；候选顺序是"种子顺序 → <code>extraction_confidence</code> 降序 → <code>claim_id</code>"（<code>paknow/graph/expansion.py:236-243</code>），截断不会把相关性更低的边提到前面。每类预算是否触顶都记录在 <code>graph_stats</code>（<code>truncated_edges</code> / <code>truncated_evidence</code> / <code>truncated_tokens</code>），离线回归据此统计。</p>
+<h3 id="73">7.3 不可引用与非重复<a class="headerlink" href="#73" title="Permanent link">&para;</a></h3>
+<ul>
+<li>每条扩展证据标记 <code>provenance="graph"</code>、<code>non_citable=True</code>；</li>
+<li>若该证据已在文本结果中，只保留「已见 [n]」指针，不重复正文；</li>
+<li>引用编号只按文本命中与上下文单元生成，图谱证据永不进入 <code>evidence_ids</code>（ADR-0002）；生成提示里单独标注「不可引用，仅作理解辅助」。</li>
+</ul>
+<h3 id="74">7.4 能力边界与回归数字<a class="headerlink" href="#74" title="Permanent link">&para;</a></h3>
+<p>图谱扩展<strong>不扩大事实来源</strong>：每条主张都由原文证据 <code>SUPPORTED_BY</code> 支撑，扩展只是把同一批原文证据中文本通道没排到的那部分找出来。它真正擅长的是关系——一个形态属于哪个家族、在什么条件下失效、阶段之间如何转换——这些是文本通道表达不出的。代价是结构边规模小、命中与否高度依赖种子概念能否被词典识别，且结果不能作为出处。</p>
+<p>离线金标准回归（<code>scripts/eval_gold.py</code>，<code>graph_expansion_v2.json</code>：60 题 / 123 个期望证据点，每题 6 条冻结查询，产物在 <code>.scratch/selection-funnel/</code>，本地库快照 2026-10-25）给出下面这组数。所有口径共用同一份数据集与同一个数据快照：</p>
+<table>
+<thead>
+<tr>
+<th>口径</th>
+<th>命中期望点</th>
+<th>完整命中题数</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>union probe（6 条冻结查询各 top-20 取并集）</td>
+<td>73/123</td>
+<td>39/60</td>
+<td>上界参照，没有多样性截断，不是线上链路</td>
+</tr>
+<tr>
+<td>text w14（生产宽度，关图谱）</td>
+<td>50/123</td>
+<td>25/60</td>
+<td>图谱臂相减的基线</td>
+</tr>
+<tr>
+<td>graph w14（生产链路，开图谱）</td>
+<td>63/123</td>
+<td>—</td>
+<td>其中图通道贡献 18 点、图独有 13 点</td>
+</tr>
+</tbody>
+</table>
+<p><strong>怎么读这张表（口径必须写清）</strong>：净增益的定义是 <code>graph_arm_found - regression_text_found</code>（<code>scripts/eval_gold.py:23-24</code>），即图谱臂总命中减去同宽度文本臂命中，<strong>不是</strong>图通道贡献本身。所以 w14 是 63 − 50 = <strong>+13</strong>（<code>.scratch/selection-funnel/gold-after-graph-w14.json</code> 里就叫 <code>net_gain</code>）。</p>
+<p><strong>调优前的同一张表</strong>（2026-10-25 之前，重排按单问句打分、池 20）是：并集 73、text w14 41、text w20 42、graph w14 55、graph w20 55，净增益 +14/+13。重排改成「按召回它的查询打分 + 池 80」后文本臂 41→50、图谱臂 55→63；宽度消融没有在调优后重测，所以 w20 一列不在此表——它当时的结论（加宽只多买 1 个期望点）来自旧重排，别再当现行数字引用。</p>
+<p><strong>诚实的结论</strong>：</p>
+<ul>
+<li><strong>图通道确实拿到了文本臂拿不到的期望点</strong>：60 题里 21 题有"图通道有、文本臂没有"的期望点，其中 13 点是图独有的；但净增益只有 +13，因为图谱补回的 18 点里有 5 点文本臂自己也能拿到。</li>
+<li><strong>不要拿它和 73 的并集比</strong>：union probe 是上界参照，不做多样性截断。生产 63 对并集 73，<strong>链路损耗 10 条</strong>——这仍是比"图谱有没有用"更值得追的问题。</li>
+<li><strong>截断必然发生</strong>：60/60 题都触到 <code>MAX_EVIDENCE=14</code> 的上限（<code>truncated_evidence</code>），边与 token 预算从未触顶，0 次运行失败。上面所有差异都是证据预算恒定卡死时的分布差异，不是某次跑挂了。</li>
+<li>因此口径正确的表述是：<strong>「图谱扩展能召回文本臂之外的证据」得到支持（21/60 题）；「图谱扩展带来净召回增益」也成立，幅度是 +13 个期望点</strong>。更早的旧结论（净增 0）来自 20 题 v1 数据集与另一套基线口径，别再引用。</li>
+</ul>
+<h2 id="8-barref">8. BarRef 召回<a class="headerlink" href="#8-barref" title="Permanent link">&para;</a></h2>
+<p>触发条件：查询里出现 <code>K线N</code>、<code>bar N</code>、<code>图N</code>。</p>
+<ul>
+<li>解析查询的编号集合；</li>
+<li>与 <code>bar_refs.bars</code> 求交，按交集大小 + 图号匹配打分；</li>
+<li>命中后把对应图并入 figures（供查看器）。</li>
+</ul>
+<p><strong>为什么只在有编号时触发</strong>：纯形态查询（"什么是双底"）用混合检索更合适；BarRef 是精确指代工具，不是通用召回。</p>
+<h2 id="9-caption">9. caption 定向召回（要图例时）<a class="headerlink" href="#9-caption" title="Permanent link">&para;</a></h2>
+<p>当路由判定 <code>wants_examples=True</code>：</p>
+<ul>
+<li>用<strong>过滤检索</strong>（<code>block_type=caption</code>）召回图注/观察单元；</li>
+<li>取其 <code>figure_ids</code> 构建"图例目录"；</li>
+<li>目录以 <code>figure_id + 图号</code> 的形式提供给生成器，模型只能从目录里选。</li>
+</ul>
+<p><strong>为什么需要目录</strong>：模型无法凭空生成 UUID 形式的 figure_id。没有目录时，它会编造"图4.4"这类字符串，最终全部被过滤掉（实测发生过）。</p>
+<h2 id="10">10. 跨轮证据累积与查询优先级<a class="headerlink" href="#10" title="Permanent link">&para;</a></h2>
+<h3 id="101">10.1 两个真实缺陷<a class="headerlink" href="#101" title="Permanent link">&para;</a></h3>
+<ol>
+<li><code>queries[:6]</code> 在 <code>next_query</code> 与 SOP 补充查询<strong>追加之后</strong>切片。基础查询集通常已满 6 条 → 补检索的新查询被静默丢弃，第二轮检索等于重复第一轮；</li>
+<li>每轮检索都从空字典重建候选集 → 上一轮证据丢失。</li>
+</ol>
+<p>修复：</p>
+<ul>
+<li>查询优先级：<code>next_query &gt; SOP 补充查询 &gt; 计划查询集</code>，去重后取前 6；</li>
+<li>状态里维护 <code>acc</code>（证据累积字典），每轮在累积集上重排与截断。</li>
+</ul>
+<p>但<strong>优先级列表最末尾还有一类查询会被切掉</strong>：消歧变体由 <code>retrieval_queries()</code> 在 <code>[:6]</code> 截断之前追加到最后一个位置（<code>paknow/workflows/router.py:93-109</code>）。基础查询集（原问题、<code>step_back</code>、<code>sub_queries</code>、<code>hyde</code>）通常已经占满 6 条，所以"消歧变体排在最后、作为可选语境偏置"这个设计承诺，实际执行中经常变成"根本不存在"。要让 <code>BTC</code>/<code>AI</code> 这类歧义术语真正拿到语境偏置，得把它们提到配额内，而不是追加在队尾（详见第 5 章 §5）。</p>
+<h2 id="11">11. 失败隔离<a class="headerlink" href="#11" title="Permanent link">&para;</a></h2>
+<p>每条召回路径独立 <code>try/except</code>，异常写入 <code>failures</code> 并继续：</p>
+<ul>
+<li>重排失败 → 用 RRF 顺序；</li>
+<li>图谱失败 → 主检索不受影响；</li>
+<li>caption 召回失败 → 图例目录为空，而不是整个请求失败。</li>
+</ul>
+<p><strong>唯一的例外是存储被别的进程占用</strong>：<code>StoreLockedError</code> 会被重新抛出（不记成普通失败），
+由 API 映射成 503。把"锁被占"降级成"零命中"正是要避免的那种静默失败。</p>
+<h2 id="12">12. 本章小结<a class="headerlink" href="#12" title="Permanent link">&para;</a></h2>
+<ul>
+<li>检索质量来自"多路召回 + 排名融合 + 后处理"的组合，而不是单点技巧。</li>
+<li>后处理（多样性、上下文、去重）对资料性质敏感，必须针对语料设计。</li>
+<li>每条路径都要有降级策略；"一个组件挂了全链路挂"是工程上不可接受的。</li>
+</ul>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  回到页面顶部
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="页脚" >
+        
+          
+          <a href="../chapter3-index/" class="md-footer__link md-footer__link--prev" aria-label="上一页: 3. 索引构建">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                上一页
+              </span>
+              <div class="md-ellipsis">
+                3. 索引构建
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../chapter5-query/" class="md-footer__link md-footer__link--next" aria-label="下一页: 5. 查询构建与改写">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                下一页
+              </span>
+              <div class="md-ellipsis">
+                5. 查询构建与改写
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      PAknow · 可追溯的多模态 RAG 与可验证 SOP 记忆
+
+    </div>
+  
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top", "navigation.tracking", "navigation.instant", "navigation.footer", "toc.follow", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.action.edit"], "search": "../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "\u5df2\u590d\u5236", "clipboard.copy": "\u590d\u5236", "search.result.more.one": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.other": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 # \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.term.missing": "\u7f3a\u5c11", "select.version": "\u9009\u62e9\u5f53\u524d\u7248\u672c"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.c21346df.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,2164 @@
+
+<!doctype html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="上线链路复盘：产物从哪来、怎么发、怎么回滚、失败怎么定位，以及本项目刻意不做的鉴权、灰度与容器化。">
+      
+      
+        <meta name="author" content="TbK0ng">
+      
+      
+        <link rel="canonical" href="https://tbk0ng.github.io/paknow/chapter15-deployment/">
+      
+      
+        <link rel="prev" href="../chapter8-service/">
+      
+      
+        <link rel="next" href="../chapter13-chart/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/logo.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.0">
+    
+    
+      
+        <title>上线与交付 - PAknow 技术文档</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+    
+    
+      <link rel="stylesheet" href="../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  <meta property="og:type" content="website">
+<meta property="og:site_name" content="PAknow 技术文档">
+<meta property="og:title" content="上线与交付 - PAknow 技术文档">
+<meta property="og:description" content="上线链路复盘：产物从哪来、怎么发、怎么回滚、失败怎么定位，以及本项目刻意不做的鉴权、灰度与容器化。">
+<meta property="og:url" content="https://tbk0ng.github.io/paknow/chapter15-deployment/">
+<meta property="og:image" content="https://tbk0ng.github.io/paknow/assets/images/og-cover.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="上线与交付 - PAknow 技术文档">
+<meta name="twitter:description" content="上线链路复盘：产物从哪来、怎么发、怎么回滚、失败怎么定位，以及本项目刻意不做的鉴权、灰度与容器化。">
+<meta name="twitter:image" content="https://tbk0ng.github.io/paknow/assets/images/og-cover.png">
+</head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#_1" class="md-skip">
+          跳转至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="页眉">
+    <a href=".." title="PAknow 技术文档" class="md-header__button md-logo" aria-label="PAknow 技术文档" data-md-component="logo">
+      
+  <img src="../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            PAknow 技术文档
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              上线与交付
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="teal"  aria-label="切换到深色模式"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="切换到深色模式" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="teal"  aria-label="切换到浅色模式"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="切换到浅色模式" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜索" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="查找">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="分享" aria-label="分享" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="清空当前内容" aria-label="清空当前内容" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜索引擎
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/TbK0ng/paknow" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    TbK0ng/paknow
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="标签" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  首页
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../chapter0-architecture/" class="md-tabs__link">
+          
+  
+  
+  设计流程
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../chapter14-evaluation/" class="md-tabs__link">
+          
+  
+  
+  验证与结果
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="导航栏" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="PAknow 技术文档" class="md-nav__button md-logo" aria-label="PAknow 技术文档" data-md-component="logo">
+      
+  <img src="../assets/logo.svg" alt="logo">
+
+    </a>
+    PAknow 技术文档
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/TbK0ng/paknow" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    TbK0ng/paknow
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    首页
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    设计流程
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    设计流程
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter0-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0. 系统架构与设计原则
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter1-corpus/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1. 资料审计与证据单元
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter2-multimodal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2. 多模态证据构建
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter3-index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3. 索引构建
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter4-retrieval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4. 检索优化
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter5-query/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5. 查询构建与改写
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter6-generation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    6. 证据核验与生成
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter7-memory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7. SOP 记忆与自动优化
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter8-service/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8. 服务与工程化
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    上线与交付
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    上线与交付
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. 九个维度先对一遍
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. 交付链路总览
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. 构建与打包
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. 发布与更新
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. 版本管理
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. 版本管理">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 版本号：现状是散落的
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 真正的版本工具是组件指纹
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 回滚的四条真实路径
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. 灰度：没有对象，所以没有机制
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. 日志与指标
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7. 日志与指标">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#71" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.1 日志：几乎没有
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#72-run_traces" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.2 run_traces 就是埋点表
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. 鉴权：现在没有，且这是清醒的
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. 可观测性：一次真实排查
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="9. 可观测性：一次真实排查">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#91-a-503" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.1 案例 A：服务起不来 / 503
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#92-b" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.2 案例 B：记忆静默失效
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. 能对外声明的边界
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. 本章小结
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter13-chart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    结构化读图
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter12-allinrag-comparison/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    All-in-RAG 全链路对照
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    验证与结果
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    验证与结果
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter14-evaluation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    评测
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter9-status/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    已完成与待补充
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter10-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    运行示例
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chapter11-ai-review/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AI 评价
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. 九个维度先对一遍
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. 交付链路总览
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. 构建与打包
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. 发布与更新
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. 版本管理
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. 版本管理">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 版本号：现状是散落的
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 真正的版本工具是组件指纹
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 回滚的四条真实路径
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. 灰度：没有对象，所以没有机制
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. 日志与指标
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7. 日志与指标">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#71" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.1 日志：几乎没有
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#72-run_traces" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.2 run_traces 就是埋点表
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. 鉴权：现在没有，且这是清醒的
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. 可观测性：一次真实排查
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="9. 可观测性：一次真实排查">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#91-a-503" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.1 案例 A：服务起不来 / 503
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#92-b" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.2 案例 B：记忆静默失效
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. 能对外声明的边界
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. 本章小结
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/TbK0ng/paknow/edit/main/book/chapter15-deployment.md" title="编辑此页" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="_1">上线与交付<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>全书其它章节回答"系统怎么工作"，这一章只回答一个问题：<strong>它凭什么能持续跑下去、跑坏了怎么退回来。</strong>
+口径先立：本项目是<strong>自托管的单用户系统</strong>（一台机器、一份索引、一个操作者），不冒充企业级多租户服务。
+代码里没有的能力（鉴权、配额、灰度、指标端点）这里一律写"没有"，并写清缺了它意味着什么。</p>
+</blockquote>
+<h2 id="1">1. 九个维度先对一遍<a class="headerlink" href="#1" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>维度</th>
+<th>本项目的答案</th>
+<th>结论</th>
+<th>证据</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>构建与打包</td>
+<td>依赖走 compose，参考数据走脚本重建，客户端走 wheel；<strong>服务本身没有镜像</strong></td>
+<td>部分</td>
+<td>§3</td>
+</tr>
+<tr>
+<td>2</td>
+<td>发布</td>
+<td>文档站全自动（<code>docs.yml</code>），MCP 适配器半自动（<code>release.py</code>），主服务手工</td>
+<td>部分</td>
+<td>§4</td>
+</tr>
+<tr>
+<td>3</td>
+<td>更新方式</td>
+<td>拉代码 + 重建索引 + 重启进程；没有 autoUpdater 之类的东西</td>
+<td>手工</td>
+<td>§4</td>
+</tr>
+<tr>
+<td>4</td>
+<td>版本管理</td>
+<td>版本号三处硬编码；真正的版本控制是<strong>组件指纹</strong>与 SOP 的 git</td>
+<td>部分</td>
+<td>§5</td>
+</tr>
+<tr>
+<td>5</td>
+<td>灰度</td>
+<td>没有流量灰度；单写者锁使"两个版本同时跑"物理上不成立</td>
+<td>无（有替代）</td>
+<td>§6</td>
+</tr>
+<tr>
+<td>6</td>
+<td>回滚</td>
+<td>数据层可回（<code>.bak</code> 备份、SOP git checkout、门禁基线拒用）；服务层无版本可退</td>
+<td>部分</td>
+<td>§5、§9</td>
+</tr>
+<tr>
+<td>7</td>
+<td>日志与指标</td>
+<td>无应用日志、无指标端点；<strong><code>run_traces</code> 表就是埋点表</strong></td>
+<td>部分</td>
+<td>§7</td>
+</tr>
+<tr>
+<td>8</td>
+<td>鉴权</td>
+<td>服务端零鉴权、零配额；信任边界只有回环地址 + 索引独占锁</td>
+<td>无</td>
+<td>§8</td>
+</tr>
+<tr>
+<td>9</td>
+<td>可观测性</td>
+<td><code>run_id</code> 是唯一链路锚点，可回放整次请求；无 tracing、无 <code>exception_id</code>、无 <code>session_id</code></td>
+<td>部分</td>
+<td>§9</td>
+</tr>
+</tbody>
+</table>
+<p><strong>为什么不分维度"补齐"成企业级</strong>：这套系统的用户就是作者本人。给单人系统加多租户、灰度平台与指标看板，写出来的是一堆没人读的代码，
+换来的是一个"看起来很企业"的假象。真实工程判断是：<strong>能说清每一项缺什么、缺了会怎样、什么时候必须补</strong>，比补齐更值钱。</p>
+<h2 id="2">2. 交付链路总览<a class="headerlink" href="#2" title="Permanent link">&para;</a></h2>
+<pre class="mermaid"><code>flowchart TB
+    subgraph "离线构建（一次性，产物入库）"
+        S[7 份 PDF/EPUB] --&gt; ING[ingest_all.py]
+        S --&gt; VLM[Qwen2.5-VL&lt;br/&gt;927 张图观察]
+        ING --&gt; DB[SQLite paknow.db]
+        ING --&gt; IDX[index_visual.py]
+        IDX --&gt; QD[Qdrant 索引&lt;br/&gt;81,809 点]
+        ING --&gt; TAX[build_taxonomy.py --apply]
+        VLM --&gt; DB
+        TAX --&gt; DB
+    end
+    subgraph "运行期（常驻进程）"
+        DB --&gt; API[uvicorn apps.api.main]
+        QD --&gt; API
+        API --&gt; VIEW[apps/viewer/index.html&lt;br/&gt;FileResponse，无构建步骤]
+        API --&gt; MCP[paknow-mcp&lt;br/&gt;stdio / streamable-http]
+    end
+    subgraph "发布通道"
+        GIT[git push main] --&gt; DOCS[docs.yml]
+        DOCS --&gt; PAGES[gh-pages 文档站]
+        REL[release.py] --&gt; GH[GitHub Release&lt;br/&gt;whl + sdist + zip + SHA256SUMS]
+    end</code></pre>
+<p>三条产物线互不共享发布节奏，这是理解整章的前提：</p>
+<table>
+<thead>
+<tr>
+<th>产物</th>
+<th>内容</th>
+<th>怎么再来一遍</th>
+<th>不可复现的部分</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>依赖容器</td>
+<td><code>postgres:16-alpine</code>、<code>qdrant/qdrant:v1.12.4</code>（<code>docker-compose.yml:2</code>）</td>
+<td><code>docker compose up -d</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td>参考数据</td>
+<td><code>paknow.db</code>（128 MiB）+ Qdrant 索引</td>
+<td><code>ingest_all.py</code> → <code>index_visual.py</code> → <code>build_taxonomy.py --apply</code>，顺序有依赖</td>
+<td>7 份里有 2 份不在脚本的 <code>SOURCES</code> 内（<a href="../chapter1-corpus/">第 1 章</a> §1）</td>
+</tr>
+<tr>
+<td>客户端</td>
+<td><code>paknow-mcp</code> 的 wheel/sdist + 技能包</td>
+<td><code>release.py</code></td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<h2 id="3">3. 构建与打包<a class="headerlink" href="#3" title="Permanent link">&para;</a></h2>
+<p><strong>服务端不做镜像，是明确的选择，不是漏做</strong>。索引是嵌入式 Qdrant 的本地目录（<code>data/objects/qdrant</code>），
+模型的加载依赖本机 GPU 与 CUDA 轮子；把它塞进容器只会把"模型跑不起来"从启动报错变成构建期报错。当前形态就是<strong>裸进程 + 两个依赖容器</strong>。</p>
+<p>构建的三层：</p>
+<ol>
+<li><strong>依赖</strong>：<code>docker-compose.yml</code> 只起 Postgres 与 Qdrant，没有 app service。切到服务端模式只改 <code>PAKNOW_DB_URL</code> 与 <code>QDRANT_URL</code>，不改代码（见 <a href="../chapter8-service/">第 8 章</a> §2）。</li>
+<li><strong>参考数据</strong>：三段脚本按序执行，任一段失败都不能继续——<code>index_visual.py</code> 读的是 <code>ingest_all.py</code> 写进库的证据单元，<code>build_taxonomy.py --apply</code> 又依赖图谱表。这也是为什么"重建索引"在本文档里等于"发一次数据版"。</li>
+<li><strong>客户端</strong>：<code>integrations/paknow-mcp/scripts/build_release.py</code> 产出确定性 bundle：<code>dist/*.whl|*.tar.gz</code> + <code>skill/paknow/SKILL.md</code> + <code>SHA256SUMS</code>（全文件 sha256）+ <code>MANIFEST.json</code>。
+   <code>MANIFEST.json</code> 记录 <code>git_commit</code> 与 <code>git_dirty</code>（<code>integrations/paknow-mcp/scripts/build_release.py:130</code>）——<strong>从脏工作区打出来的包，manifest 自己会承认</strong>，<code>release.py</code> 随后会拒发。</li>
+</ol>
+<p>前端没有构建产物：<code>apps/viewer/index.html</code> 是单文件，由 <code>FileResponse</code> 直接吐出来（<code>apps/api/main.py:378</code>）。
+少一层 npm 构建，就少一类"线上跑的是旧前端"事故。</p>
+<h2 id="4">4. 发布与更新<a class="headerlink" href="#4" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>通道</th>
+<th>触发</th>
+<th>自动化程度</th>
+<th>失败时</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>文档站</td>
+<td>push 到 <code>main</code> 且命中 <code>book/**</code>、<code>hooks/**</code>、<code>mkdocs.yml</code></td>
+<td>全自动：<code>mkdocs gh-deploy --force --clean --strict</code>（<code>.github/workflows/docs.yml:34</code>）</td>
+<td><code>--strict</code> 把坏链接当错误，构建失败即不发布，站点停在上一版</td>
+</tr>
+<tr>
+<td>代码测试</td>
+<td>任意 push / PR</td>
+<td>自动：<code>python scripts/check_scratch.py</code> 与 <code>python -m pytest -q</code>（<code>.github/workflows/check.yml:34</code>）</td>
+<td>PR 红，但<strong>不阻塞本地工作</strong>（没有分支保护）</td>
+</tr>
+<tr>
+<td>MCP 适配器</td>
+<td>本地执行 <code>release.py --publish</code></td>
+<td>半自动，五道门禁：测试通过 → 工作区干净 → bundle 验证通过 → <code>gh</code> 已登录 → tag 不存在</td>
+<td>任一门禁失败即 <code>SystemExit</code>，不会产出半个 release</td>
+</tr>
+<tr>
+<td>主服务</td>
+<td>人</td>
+<td>手工：<code>git pull</code> → 重建索引 → 重启 <code>uvicorn</code></td>
+<td><strong>没有可回退的产物</strong>，只能靠 git 回退源码 + 重建</td>
+</tr>
+</tbody>
+</table>
+<p>发布动作的细节值得单独看，因为它是仓库里唯一一条完整的"门禁 → 打标 → 分发"链路：</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># 只构建 + 验证，不发布</span>
+.venv/Scripts/python.exe<span class="w"> </span>integrations/paknow-mcp/scripts/release.py
+
+<span class="c1"># 构建 + 验证 + 打 tag + 发 GitHub Release</span>
+.venv/Scripts/python.exe<span class="w"> </span>integrations/paknow-mcp/scripts/release.py<span class="w"> </span>--publish
+</code></pre></div>
+<p><code>--publish</code> 之前必须先跑过 <code>verify_release.py</code>：它把 bundle 解到临时目录，在<strong>全新 venv</strong> 里装 wheel，
+再用 stdio 逐个探活 11 个工具，结果写 <code>VERIFICATION.json</code>。<code>release.py</code> 最后一步是
+<code>gh release create &lt;tag&gt; … --verify-tag</code>（<code>integrations/paknow-mcp/scripts/release.py:174</code>），上传的正是那份带 <code>SHA256SUMS</code> 的产物。</p>
+<p><strong>更新语义的三种</strong>（面试里"用户怎么拿到新版本"问的就是这个）：</p>
+<ul>
+<li>文档站：GitHub Pages 自动更新，读者刷新即最新；</li>
+<li>MCP 客户端：<code>pip install paknow-mcp==&lt;version&gt;</code>，或直接从 Release 下 zip；</li>
+<li>主服务：<strong>更新即重建</strong>。语料或索引变了，<code>component_versions()</code> 的指纹随之变化，旧 SOP 自动失效（§5）——这既是更新机制，也是回滚的代价。</li>
+</ul>
+<h2 id="5">5. 版本管理<a class="headerlink" href="#5" title="Permanent link">&para;</a></h2>
+<h3 id="51">5.1 版本号：现状是散落的<a class="headerlink" href="#51" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>位置</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>pyproject.toml:3</code></td>
+<td><code>version = "0.1.0"</code></td>
+</tr>
+<tr>
+<td><code>apps/api/main.py:41</code></td>
+<td><code>FastAPI(title="PAknow", version="0.1.0", …)</code></td>
+</tr>
+<tr>
+<td><code>integrations/paknow-mcp/src/paknow_mcp/__init__.py:5</code></td>
+<td><code>__version__ = "0.1.0"</code>（打包脚本唯一读取的源）</td>
+</tr>
+</tbody>
+</table>
+<p>三处各自独立，没有 CHANGELOG，也没有针对主应用的打标动作——仓库里唯一的 tag 由 <code>release.py</code> 生成，标的是 <code>paknow-mcp-v*</code>。
+后果是可验证的：<code>/health</code> 只回 <code>{"status": "ok"}</code>
+（<code>apps/api/main.py:221</code>），不带版本，于是 MCP 客户端 <code>paknow_health</code> 想读的 <code>server_version</code>
+（<code>integrations/paknow-mcp/src/paknow_mcp/server.py:519</code>）<strong>永远是 <code>None</code></strong>——"线上到底跑的是哪一版"这个问题，现在只能靠 <code>git log</code> 回答。</p>
+<h3 id="52">5.2 真正的版本工具是组件指纹<a class="headerlink" href="#52" title="Permanent link">&para;</a></h3>
+<p>系统不靠版本号识别"我面对的是哪份数据"，靠指纹：<code>component_versions()</code>（<code>paknow/memory/versions.py:21</code>）把
+语料散列（<code>sha1(证据单元数:最新 parsed_at)[:12]</code>）、图谱规模（<code>1105n/3753e</code>）、四个模型名打成一个 dict，
+并<strong>写进每一条 trace 的 <code>version_snapshot</code></strong>（<code>paknow/memory/trace.py:12</code>）。因此每一句答案都能回答"它是在哪份语料、哪套模型下产生的"。</p>
+<p>实测（本地库 2026-10-26 快照，641 条 trace）：</p>
+<table>
+<thead>
+<tr>
+<th><code>version_snapshot.corpus</code></th>
+<th style="text-align: right;">条数</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>2b9b41f6cc0c</code></td>
+<td style="text-align: right;">444</td>
+<td>当前指纹（父块回填后）</td>
+</tr>
+<tr>
+<td><code>a96ff4bfbbc2</code></td>
+<td style="text-align: right;">182</td>
+<td>回填前的语料</td>
+</tr>
+<tr>
+<td>空 <code>{}</code></td>
+<td style="text-align: right;">15</td>
+<td>指纹查询失败时的历史行，如实留档</td>
+</tr>
+</tbody>
+</table>
+<p>这就是"版本管理"在这套系统里唯一诚实的表述：<strong>代码版本靠 git，数据版本靠指纹，两者都不靠语义化版本号。</strong></p>
+<h3 id="53">5.3 回滚的四条真实路径<a class="headerlink" href="#53" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>对象</th>
+<th>机制</th>
+<th>代码位置</th>
+<th>到哪一步</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>记忆（SOP）</td>
+<td>YAML 入 git，每次变更自动 commit，可 checkout 任意版本</td>
+<td><code>sop_registry/</code>、<code>paknow/memory/sop.py</code></td>
+<td>✅ 完整</td>
+</tr>
+<tr>
+<td>记忆（失效保护）</td>
+<td>指纹不符的 SOP <strong>不被选中</strong>，而不是被错误使用</td>
+<td><code>paknow/memory/sop.py:152</code></td>
+<td>✅ 完整（代价见 §9）</td>
+</tr>
+<tr>
+<td>数据库</td>
+<td>破坏性迁移前先复制 <code>paknow.db.bak-&lt;时间戳&gt;</code>，默认 dry-run</td>
+<td><code>scripts/migrate_model_v2.py</code></td>
+<td>✅ 单机可用</td>
+</tr>
+<tr>
+<td>评估基线</td>
+<td>数据集哈希不符即拒用旧基线；失败的运行永远不能写成基线</td>
+<td><code>scripts/quality_gate.py</code></td>
+<td>✅ 完整</td>
+</tr>
+<tr>
+<td>服务二进制</td>
+<td>无镜像、无归档包、无部署清单</td>
+<td>—</td>
+<td>❌ 不存在</td>
+</tr>
+</tbody>
+</table>
+<p>最后一行是这张表最重要的部分：<strong>能回滚数据，不能回滚服务。</strong> 服务出问题的止损手段是 git 回退源码后重建并重启，
+期间会话中已经入库的 trace 与 SOP 变更不会自动撤销（它们是数据，不是代码）。</p>
+<h2 id="6">6. 灰度：没有对象，所以没有机制<a class="headerlink" href="#6" title="Permanent link">&para;</a></h2>
+<p>灰度发布要成立，前提是<strong>能同时存在两个版本、并把一部分流量导给新的那个</strong>。本项目两个前提都不成立：</p>
+<ul>
+<li>嵌入式 Qdrant 一个索引目录只允许一个客户端，进程内用 <code>portalocker</code> 独占锁保证这件事（<code>paknow/retrieval/qdrant_store.py:97</code>）；</li>
+<li>索引与数据库都在本机，第二个实例起来必然撞锁 → 启动自检直接拒启（<code>check_store_ready</code>，<code>paknow/retrieval/qdrant_store.py:148</code>）。</li>
+</ul>
+<p>所以"灰度"在这里被替换成两个<strong>本地等价物</strong>，它们解决的是同一个问题（新东西只影响一小部分，出问题能识别出来）：</p>
+<table>
+<thead>
+<tr>
+<th>企业级灰度</th>
+<th>本项目的替代</th>
+<th>覆盖面</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>按比例放量</td>
+<td>SOP 生命周期：<code>candidate</code> → <code>shadow</code>（参与但不作唯一依据）→ <code>active</code></td>
+<td>只覆盖记忆，不覆盖代码</td>
+</tr>
+<tr>
+<td>灰度期观测</td>
+<td>质量门禁的 10 题分层抽样（<code>scripts/quality_gate.py</code>），硬约束任一失败即退非零</td>
+<td>只覆盖问答效果，不覆盖延迟与资源</td>
+</tr>
+</tbody>
+</table>
+<p>两个替代都在"能识别一部分坏结果"上成立，但都不覆盖代码与索引的切换——因为代码切换在这个部署形态下就是一次重启，
+没有中间态可言。</p>
+<h2 id="7">7. 日志与指标<a class="headerlink" href="#7" title="Permanent link">&para;</a></h2>
+<h3 id="71">7.1 日志：几乎没有<a class="headerlink" href="#71" title="Permanent link">&para;</a></h3>
+<ul>
+<li>应用代码里<strong>没有 logger</strong>：<code>paknow/</code> 与 <code>apps/</code> 都没有 <code>import logging</code>，API 只有 uvicorn 默认输出；</li>
+<li>仓库里唯一的 <code>logging.basicConfig</code> 在 MCP CLI，写 stderr、无文件、无轮转（<code>integrations/paknow-mcp/src/paknow_mcp/__main__.py:67</code> 的 <code>main</code>，<code>--log-level</code> 的 help 原文写着 "stderr only"）。</li>
+</ul>
+<p>这不影响排障，因为排障不靠日志——靠下一节的 trace 表。日志缺席的代价是"排障必须能拿到 <code>run_id</code>"，而 <code>run_id</code> 只出现在响应体里。</p>
+<h3 id="72-run_traces">7.2 <code>run_traces</code> 就是埋点表<a class="headerlink" href="#72-run_traces" title="Permanent link">&para;</a></h3>
+<p>每次 <code>/query</code> 落一行（<code>RunTraceRow</code>，<code>paknow/db/models.py:188</code>），字段即埋点：</p>
+<table>
+<thead>
+<tr>
+<th>埋点字段</th>
+<th>记录什么</th>
+<th>推导出的指标</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>output.degraded</code></td>
+<td>这次回答是不是占位答案（<code>_resolve_answer</code> 明确"标记而不是按长度猜"，<code>apps/api/main.py:200</code>）</td>
+<td><strong>答案可用率</strong></td>
+</tr>
+<tr>
+<td><code>failures</code></td>
+<td><code>"stage: reason: detail"</code> 列表，结构化后分 <code>timeout</code> / <code>invalid_structure</code> / <code>no_content</code> / <code>error</code>（<code>apps/api/main.py:150</code>）</td>
+<td>各阶段失败率</td>
+</tr>
+<tr>
+<td><code>elapsed_ms</code></td>
+<td>整次请求耗时（<code>paknow/workflows/graph.py:311</code>）</td>
+<td>P50 / P95 延迟</td>
+</tr>
+<tr>
+<td><code>output.sufficiency</code></td>
+<td>核验器判定 + 判定时看到的证据条数与字符数</td>
+<td>证据充分率、上下文规模</td>
+</tr>
+<tr>
+<td><code>routes</code></td>
+<td>实际命中的召回路径，如 <code>["hybrid_text", "graph_local"]</code></td>
+<td>路由分布（哪条召回在干活）</td>
+</tr>
+<tr>
+<td><code>request.sop</code></td>
+<td>本次选中了哪个 SOP（无则缺键）</td>
+<td><strong>记忆命中率</strong></td>
+</tr>
+<tr>
+<td><code>score_status</code></td>
+<td><code>unscored</code> / <code>optimized</code></td>
+<td>记忆被消费的比例</td>
+</tr>
+<tr>
+<td><code>version_snapshot</code></td>
+<td>语料指纹 + 图谱规模 + 模型名</td>
+<td>指标的口径分层（按版本切）</td>
+</tr>
+<tr>
+<td><code>cost_usd</code></td>
+<td>预留列（<code>paknow/db/models.py:201</code>）</td>
+<td><strong>从未被赋值</strong> —— 见下</td>
+</tr>
+</tbody>
+</table>
+<p>指标定义与查询都是可执行的，不需要额外依赖：</p>
+<div class="highlight"><pre><span></span><code><span class="c1">-- 答案可用率 / 降级数</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">runs</span><span class="p">,</span>
+<span class="w">       </span><span class="k">SUM</span><span class="p">(</span><span class="n">json_extract</span><span class="p">(</span><span class="k">output</span><span class="p">,</span><span class="w"> </span><span class="s1">'$.degraded'</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">degraded</span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">run_traces</span><span class="p">;</span>
+
+<span class="c1">-- 延迟（毫秒转秒）</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="n">ROUND</span><span class="p">(</span><span class="k">AVG</span><span class="p">(</span><span class="n">elapsed_ms</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1000</span><span class="p">.</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">avg_s</span><span class="p">,</span>
+<span class="w">       </span><span class="n">ROUND</span><span class="p">(</span><span class="k">MAX</span><span class="p">(</span><span class="n">elapsed_ms</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1000</span><span class="p">.</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">max_s</span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">run_traces</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">elapsed_ms</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">;</span>
+
+<span class="c1">-- 记忆命中率</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="n">json_extract</span><span class="p">(</span><span class="n">request</span><span class="p">,</span><span class="w"> </span><span class="s1">'$.sop'</span><span class="p">)</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">sop_selected</span><span class="p">,</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">run_traces</span><span class="w"> </span><span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+
+<span class="c1">-- 有失败的运行有多少</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">run_traces</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">json_array_length</span><span class="p">(</span><span class="n">failures</span><span class="p">)</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+
+<span class="c1">-- 成本列是不是死的</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">runs</span><span class="p">,</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="n">cost_usd</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">with_cost</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">run_traces</span><span class="p">;</span>
+</code></pre></div>
+<p>本地库 2026-10-26 快照（641 行，2026-10-18 → 10-26）的实际结果：</p>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>运行数 / 其中降级</td>
+<td>641 / 1（0.16%）</td>
+</tr>
+<tr>
+<td>延迟 平均 / P50 / P95 / 最大</td>
+<td>40.6 s / 37.0 s / 69.1 s / 188.8 s</td>
+</tr>
+<tr>
+<td>带失败的运行</td>
+<td>26（4.1%）</td>
+</tr>
+<tr>
+<td>选中 SOP 的运行</td>
+<td>500（78%）；未选中 141</td>
+</tr>
+<tr>
+<td><code>score_status</code> 分布</td>
+<td><code>optimized</code> 635 / <code>unscored</code> 6</td>
+</tr>
+<tr>
+<td><code>cost_usd</code> 非空</td>
+<td><strong>0 / 641</strong></td>
+</tr>
+</tbody>
+</table>
+<p>最后一行的意思是：<strong>这张表的成本口径是空的。</strong> 列在、契约里有 <code>cost_usd</code>（<code>paknow/memory/contracts.py:47</code>），
+但 <code>save_trace</code> 从不传它，网关也不回传用量。所以"每次请求花多少钱"目前只能按 token 预算常量估算，不能测量。
+这是本章第一条必须承认的欠账：<strong>指标表有了，聚合层与成本口径没有。</strong></p>
+<p>其余缺口同样明确：没有 <code>/metrics</code> 端点，没有 Prometheus / OpenTelemetry / Sentry 任何依赖，
+<code>elapsed_ms</code> 只存不聚合（上面的 P50/P95 是一次性 SQL，不是看板）。</p>
+<h2 id="8">8. 鉴权：现在没有，且这是清醒的<a class="headerlink" href="#8" title="Permanent link">&para;</a></h2>
+<p><strong>服务端零鉴权</strong>。<code>app = FastAPI(...)</code>（<code>apps/api/main.py:41</code>）没有 <code>add_middleware</code>、没有 <code>Depends</code>、
+没有 <code>HTTPBearer</code>，12 个路由全部匿名可访问；<code>/docs</code> 默认开着；没有 CORS、没有限流、没有每用户配额。
+MCP 侧是<strong>不对称</strong>的：客户端在配置了 token 时会带 <code>Authorization: Bearer …</code>（<code>integrations/paknow-mcp/src/paknow_mcp/config.py:83</code>），
+但服务端从不读取这个头——发出去没人校验。</p>
+<p>那么现在的信任边界是什么？两条，都是结构性的：</p>
+<ol>
+<li><strong>回环地址</strong>：默认 <code>127.0.0.1:8000</code>，只有本机能连；</li>
+<li><strong>单写者锁</strong>：同一份索引只允许一个进程持有（§6），第二个进程拿到的是 <code>StoreLockedError</code> 而不是一份脏数据。</li>
+</ol>
+<p>⚠️ 这条边界有一个具体的安全风险，必须写进文档：MCP 适配器支持
+<code>--transport streamable-http</code>（<code>integrations/paknow-mcp/src/paknow_mcp/__main__.py:83</code>），该传输<strong>没有任何鉴权</strong>。
+把它绑到非回环地址（<code>--host 0.0.0.0</code>），等于把全部 11 个工具——包括整库全文检索与页图渲染——暴露给能访问该端口的人。
+在补上鉴权之前，<strong>只允许回环地址</strong>。</p>
+<p>要开放给第二个人时，最小改造是三步，不是三步以外的任何东西：</p>
+<ol>
+<li>服务端读 <code>Authorization</code> 并与 <code>PAKNOW_TOKEN</code> 比对（一个依赖函数即可，覆盖全部路由）；</li>
+<li>反向代理做 TLS + 按 IP 限流；</li>
+<li>配额落到 <code>user_facts.user_id</code>（列已存在但从未被写入）与 <code>run_traces</code> 的按用户维度。</li>
+</ol>
+<p>三步都未实现。触发条件是<strong>用户数 &gt; 1</strong>，不是"像企业项目"。在此之前引入鉴权，收益为零、维护成本为正。</p>
+<h2 id="9">9. 可观测性：一次真实排查<a class="headerlink" href="#9" title="Permanent link">&para;</a></h2>
+<p><code>run_id</code> 是系统里唯一的链路锚点：<code>run_query</code> 入口生成（<code>paknow/workflows/graph.py:96</code>），随响应返回，
+<code>GET /runs/{run_id}</code>（<code>apps/api/main.py:356</code>）可以取回意图、路由、证据 id、输出、失败、耗时。
+没有 <code>request_id</code> 透传、没有 <code>session_id</code>、没有 <code>exception_id</code>、没有 span——所以"排查"只能是"拿着 <code>run_id</code> 反查"，不存在别的路径。</p>
+<p>下面两个案例都是<strong>本仓库当前状态下的真实问题</strong>，不是编的演练。</p>
+<h3 id="91-a-503">9.1 案例 A：服务起不来 / 503<a class="headerlink" href="#91-a-503" title="Permanent link">&para;</a></h3>
+<p><strong>现象</strong>：<code>uvicorn</code> 启动失败，或运行中突然返回 <code>503 {"detail": …}</code>。</p>
+<p><strong>定位</strong>：启动自检 <code>check_store_ready</code>（<code>paknow/retrieval/qdrant_store.py:148</code>）给出三种机器可读原因之一：</p>
+<table>
+<thead>
+<tr>
+<th><code>reason</code></th>
+<th>含义</th>
+<th>处理</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>missing</code></td>
+<td>集合不存在（没建库）</td>
+<td>跑入库脚本</td>
+</tr>
+<tr>
+<td><code>empty</code></td>
+<td>集合为空（入库未完成）</td>
+<td>等入库跑完再启</td>
+</tr>
+<tr>
+<td><code>locked</code></td>
+<td>索引被别的进程占用</td>
+<td>读锁文件里的持有者</td>
+</tr>
+</tbody>
+</table>
+<p><code>locked</code> 是唯一需要"找进程"的情况，而锁文件已经写好了持有者身份：<code>pid</code> / <code>acquired_at</code> / <code>argv</code>
+（写入点 <code>paknow/retrieval/qdrant_store.py:112</code>），报错原文会带上 <code>pid=…, since=…, cmd=…</code>。
+常见持有者是评测或重建脚本——它们不释放锁是对的，因为释放等于让两个进程同时写同一份索引。</p>
+<p><strong>为什么这样设计</strong>：宁可拒启，也不做"活着但答案永远为空"的半死服务。这是把故障从"静默错误答案"前移到"进程起不来"。</p>
+<h3 id="92-b">9.2 案例 B：记忆静默失效<a class="headerlink" href="#92-b" title="Permanent link">&para;</a></h3>
+<p><strong>现象</strong>：图表分析的回答不体现 SOP 的步骤，但没有报错、没有降级标记、<code>/query</code> 一切正常。</p>
+<p><strong>定位路径</strong>（每一步都有具体字段）：</p>
+<ol>
+<li>取一次相关请求的 <code>run_id</code> → <code>GET /runs/{run_id}</code> → <code>request</code> 里<strong>没有 <code>sop</code> 键</strong>，说明这次没有选中任何 SOP；</li>
+<li>看 <code>GET /sops</code>：该 SOP 存在，状态也是可被选中的（<code>active</code> / <code>shadow</code> / <code>candidate</code>）；</li>
+<li>取它的 <code>compatible_versions</code>，与 trace 里的 <code>version_snapshot</code>（<code>paknow/memory/versions.py:21</code>）逐项比对——任一项不等就不再可选，最常见的是重建索引后 <code>corpus</code> 指纹变了；</li>
+<li><strong>根因</strong>：<code>select_sop</code>（<code>paknow/memory/sop.py:152</code>）对指纹不匹配的 SOP 直接 <code>continue</code>，不记日志、不写 trace、不报错。于是"记忆没生效"这个事实在任何可观测面上都不存在。</li>
+</ol>
+<p><strong>处理方式二选一</strong>：给该 SOP 升版本并刷新 <code>compatible_versions</code>（等于承认它是为旧语料写的，需要重新校验），
+或者把跳过原因写进 trace 的 <code>failures</code>（让失效变成可查事件）。当前两者都没做——指纹保护是"静默正确"，代价是失效不可观测。</p>
+<p><strong>一个反例说明保护范围</strong>：<code>compatible_versions</code> 为空的 SOP 不受指纹约束，永远可选，也永远不会因为语料变化被拦下
+（如 <code>sop_registry/knowledge_qa_term_evidence_first.yaml:43</code>）。指纹保护只对填了该字段的 SOP 生效。</p>
+<p><strong>一个审计副产品</strong>：<code>GET /query</code> 的 <code>debug: true</code> 只对单次请求暴露 <code>hits</code> / <code>failures</code>（<code>apps/api/main.py:176</code>），
+<strong>不产生跨请求的聚合</strong>。上面两个案例能查清，靠的是"每次请求都落一行 trace"这个习惯，而不是任何日志系统。</p>
+<h2 id="10">10. 能对外声明的边界<a class="headerlink" href="#10" title="Permanent link">&para;</a></h2>
+<p>口径统一到一个标准：<strong>每个"部署/上线"字样，都要能在 30 秒内指到一条命令或一个字段。</strong></p>
+<table>
+<thead>
+<tr>
+<th>可以说（有代码/数据支撑）</th>
+<th>不能说</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>文档站持续部署，<code>main</code> 上改 <code>book/**</code> 自动发布，坏链接会导致构建失败</td>
+<td>"有完整的 CD 流水线"（只有文档有）</td>
+</tr>
+<tr>
+<td>MCP 适配器的发布有五道门禁、产物带 <code>SHA256SUMS</code> 与 <code>git_commit</code></td>
+<td>"服务端有版本化发布与镜像回滚"</td>
+</tr>
+<tr>
+<td>每次请求的意图、路由、证据、失败、耗时、数据版本都落库，可按 <code>run_id</code> 回放</td>
+<td>"有全链路 tracing / 有 <code>exception_id</code>"</td>
+</tr>
+<tr>
+<td>服务启动前自检存储，缺库/空库/被占用三种原因分别拒启</td>
+<td>"有完善的监控告警"</td>
+</tr>
+<tr>
+<td>SOP 变更入 git 可 checkout，指纹不符的记忆不会被选中</td>
+<td>"有自动化回滚流水线"</td>
+</tr>
+<tr>
+<td>指标定义与 SQL 与库快照一致，可用一条查询复算</td>
+<td>"有实时指标看板"（聚合层未做）</td>
+</tr>
+<tr>
+<td>单用户自托管，鉴权以回环地址为边界，<code>streamable-http</code> 只允许绑回环</td>
+<td>"支持多用户 / 有鉴权与配额"</td>
+</tr>
+</tbody>
+</table>
+<h2 id="11">11. 本章小结<a class="headerlink" href="#11" title="Permanent link">&para;</a></h2>
+<ul>
+<li>交付链路的三条产物线（依赖容器、参考数据、客户端包）各有各的节奏；<strong>主服务本身没有可回滚的产物</strong>，这一点不粉饰。</li>
+<li>版本控制的真实载体是<strong>组件指纹 + SOP 的 git 历史</strong>，不是语义化版本号；代价是 <code>/health</code> 报不出"跑的是哪一版"。</li>
+<li>灰度在本部署形态下没有对象，替代物是 SOP <code>shadow</code> 与质量门禁抽样。</li>
+<li>可观测性 = <code>run_id</code> + <code>run_traces</code> 一行一次请求；<strong>埋点表有了，聚合层与成本口径没有</strong>。</li>
+<li>鉴权、配额、容器化、指标端点全部未实现，且各有明确的触发条件；写成"已具备"就是假账。</li>
+</ul>
+<p>下一步该补什么、按什么顺序，见 <a href="../chapter9-status/">已完成与待补充</a> 的 P3。</p>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  回到页面顶部
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="页脚" >
+        
+          
+          <a href="../chapter8-service/" class="md-footer__link md-footer__link--prev" aria-label="上一页: 8. 服务与工程化">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                上一页
+              </span>
+              <div class="md-ellipsis">
+                8. 服务与工程化
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../chapter13-chart/" class="md-footer__link md-footer__link--next" aria-label="下一页: 结构化读图">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                下一页
+              </span>
+              <div class="md-ellipsis">
+                结构化读图
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      PAknow · 可追溯的多模态 RAG 与可验证 SOP 记忆
+
+    </div>
+  
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top", "navigation.tracking", "navigation.instant", "navigation.footer", "toc.follow", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.action.edit"], "search": "../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "\u5df2\u590d\u5236", "clipboard.copy": "\u590d\u5236", "search.result.more.one": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.other": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 # \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.term.missing": "\u7f3a\u5c11", "select.version": "\u9009\u62e9\u5f53\u524d\u7248\u672c"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.c21346df.min.js"></script>
+      
+    
+  </body>
+</html>
