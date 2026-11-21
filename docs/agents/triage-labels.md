@@ -1,39 +1,19 @@
-# Triage Labels
+# Triage statuses
 
-The skills speak in terms of five canonical triage roles. This file maps those roles to the actual label strings used in this repo's issue tracker.
-
-| Label in mattpocock/skills | Label in our tracker | Meaning                                  |
-| -------------------------- | -------------------- | ---------------------------------------- |
-| `needs-triage`             | `needs-triage`       | Maintainer needs to evaluate this issue  |
-| `needs-info`               | `needs-info`         | Waiting on reporter for more information |
-| `ready-for-agent`          | `ready-for-agent`    | Fully specified, ready for an AFK agent  |
-| `ready-for-human`          | `ready-for-human`    | Requires human implementation            |
-| `wontfix`                  | `wontfix`            | Will not be actioned                     |
-
-When a skill mentions a role (e.g. "apply the AFK-ready triage label"), use the corresponding label string from this table.
-
-Edit the "Label in our tracker" column to match whatever vocabulary you actually use.
-
-## In this repo
-
-The tracker is local markdown, so these strings are written as the value of a `**Status:**` line at the top of each ticket file rather than applied as tracker labels.
-
-The canonical form is exactly one bold line per file:
+The [local Markdown tracker](issue-tracker.md) records triage and work state in exactly one line per ticket or spec:
 
 ```markdown
 **Status:** ready-for-agent
 ```
 
-The checker (`scripts/check_scratch.py`) accepts these values:
-
 | Status | When |
 | --- | --- |
-| `needs-triage` | Maintainer needs to evaluate this issue |
-| `needs-info` | Waiting on reporter for more information |
-| `ready-for-agent` | Fully specified, ready for an AFK agent (all blockers resolved) |
-| `ready-for-human` | Requires human implementation (all blockers resolved) |
-| `wontfix` | Will not be actioned |
-| `claimed` | In progress; all blockers must already be `resolved` |
+| `needs-triage` | Maintainer needs to evaluate the issue |
+| `needs-info` | More information is needed |
+| `ready-for-agent` | Ready for implementation by an agent; all blockers resolved |
+| `ready-for-human` | Requires human implementation; all blockers resolved |
+| `wontfix` | Will not be acted on |
+| `claimed` | In progress; all blockers already resolved |
 | `resolved` | Done |
 
-A plain `Status:` line is still read for older files, but new tickets and specs use the bold form.
+The first five are triage states; `claimed` and `resolved` track progress. The checker accepts plain `Status:` for older files; use the bold form for new files.

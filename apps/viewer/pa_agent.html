@@ -1,0 +1,703 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PA Agent · PAknow</title>
+<style>
+:root{color-scheme:dark;--bg:#0d1418;--card:#121d23;--line:#24353e;--text:#e5eef0;--muted:#a4b8bd;--accent:#78dac7;--red:#f2929d}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.55 system-ui,sans-serif}a{color:var(--accent)}header{padding:14px 22px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px}h1,h2,h3,p{margin:0}h1{font-size:20px}header p,.muted,small{color:var(--muted)}main{max-width:1580px;margin:auto;display:grid;grid-template-columns:minmax(0,1.45fr) minmax(390px,1fr);gap:14px;padding:14px}.card{background:var(--card);border:1px solid var(--line);border-radius:8px;min-width:0}.section{padding:15px 16px;border-bottom:1px solid var(--line)}.section:last-child{border-bottom:0}.line,.controls{display:flex;flex-wrap:wrap;align-items:center;gap:8px}.line{justify-content:space-between;gap:12px}button{border:1px solid var(--line);border-radius:5px;background:#182930;color:var(--text);padding:7px 10px;font:inherit;cursor:pointer}button:hover{border-color:var(--accent)}button:disabled{opacity:.42;cursor:default}.primary{background:#89decc;color:#092019;font-weight:650}.controls{margin-top:10px}.controls input{min-width:100px;flex:1;accent-color:var(--accent)}.quotes,.levels{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:8px 0 0}.quotes dt,.levels dt{color:var(--muted);font-size:12px}.quotes dd,.levels dd{margin:0;font-variant-numeric:tabular-nums}.plot{padding:8px 4px}.plot canvas{display:block;width:100%;height:clamp(240px,48vh,540px)}#cutoff,#market-status{color:var(--muted);font-size:12px;margin-top:6px}.pill{padding:3px 9px;border:1px solid var(--line);border-radius:5px}.long{color:var(--accent)}.short,.bad{color:var(--red)}.checks{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:9px}.checks h3{font-size:13px}.checks ul{margin:4px 0 8px;padding:0;list-style:none}.checks li{font-size:13px;margin:4px 0}h2{font-size:15px}.notes p{margin-top:8px}.sources{padding:0;margin:10px 0 0;list-style:none}.sources li,.comment{padding:9px 0;border-top:1px solid var(--line);overflow-wrap:anywhere}.sources p,.comment p{margin:3px 0;white-space:pre-wrap}input[type=checkbox]{accent-color:var(--accent)}#evidence-status{margin-top:8px}[hidden]{display:none!important}@media(max-width:940px){main{grid-template-columns:1fr}.plot canvas{height:40vh}}@media(max-width:520px){main{padding:8px}header{padding:9px 12px}.section{padding:10px}.checks{gap:6px}}
+.evidence-intro{margin-top:5px}.evidence-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:10px 0}.evidence-gate{padding:8px;border-radius:6px;border:1px solid var(--line);background:#0f181e}.evidence-gate strong,.evidence-gate small{display:block}.evidence-gate[data-status=ready] strong{color:var(--accent)}.evidence-gate[data-status=blocked] strong{color:#ffbd91}.evidence-gate[data-status=ready]{border-color:#375951}.evidence-details{margin-top:8px;padding:8px 10px;border:1px solid var(--line);border-radius:6px}.evidence-details summary{cursor:pointer;font-weight:550}.evidence-details p,.evidence-details ul{margin:6px 0 0}.evidence-details ul{padding-left:22px}.source-list-title{margin-top:14px}.sources li:focus{outline:2px solid var(--accent);outline-offset:3px}.evidence-quote{border-left:2px solid var(--accent);padding-left:8px;color:#d0e9e5}.anchor-chip,.citation-chip{padding:3px 7px;font-size:12px;margin:3px 4px 3px 0}.anchor-chip:hover,.citation-chip:hover{background:#224137}.anchor-focus{padding:0 16px 8px;color:#ffd69d}.sources mark{background:#e2bf78;color:#17130b;border-radius:2px}.review-verdict{font-weight:650;color:var(--accent);margin:8px 0}.support-state{border-left:2px solid #e2bf78;padding-left:8px}.review-blocks{color:#ffc499;margin:6px 0}.notes li{overflow-wrap:anywhere}
+.panel-summary{cursor:pointer;font-weight:630;padding:6px 0}.history{margin-top:6px}.history .history{padding-left:8px}.history .sources{margin-top:2px}#evidence-status[data-state=busy]{border-left:2px solid var(--accent);padding:6px 8px;background:#142921;color:#b8eae1}#evidence-status[data-state=error]{border-left:2px solid #ffb687;padding:6px 8px;background:#32251e;color:#ffd3ae}button[aria-busy=true]{opacity:.95;cursor:progress}button[aria-busy=true]::before{content:'';display:inline-block;width:.65em;height:.65em;margin-right:.55em;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:evidence-spin .8s linear infinite}@keyframes evidence-spin{to{transform:rotate(1turn)}}@media(prefers-reduced-motion:reduce){button[aria-busy=true]::before{animation:none}}@media(min-width:941px){body{display:flex;flex-direction:column;height:100dvh;overflow:hidden}main{flex:1;width:100%;min-height:0}main>.column{min-height:0;overflow-y:auto;overscroll-behavior-y:contain;scrollbar-gutter:stable}}
+</style>
+</head>
+<body>
+<header><div><h1>PA Agent</h1><p>PA 候选 → PAknow 入场复核 · 只读模拟</p></div></header>
+<main>
+  <article class="card column" aria-label="行情与模拟单">
+    <div class="section">
+      <div class="line"><div><h2>BTC-USDT 永续 · 15 分钟</h2><p id="market-status" role="status">正在读取 OKX 已收盘行情…</p></div><button id="refresh">更新行情</button></div>
+      <div class="controls"><button id="latest" disabled>最新</button><button id="prev" disabled>上一根</button><button id="play" disabled>播放</button><button id="next" disabled>下一根</button><button id="candidate" disabled>上个PA 候选</button><button id="pending" disabled>下个待复核</button><input id="cursor" type="range" min="0" max="0" value="0" aria-label="K 线回放进度" disabled></div>
+      <div class="controls"><button id="batch-start" disabled>批量复核当前窗口</button><button id="batch-stop" hidden>停止派发</button><small id="batch-status" role="status"></small></div>
+      <p id="cutoff"></p>
+      <div class="controls"><label><input id="trade-lines" type="checkbox" checked> 显示模拟单连线</label><small>复核须发起单笔或确认批量</small><small><span class="long">绿：盈利</span> · <span class="short">红：亏损</span> · 虚线：选中入场的止盈 / 止损</small></div>
+    </div>
+    <div class="plot"><canvas id="chart" aria-label="K 线、EMA20、PA 候选与已选行情锚点"></canvas></div>
+    <p id="anchor-focus" class="anchor-focus" role="status" hidden></p>
+    <div class="section"><div class="line"><h2>所选 K 线</h2><small>均为独立模拟，未扣费用</small></div><dl class="quotes" id="quotes"></dl></div>
+    <div class="section"><h2>模拟单</h2><p class="muted" id="trade-summary" role="status">等待行情。</p>
+      <details id="trade-history" class="history" open hidden><summary id="trade-history-label" class="panel-summary">已成交的模拟单</summary>
+        <ol id="trade-list" class="sources"></ol>
+        <details id="trade-older" class="history" hidden><summary id="trade-older-label" class="panel-summary">展开其余成交记录</summary><ol id="trade-older-list" class="sources" start="6"></ol></details>
+      </details>
+      <details id="unfilled" class="history" hidden><summary id="unfilled-summary" class="panel-summary">到期或取消的方案</summary><ol id="unfilled-list" class="sources"></ol></details>
+    </div>
+  </article>
+  <aside class="card column" aria-label="PA 判断与证据复核">
+    <section class="section" aria-labelledby="rule-title">
+      <div class="line"><h2 id="rule-title">PA  · 多空检查</h2><span class="pill" id="state">待加载</span></div>
+      <p class="muted" id="timeframe"></p>
+      <div id="background" class="notes"></div>
+      <div id="rule-details" class="notes"><p class="muted" role="status">等待选择已收盘的 K 线。</p></div>
+    </section>
+    <section class="section" aria-labelledby="evidence-title">
+      <h2 id="evidence-title">PAknow · 证据与复核</h2>
+      <p id="evidence-intro" class="muted evidence-intro">按需查看原文、适用条件和反例。</p>
+      <div class="controls"><button class="primary" id="evidence-preview" aria-controls="evidence-panel" hidden disabled>先看证据（不调用模型）</button><button id="evidence-refresh" hidden disabled>重新取证</button><button id="analyze" disabled>分析该 K 线</button><label id="cloud-option" hidden><input type="checkbox" id="cloud">同时请求模型解读（可能计费）</label></div>
+      <p class="muted" id="evidence-status" role="status">选中已收盘的 K 线后，可手动取证。</p>
+      <p id="review-notice" class="muted" role="status" hidden></p>
+      <div class="evidence-grid" id="evidence-gates" role="group" aria-label="三类独立原文的核验状态" hidden></div>
+      <details id="evidence-panel" class="evidence-details" hidden><summary id="evidence-panel-label">证据详情</summary>
+        <div id="evidence-context"></div><div id="commentary"></div>
+        <h3 id="sources-title" class="source-list-title" hidden>原文出处</h3><ul class="sources" id="sources" aria-labelledby="sources-title"></ul>
+      </details>
+    </section>
+  </aside>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const STEP = 900_000;
+const utc = (ms) => new Date(ms).toISOString().slice(0,16).replace('T',' ') + ' UTC';
+const price = (n) => n == null ? '—' : n.toLocaleString('en-US',{maximumFractionDigits:2});
+const stateNames = {long:'多头候选',short:'空头候选',wait:'观望',unavailable:'数据不足'};
+let data, cursor, timer, playing = false, playSession = 0, revision = 0, ruleRequest, analysisRequest, selection;
+let evidenceBusy = false, chartAnchor = null;
+const reviewNames={pending:"候选 · 待深度复核",approve:"二层已给条件方案",wait:"二层等待 · 不入场",reject:"二层否决 · 不入场"};
+
+function node(tag, value, style) {
+  const n = document.createElement(tag);
+  if (value != null) n.textContent = value;
+  if (style) n.className = style;
+  return n;
+}
+async function api(url, options) {
+  const response = await fetch(url,options);
+  const body = await response.json();
+  if (!response.ok) throw Object.assign(new Error(typeof body.detail === 'string' ? body.detail : '请求失败'),
+    {status:response.status,reviewState:response.headers.get('X-PA-Review-State')});
+  return body;
+}
+function facts(container, values) {
+  container.replaceChildren(...values.map(([name,value]) => {
+    const div=node('div');div.append(node('dt',name),node('dd',value));return div;
+  }));
+}
+function displayTrades() {
+  return (data.trades || []).filter(t => t.entry_index<=cursor).map(t => t.exit_index!==null && t.exit_index<=cursor
+    ? t : {...t,exit_index:null,exit_price:null,pnl_pct:null,exit_reason:null});
+}
+function draw() {
+  if (!data) return;
+  const prelude=data.prelude || [], lookback=data.background_count || 80;
+  const first=Math.max(-prelude.length,cursor-lookback-3);
+  const candle=first<0 ? [...prelude.slice(prelude.length+first),...data.bars.slice(0,cursor+1)] : data.bars.slice(first,cursor+1);
+  const trades=$('trade-lines').checked ? displayTrades().filter(t=>(t.exit_index ?? cursor)>=first) : [];
+  const selected=trades.filter(t=>t.entry_index===cursor);
+  const shownPrices=trades.flatMap(t=>[
+    t.entry_index>=first ? t.entry_price : null,t.exit_price,
+    ...(selected.includes(t) ? [t.stop_price,t.target_price] : []),
+  ]).filter(Number.isFinite);
+  const canvas = $('chart'), dpr = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  canvas.width = w*dpr; canvas.height = h*dpr;
+  const ctx = canvas.getContext('2d');ctx.scale(dpr,dpr);
+  const high=Math.max(...shownPrices,...candle.map(b=>Math.max(b.high,b.ema20 ?? b.high))), low=Math.min(...shownPrices,...candle.map(b=>Math.min(b.low,b.ema20 ?? b.low)));
+  const xw=Math.max(w-78,1), yh=h-52, count=Math.max(12,candle.length);
+  const x=i=>16+(i+0.5+count-candle.length)*xw/count, y=v=>20+(high-v)/((high-low)||1)*yh;
+  const step=xw/count, backdropStart=Math.max(0,cursor-lookback-first), signalIndex=cursor-first;
+  ctx.fillStyle='#172a30';ctx.fillRect(x(backdropStart)-step/2,18,(signalIndex-backdropStart)*step,h-48);
+  ctx.fillStyle='#23363b';ctx.fillRect(x(signalIndex)-step/2,18,step,h-48);
+  ctx.font='11px system-ui';
+  for (let i=0;i<5;i++) {
+    const value=high-(high-low)*i/4, yy=y(value);
+    ctx.strokeStyle='#283840';ctx.beginPath();ctx.moveTo(13,yy);ctx.lineTo(w-60,yy);ctx.stroke();
+    ctx.fillStyle='#a4b8bd';ctx.fillText(price(value),w-55,yy+4);
+  }
+  ctx.strokeStyle='#e4b76e';ctx.beginPath();let started=false;
+  for (const [i,b] of candle.entries()) if (b.ema20!=null) {if (!started) ctx.moveTo(x(i),y(b.ema20));else ctx.lineTo(x(i),y(b.ema20));started=true;}
+  ctx.stroke();
+  for (const [i,b] of candle.entries()) {
+    const xx=x(i), yy=Math.min(y(b.open),y(b.close)), color=b.close>=b.open?'#6dcab4':'#e17e8f';
+    ctx.strokeStyle=color;ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(xx,y(b.high));ctx.lineTo(xx,y(b.low));ctx.stroke();
+    const width=Math.max(2,xw/count*.62);
+    ctx.fillRect(xx-width/2,yy,width,Math.max(1,Math.abs(y(b.open)-y(b.close))));
+    const filled=trades.find(t=>t.entry_index===first+i);
+    if (filled) {
+      ctx.fillStyle=filled.side==='long'?'#b2ffe9':'#ffc2ca';ctx.beginPath();ctx.arc(xx,filled.side==='long'?y(b.low)+6:y(b.high)-5,3,0,2*Math.PI);ctx.fill();
+    }
+    if (i % Math.max(1,Math.ceil(candle.length/5))===0) {ctx.fillStyle='#a4b8bd';ctx.fillText(utc(b.ts_open).slice(5,16),Math.max(5,Math.min(xx-18,w-92)),h-10);}
+  }
+  ctx.save();ctx.beginPath();ctx.rect(13,15,w-72,h-45);ctx.clip();
+  for(const t of trades) {
+    if(t.exit_index===null)continue;
+    const visible=Math.max(first,t.entry_index), elapsed=visible===t.entry_index?0:(visible-t.entry_index)/(t.exit_index-t.entry_index);
+    const start=t.entry_price+(t.exit_price-t.entry_price)*elapsed;
+    const eid=x(t.exit_index-first), sx=x(visible-first);
+    ctx.strokeStyle=ctx.fillStyle=t.pnl_pct>0?'#42eca0':t.pnl_pct<0?'#ff6e82':'#a4b8bd';
+    ctx.lineWidth=1.7;ctx.beginPath();ctx.moveTo(sx,y(start));ctx.lineTo(eid,y(t.exit_price));ctx.stroke();
+    for(const [xx,py] of [[eid,t.exit_price],...(visible===t.entry_index?[[sx,start]]:[])]){
+      ctx.beginPath();ctx.arc(xx,y(py),3,0,2*Math.PI);ctx.fill();
+    }
+  }
+  for (const t of selected) {
+    const xx=x(t.entry_index-first);
+    ctx.setLineDash([4,4]);ctx.lineWidth=1;ctx.font='11px system-ui';
+    for(const [value,label,color] of [[t.target_price,'止盈','#78dac7'],[t.stop_price,'止损','#f2929d']]){
+      const end=xw+14, start=Math.max(16,xx-105), yy=y(value);
+      ctx.strokeStyle=ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(start,yy);ctx.lineTo(end,yy);ctx.stroke();ctx.fillText(label,start,yy-3);
+    }
+    ctx.setLineDash([]);ctx.strokeStyle='#e5eef0';ctx.beginPath();ctx.arc(xx,y(t.entry_price),4,0,2*Math.PI);ctx.stroke();
+  }
+  if(chartAnchor){
+    const i=candle.findIndex(b=>b.ts_open===chartAnchor.ts_open);
+    if(i>=0){
+      const xx=x(i), yy=y(chartAnchor.price);
+      ctx.strokeStyle='#ffd080';ctx.lineWidth=1.5;ctx.setLineDash([3,4]);ctx.beginPath();ctx.moveTo(xx,18);ctx.lineTo(xx,h-32);ctx.stroke();
+      ctx.setLineDash([]);ctx.beginPath();ctx.arc(xx,yy,5,0,Math.PI*2);ctx.fillStyle='#151e22';ctx.fill();ctx.stroke();
+    }
+  }
+  ctx.restore();
+  ctx.fillStyle='#e4b76e';ctx.fillText('EMA20 '+price(candle.at(-1).ema20),16,14);
+  ctx.fillStyle='#a4b8bd';ctx.fillText('阴影：前 '+lookback+' 根背景',Math.min(160,w*.46),14);
+}
+function showTrades() {
+  const trades=displayTrades(), ended=trades.filter(t=>t.exit_index!==null);
+  const gain=ended.filter(t=>t.pnl_pct>0).length, loss=ended.filter(t=>t.pnl_pct<0).length;
+  const pending=data.reviews.slice(0,cursor+1).filter(s=>s==='pending').length;
+  const armed=data.orders.filter(o=>o.signal_index<=cursor&&(o.result_index===null||o.result_index>cursor)).length;
+  const unfilled=data.orders.filter(o=>o.result_index!==null&&o.result_index<=cursor&&o.status!=='filled');
+  $('trade-summary').textContent='截至当前：'+gain+' 盈 · '+loss+' 亏 · '+(trades.length-ended.length)+' 持有中 · '+armed+' 等触发 · '+unfilled.length+' 到期或取消 · '+pending+' 候选待复核。';
+  $('unfilled').hidden=!unfilled.length;
+  $('unfilled-summary').textContent='到期或取消的方案（'+unfilled.length+'）';
+  $('unfilled-list').replaceChildren(...unfilled.slice().reverse().map(o=>{
+    const item=node('li'), jump=node('button','回到信号 #' +(o.signal_index+1)+'（隐藏后续结果）');
+    jump.onclick=()=>{pause();select(o.signal_index);};
+    const outcome=o.status==='expired'?'入场条件未触发，方案到期':'触发前方案失效，已取消';
+    item.append(jump,node('p','第 '+(o.result_index+1)+' 根：'+outcome));
+    return item;
+  }));
+  const ranked=[...trades].reverse();
+  const focused=t=>t.entry_index===cursor||t.exit_index===cursor;
+  ranked.sort((a,b)=>Number(focused(b))-Number(focused(a)));
+  const recent=ranked.slice(0,5), older=ranked.slice(5);
+  $('trade-history').hidden=!ranked.length;
+  $('trade-history-label').textContent='已成交的模拟单（'+ranked.length+'）';
+  $('trade-older').hidden=!older.length;
+  $('trade-older-label').textContent='其余 '+older.length+' 笔成交记录';
+  function tradeRow(t){
+    const item=node('li'), jump=node('button',(t.side==='long'?'多':'空')+' · #'+(t.entry_index+1));
+    jump.onclick=()=>{pause();select(t.signal_index);};
+    jump.title='查看原计划 K 线';
+    item.append(jump,node('p','入场 '+price(t.entry_price)+' · 止盈 '+price(t.target_price)+' · 止损 '+price(t.stop_price)));
+    if(t.exit_index!==null){
+      const why={target:'止盈',stop:'止损',ambiguous_stop:'同根同时触及，按止损',ambiguous_entry_stop:'入场根可能止损',close_invalidation:'结构失效，下一根开盘离场',time_exit:'达到最长持有期'}[t.exit_reason];
+      item.append(node('p',why+' '+price(t.exit_price)+' · '+(t.pnl_pct>0?'+':'')+t.pnl_pct.toFixed(2)+'%',t.pnl_pct>0?'long':'short'));
+      if(t.exit_index!==cursor){const exit=node('button','查看出场 #'+(t.exit_index+1));exit.onclick=()=>{pause();select(t.exit_index);};item.append(exit);}
+    }else{item.append(node('small','截至当前未出场'));}
+    return item;
+  }
+  $('trade-list').replaceChildren(...recent.map(tradeRow));
+  $('trade-older-list').replaceChildren(...($('trade-older').open?older.map(tradeRow):[]));
+}
+$('trade-older').ontoggle=()=>{if(data)showTrades();};
+function showBackground(bg) {
+  const box=$('background');box.replaceChildren();
+  const regimes={up:'上行背景',down:'下行背景',range_or_mixed:'震荡或结构混合'};
+  const structure={rising:'最近 40 根的高低点抬高',falling:'最近 40 根的高低点降低',mixed:'前后两段高低点未同步移动'};
+  box.append(node('h3','先看前 '+bg.count+' 根 · '+regimes[bg.regime]));
+  box.append(node('small',utc(bg.start_ms)+' — '+utc(bg.end_ms)+' · 不含信号 K 线，供第二层综合判断'));
+  box.append(node('p','背景低点 '+price(bg.low)+' · 高点 '+price(bg.high)+' · 净变动 '+(bg.change_pct>0?'+':'')+bg.change_pct.toFixed(2)+'% · 单向效率 '+(100*bg.efficiency).toFixed(0)+'%'));
+  const pos=bg.signal_range_position;
+  if(pos!=null){
+    const location=pos>1?'高于背景上沿':pos<0?'低于背景下沿':(100*pos).toFixed(0)+'% 区间位置（低点为 0%）';
+    box.append(node('p',structure[bg.structure]+'；信号收盘 '+location+'。','muted'));
+  }
+}
+function showRule(rule, status) {
+  showBackground(rule.background);
+  const box=$('rule-details');box.replaceChildren();
+  $('state').textContent=reviewNames[status]||(rule.swing.status==='blocked'?'价格结构无效':stateNames[rule.state]);$('state').className='pill '+(status==='approve'?rule.state:'wait');
+  if (!rule.facts) {box.append(node('p',rule.reason,'muted'));return;}
+  $('timeframe').textContent='1 小时数据截至 '+utc(rule.higher_close_ms);
+  const f=rule.facts, checks=node('div',null,'checks');
+  for (const [direction,label] of [['long','多头'],['short','空头']]) {
+    const side=rule[direction], col=node('div'), list=node('ul');
+    col.append(node('h3',label+' · '+side.checks.filter(c=>c.passed).length+'/'+side.checks.length));
+    for (const check of side.checks) list.append(node('li',(check.passed?'通过 · ':'未过 · ')+check.label,check.passed?'long':'muted'));
+    col.append(list);checks.append(col);
+  }
+  box.append(checks);
+  box.append(node('p',`信号与高周期：收盘 ${price(f.close)}，15m EMA20 ${price(f.ema20)}，五根斜率 ${f.ema_delta_atr.toFixed(2)} ATR；1h 收盘 ${price(f.higher_close)}，EMA20 ${price(f.higher_ema20)}，五根斜率 ${f.higher_ema_delta_atr.toFixed(2)} ATR。`));
+  box.append(node('p',`确认参照：前一根高点 ${price(f.previous_high)}、低点 ${price(f.previous_low)}。同向实体还须收盘穿越该极值，或影线穿越且收盘不弱于前棒。`));
+  const swing=rule.swing, candidate=rule.plan ? rule[rule.plan.side] : null;
+  if(candidate){
+    box.append(node('h3',swing.status==='pending'?'第一层：PA 价格结构有效':'第一层：价格结构无效'));
+    const list=node('ul');
+    for(const check of swing.checks) list.append(node('li',(check.passed?'通过 · ':'未过 · ')+check.label,check.passed?'long':'muted'));
+    box.append(list);
+    if(swing.net_rr!=null)box.append(node('small','离 EMA20 '+swing.ema_gap_atr.toFixed(2)+' ATR · 估算净盈亏比 '+swing.net_rr.toFixed(2)+' : 1（单边成本 0.07%，不含资金费）'));
+  }
+  if (candidate && swing.status==='pending') {
+    box.append(node('p',candidate.ema_proxy?'本次仅通过 EMA 接近代理，不代表已识别出明确的二次测试。':`本次满足二次测试规则，涉及 K${candidate.test_bars.join('、K')}；规则通过不等于已确认标准 H2/L2。`));
+    const l=candidate.levels, plan=rule.plan, dl=node('dl',null,'levels');
+    const align={aligned:'与 80 根背景顺向，仍看后续跟进。',counter:'与 80 根背景反向；单根信号不足以确认反转，注意跟进。',mixed:'80 根未达到明确趋势的判定条件，注意区间边缘的失败突破。'};
+    box.append(node('h3','PA 草案 · 供模型参考'));box.append(node('p',align[plan.alignment]));
+    if(plan.edge_before_target!=null)box.append(node('p','目标之前有背景边界 '+price(plan.edge_before_target)+'，不能假定直接通过。'));
+    facts(dl,[['参考价（信号收盘）',price(plan.entry)],['结构止损',price(plan.stop)],['目标 · '+l.target_basis,price(plan.target)]]);box.append(dl);
+    if(plan.gross_rr!=null)box.append(node('small','计划毛盈亏比 '+plan.gross_rr.toFixed(2)+' : 1 · 不含费用，不代表实际结果'));
+  } else if (candidate) {
+    box.append(node('p','价格结构不合法，本根不能模拟入场。'));
+  } else {
+    const unmet=side=>side.checks.filter(c=>!c.passed).map(c=>c.label).join('、');
+    box.append(node('p','先等缺失条件：多头须补足「'+unmet(rule.long)+'」；空头须补足「'+unmet(rule.short)+'」。没有确认就不画候选目标。'));
+  }
+}
+function previousBar(status) {
+  for(let i=cursor-1;i>=0;i--) if (status==='candidate'?data.bars[i].swing_status==='pending':data.reviews[i]===status) return i;
+  return null;
+}
+function pendingBar() {
+  for(let step=1;step<data.reviews.length;step++){
+    const i=(cursor+step)%data.reviews.length;
+    if(data.reviews[i]==='pending')return i;
+  }
+  return null;
+}
+function pause() {clearTimeout(timer);timer=null;playing=false;playSession++;$('play').textContent='播放';}
+const roles={support:'适用条件',risk:'反例／失效',confirmation:'触发与确认'};
+function resetEvidence(){
+  for(const id of ['sources','commentary','evidence-context','evidence-gates'])$(id).replaceChildren();
+  $('evidence-gates').hidden=$('sources-title').hidden=true;
+}
+function attemptHasEvidence(attempt){
+  return attempt?.review_evidence_ready ?? (attempt?.retrieval_status==='ok' && attempt?.evidence_gaps?.length===0);
+}
+function evidenceMessage(text,state=''){
+  const status=$('evidence-status');status.textContent=text;
+  if(state)status.dataset.state=state;else status.removeAttribute('data-state');
+}
+function previewLabel(){
+  const button=$('evidence-preview'), panel=$('evidence-panel');
+  button.textContent=panel.hidden?'先看证据（不调用模型）':panel.open?'收起证据':'展开证据';
+  button.setAttribute('aria-expanded',String(!panel.hidden&&panel.open));
+}
+function evidenceControls(){
+  const candidate=Boolean(selection?.fingerprint), saved=Boolean(selection?.saved_review);
+  const ready=Boolean(selection?.previewToken||(!selection?.mustPreview&&attemptHasEvidence(selection?.last_attempt)));
+  const preview=$('evidence-preview'), action=$('analyze');
+  preview.hidden=!candidate||saved;preview.disabled=evidenceBusy||!candidate||saved;
+  $('evidence-refresh').hidden=!candidate||saved||$('evidence-panel').hidden;
+  $('evidence-refresh').disabled=evidenceBusy;
+  if(!evidenceBusy)previewLabel();
+  action.className=candidate?'':'primary';
+  action.textContent=candidate?(saved?'复核已保存':(selection.last_attempt?'重试模型复核':'调用模型复核')+'（可能计费）'):'分析该 K 线';
+  if(selection?.review_in_progress)action.textContent='模型复核进行中…';
+  action.disabled=evidenceBusy||!selection||selection.rule.state==='unavailable'||(candidate&&(saved||selection.review_in_progress||!data.cloud_available||!ready));
+  action.title=!candidate||saved?'':selection.review_in_progress?'等待已发出的复核，不会重复调用':
+    !data.cloud_available?'未配置云模型':!ready?'请先取证；需核验三类独立原文和所在段落':'';
+  $('cloud-option').hidden=candidate||!selection||!data?.cloud_available;
+  $('evidence-intro').textContent=candidate?'先核对适用条件、反例与确认原文，再决定是否调用模型。取证不会生成判定或模拟单。':'按需查阅原文。普通 K 线的分析不进入候选复核或模拟单。';
+}
+function reconcileSelection(){
+  if(!playing&&!evidenceBusy&&selection?.fingerprint&&!selection.saved_review
+      && ['approve','wait','reject'].includes(data.reviews[cursor]))void select(cursor);
+}
+function reviewNotice(message){
+  $('review-notice').textContent=message;
+  $('review-notice').hidden=!message;
+}
+function followActiveReview(token,i){
+  setTimeout(async()=>{
+    if(token!==revision||!selection?.review_in_progress)return;
+    try{
+      const answer=await api('/pa-agent/rule?close_ms='+(data.bars[i].ts_open+STEP));
+      if(token!==revision)return;
+      if(!sameSnapshot(answer.snapshot)){
+        reviewNotice('行情窗口已更新，请刷新后查看复核结果。');return;
+      }
+      if(!answer.review_in_progress){void select(i);return;}
+    }catch{/* A transient status read must not start another model request. */}
+    if(token===revision)followActiveReview(token,i);
+  },3000);
+}
+async function select(i,notice='') {
+  if (!data || !Number.isInteger(i) || i<0 || i>=data.bars.length) return;
+  const token=++revision;cursor=i;selection=null;ruleRequest?.abort();analysisRequest?.abort();
+  ruleRequest=new AbortController();evidenceBusy=false;chartAnchor=null;$('anchor-focus').hidden=true;
+  resetEvidence();$('evidence-panel').hidden=true;$('evidence-panel').open=false;
+  $('evidence-status').removeAttribute('data-state');reviewNotice(notice);
+  for(const id of ['evidence-preview','evidence-refresh','analyze'])$(id).removeAttribute('aria-busy');
+  $('evidence-refresh').textContent='重新取证';
+  evidenceControls();$('rule-details').replaceChildren();$('background').replaceChildren();$('timeframe').textContent='';
+  $('evidence-status').textContent='正在读取所选 K 线的规则。';
+  const bar=data.bars[i], close=bar.ts_open+STEP;
+  $('state').textContent=reviewNames[data.reviews[i]]||stateNames[bar.state];$('state').className='pill '+(data.reviews[i]==='approve'?bar.state:'wait');
+  $('cursor').value=i;$('cutoff').textContent=`${i+1} / ${data.bars.length} · ${utc(close)} 收盘`;
+  $('prev').disabled=i===0;$('next').disabled=i===data.bars.length-1;$('candidate').disabled=previousBar('candidate')===null;$('pending').disabled=pendingBar()===null;
+  if ($('next').disabled) pause();
+  facts($('quotes'),[['开盘',price(bar.open)],['最高',price(bar.high)],['最低',price(bar.low)],['收盘',price(bar.close)],['成交量（张）',price(bar.volume)],['EMA20',price(bar.ema20)]]);
+  draw();showTrades();
+  try {
+    const answer=await api('/pa-agent/rule?close_ms='+close,{signal:ruleRequest.signal});
+    if(token===revision){
+      if(!sameSnapshot(answer.snapshot)){
+        $('evidence-status').textContent='行情窗口已更新，请刷新市场数据后再选择。';return;
+      }
+      selection=answer;
+      showRule(answer.rule,answer.review_status);
+      evidenceControls();
+      if(answer.saved_review){
+        applyProjection(answer.snapshot,answer.projection);
+        showEvidence({...answer.saved_review,review_source:'saved'});
+      }else if(answer.last_attempt){
+        showEvidence({...answer.last_attempt,review_source:'last_attempt',model_called:false});
+        evidenceControls();
+      }else if(answer.fingerprint){
+        $('evidence-status').textContent=data.cloud_available?'尚未取证 · 未调用模型 · 仍待复核。':'尚未取证 · 未配置云模型，仍可查看原文。';
+        showRoleGates();
+      }else{
+        $('evidence-status').textContent='选择「分析该 K 线」检索上下文与反例。';
+      }
+      if(answer.review_in_progress){
+        reviewNotice('这笔候选已有复核请求在进行。页面会自动更新结果，不会再发一笔。');
+        followActiveReview(token,i);
+      }
+    }
+  } catch(error) {if(token===revision&&error.name!=='AbortError')$('rule-details').textContent=error.message;}
+}
+function windowSnapshot(view){return [view.first_ms,view.last_ms,view.fetched_ms];}
+function sameSnapshot(snapshot){
+  return JSON.stringify(snapshot)===JSON.stringify(windowSnapshot(data));
+}
+function applyProjection(snapshot, projection){
+  if(!projection||!sameSnapshot(snapshot))return false;
+  if(projection.projection_seq<=data.projection_seq)return true;
+  data.projection_seq=projection.projection_seq;
+  data.reviews=projection.reviews;data.orders=projection.orders;data.trades=projection.trades;
+  draw();showTrades();$('pending').disabled=pendingBar()===null;
+  return true;
+}
+function evidenceDetails(title){
+  const details=node('details',null,'evidence-details');details.append(node('summary',title));return details;
+}
+function showRoleGates(reply){
+  const grid=$('evidence-gates');grid.hidden=false;grid.replaceChildren();
+  for(const [role,title] of Object.entries(roles)){
+    const rows=(reply?.sources||[]).filter(source=>source.role===role);
+    const checked=rows.filter(source=>source.verified).length;
+    const item=node('div',null,'evidence-gate');
+    item.dataset.status=checked?'ready':reply?'blocked':'idle';
+    item.append(node('strong',title),node('small',checked?`${checked} 条已核验原文`:rows.length?'仅有文本线索':reply?'缺已核验原文':'尚未取证'));
+    const first=rows.find(source=>source.verified)||rows[0];
+    if(first){
+      const b=node('button',checked?'查看原文':'查看线索','citation-chip');
+      b.setAttribute('aria-label',title+' · '+b.textContent);
+      b.onclick=()=>{
+        $('evidence-panel').open=true;
+        const source=$('source-'+(reply.sources.indexOf(first)+1));
+        source?.focus({preventScroll:true});source?.scrollIntoView({block:'nearest'});
+      };
+      item.append(b);
+    }
+    grid.append(item);
+  }
+}
+function anchorButton(mark,label){
+  const b=node('button',label,'anchor-chip');b.type='button';
+  b.title=`在当前图中定位 · ${utc(mark.ts_open+STEP)} ${mark.field.toUpperCase()}`;
+  b.onclick=()=>{
+    if(!data||mark.ts_open>data.bars[cursor].ts_open||mark.ts_open<data.bars[cursor].ts_open-80*STEP)return;
+    chartAnchor=mark;draw();
+    $('anchor-focus').hidden=false;$('anchor-focus').textContent=`已标记 ${utc(mark.ts_open+STEP)} 收盘棒 · ${mark.field.toUpperCase()} ${price(mark.price)}（回放游标未移动）`;
+    $('chart').scrollIntoView({block:'nearest'});
+  };
+  return b;
+}
+function setupDetails(reply){
+  if(!reply.setup)return;
+  const s=reply.setup, box=evidenceDetails('信号当时的行情事实 · 仅前 80 根与信号');
+  box.append(node('p','复核截止：'+utc(reply.rule.close_ms)+' 收盘'));
+  const alignment={aligned:'顺前段走势',mixed:'区间或结构混合',counter:'逆前段走势'}[s.alignment];
+  const zone={above:'收在前区间上方',below:'收在前区间下方',upper:'靠近区间上沿',lower:'靠近区间下沿',middle:'区间中部'}[s.zone];
+  const test=s.repeated_with_reaction?'有两次探测且中间出现反应':{observed_by_rule:'规则记录到二次测试，但未证实两次探测间的反应',ema_proxy:'仅 EMA 接近代理，不是已观察到的二次测试',not_observed:'尚未观察到二次测试'}[s.test];
+  const signal={prior_extreme_close:'信号收过上一根同向极值，尚不是后续跟进',same_side_close:'仅观察到同向信号收盘',not_confirmed:'未确认同向信号收盘'}[s.signal];
+  box.append(node('p',[alignment,zone,s.reentered?'越过同向边界后收回区间内':null,s.obstacle_before_target?'PA 草案目标前有边界障碍':null].filter(Boolean).join(' · ')),node('p',test),node('p',signal));
+  const labels={signal_close:'信号收盘',signal_high:'信号最高',signal_low:'信号最低',previous_high:'前一根高点',previous_low:'前一根低点',range_high:'前 80 根最高',range_low:'前 80 根最低'};
+  const anchors=reply.market_anchors||reply.commentary?.market_anchors||{};
+  for(const [key,mark] of Object.entries(anchors))box.append(anchorButton(mark,`${labels[key]||'规则测试 '+key.split('_').at(-1)} ${price(mark.price)}`));
+  $('evidence-context').append(box);
+}
+function showEvidence(reply) {
+  const panel=$('evidence-panel');
+  if(panel.hidden||reply.review_source==='preview')panel.open=true;
+  panel.hidden=false;
+  const count=reply.sources?.length||0;
+  $('evidence-panel-label').textContent=(reply.commentary?'复核解读与原文':'证据详情')+'（'+count+' 条来源）';
+  const statuses={ok:'已从 PAknow 核验出处',partial:'部分检索失败，下列出处仍可核验',no_evidence:'没有找到可引用的资料',unavailable:'检索暂不可用，规则判断不受影响'};
+  const model={not_configured:'未配置模型',no_evidence:'缺少证据，不生成',unavailable:'模型解读未通过，使用本地分析',provider_billing:'模型服务拒绝调用（402）',provider_auth:'模型服务未通过认证（401/403）',provider_rate_limit:'模型服务限流（429）',provider_request:'模型服务拒绝请求参数，可检查模型配置或输出上限',insufficient_evidence:'证据不足，未调用模型'};
+  const candidate=Boolean(selection?.fingerprint);
+  if(candidate)showRoleGates(reply);
+  const gaps=(reply.evidence_gaps||[]).map(role=>roles[role]).join('、');
+  const graph={ok:'图谱已参与查询规划',empty:'图谱无匹配，显示文本线索',unavailable:'图谱不可用，显示文本线索',disabled:'图谱未参与'}[reply.graph_status];
+  const failure={timeout:'模型请求超时',invalid_structure:'模型输出或引用校验未通过',no_content:'没有收到可用的模型内容',connection:'未能连接模型服务',length:'模型回复达到长度上限，未生成完整结果；证据仍可查看，可手动重试'}[reply.commentary_failure];
+  const saved=reply.review_source==='saved';
+  const previous=reply.review_source==='last_attempt';
+  const incomplete=reply.review_source==='attempt'&&reply.review_status==='pending';
+  const previousAt=reply.attempt_completed_ms?' · '+utc(reply.attempt_completed_ms):'';
+  const persistence=saved?'已读本地复核结果，未再次调用模型':previous?(selection?.review_in_progress?'此前失败记录':'历史失败记录')+previousAt+' · 只读记录':incomplete?
+    (reply.attempt_id?'已保存证据包和失败状态，未保存判定':'本次未保存判定，仍待复核') : reply.review_source==='attempt'?'本次结论已保存':null;
+  const reuse=!saved&&!previous&&reply.evidence_source==='saved'?'本次复用已核验证据，未重新检索':null;
+  const call=reply.review_source==='attempt'&&!reply.model_called?'未调用模型':null;
+  const warnings=reply.evidence_warnings?.length?'部分辅助检索降级':null;
+  const previewed=reply.review_source==='preview';
+  const eligibility=previewed?(reply.evidence_token?(data.cloud_available?'三类原文与上下文就绪，可选择调用模型':'三类原文与上下文就绪；未配置云模型'):'证据未就绪，仍待复核'):null;
+  const failed=failure||model[reply.commentary_status];
+  const reviewFailed=!previewed&&incomplete&&Boolean(failed);
+  evidenceMessage([reviewFailed?'复核未完成：'+failed+'；没有保存判定':null,
+    previewed?'仅取证 · 未调用模型':persistence,eligibility,reuse,call,statuses[reply.retrieval_status]||'未检索',
+    graph,gaps?'缺少可核验原文：'+gaps:null,warnings,reviewFailed?null:failed].filter(Boolean).join(' · '),
+    reviewFailed||((saved||previous)&&failed)?'error':'');
+  const explanations=(reply.evidence_failures||[]).map(key=>{
+    const [role,problem]=key.split(':');
+    const label=roles[role];
+    if(problem==='missing_parent')return label+'：缺少用于理解限制的父段原文';
+    if(problem==='invalid_parent_span')return label+'：引用与父段的位置无法核对';
+    if(problem==='citations')return label+'：无法核验原文出处';
+    if(role==='parent_context')return '父段上下文暂不可核验';
+    return null;
+  }).filter(Boolean);
+  if(explanations.length){const list=node('ul',null,'review-blocks');for(const note of new Set(explanations))list.append(node('li',note));$('evidence-context').append(list);}
+  setupDetails(reply);
+  if(reply.role_questions){
+    const box=evidenceDetails('查看本次实际检索问题');
+    for(const [role,question] of Object.entries(reply.role_questions)){
+      const queries=reply.role_query_plan?.[role]||[question];
+      box.append(node('h4',roles[role]));
+      const list=node('ul');for(const q of queries)list.append(node('li',q));box.append(list);
+    }
+    $('evidence-context').append(box);
+  }
+  const commentary=reply.commentary || reply.local_commentary;
+  const decision={approve:'通过 · 已给条件方案，不等于成交',wait:'等待 · 当前没有可执行方案',reject:'否决 · 本候选不入场'}[reply.commentary?.verdict];
+  if(decision)$('commentary').append(node('p',decision,'review-verdict'));
+  if(commentary)$('commentary').append(node('small',reply.commentary?.verdict?'PAknow 第二层 · 模拟执行方案':reply.commentary?'模型解读 · 不更改规则':'本地诊断 · 出处用于理解相关原理'));
+  const support={observed:'适用条件已观察到',needs_entry_trigger:'仍需明确的入场触发',needs_closed_confirmation:'仍需后续收盘确认',unresolved:'必要条件尚未解决'}[reply.commentary?.support_status];
+  if(support)$('commentary').append(node('p',`模型对适用条件的判断：${support}`,'support-state'));
+  const paper=reply.commentary?.paper_plan;
+  if(paper){
+    const box=node('div',null,'comment'), dl=node('dl',null,'levels');
+    const mode={next_open:'下一根开盘',breakout_touch:'触及突破价',pullback_touch:'触及回撤价',close_confirm:'突破收盘确认后下一根开盘',pullback_confirm:'回撤触及后同向收回，下一根开盘'}[paper.entry_mode];
+    const order=data.orders.find(o=>o.signal_index===cursor);
+    const orderText=order&&order.result_index!==null&&order.result_index<=cursor?{filled:'条件满足，已模拟成交',expired:'未触发，计划已到期',invalidated:'价格已失效，计划取消'}[order.status]:'计划已生效，等待后续 K 线触发';
+    box.append(node('h3','程序执行条件 · '+(paper.side==='long'?'多头':'空头')),node('p',orderText));
+    facts(dl,[['入场方式',mode],['触发价',paper.entry_mode==='next_open'?'信号时未知':price(paper.entry_level)],['入场有效期',paper.entry_window_bars+' 根'],['止损',price(paper.stop_price)],['止盈',price(paper.target_price)],['最长持有',paper.max_hold_bars+' 根'],['收盘提前离场价',price(paper.exit_on_close)]]);
+    box.append(dl);
+    const fieldNames={entry_level:'触发价',stop_price:'止损',target_price:'止盈',exit_on_close:'收盘失效'};
+    for(const [level,anchor] of Object.entries(reply.commentary.price_anchors||{})){
+      const proposed=anchor.offset===0?' → 直接采用原价':` → 方案 ${price(anchor.proposed_price)}（相对原价 ${anchor.offset>0?'+':''}${price(anchor.offset)}）`;
+      const line=node('div');line.append(anchorButton({...anchor,price:anchor.basis_price},`${fieldNames[level]}参照 ${anchor.field.toUpperCase()} ${price(anchor.basis_price)}`),node('small',proposed));box.append(line);
+    }
+    $('commentary').append(box);
+  }
+  const refs=new Map();
+  for (const [i,source] of reply.sources.entries()) {
+    const item=node('li'), more=node('button','展开完整原文'), excerpt=node('p',source.text);
+    item.id='source-'+(i+1);item.tabIndex=-1;
+    const context=source.reading_context&&source.reading_context!==source.text?evidenceDetails('查看本次所用父段（包含上下文，不另计证据）'):null;
+    if(context)context.append(node('p',source.reading_context));
+    more.onclick=async()=>{
+      more.disabled=true;
+      try {
+        const original=await api('/pa-agent/evidence/'+encodeURIComponent(source.id)+'?context=true');
+        const full=original.context||original.text;
+        if(full===source.text){more.replaceWith(node('small','已显示完整原文'));return;}
+        const parent=context||evidenceDetails('查看所在完整段落（不另计证据）');
+        if(!context)item.append(parent);
+        parent.querySelector('p')?.remove();parent.append(node('p',full));
+        parent.open=true;more.remove();
+      }catch(error){
+        more.textContent='原文暂不可读，重试';more.title=error.message;more.disabled=false;
+      }
+    };
+    refs.set(source.id,{number:i+1,focus(quote){
+      const start=quote?source.text.indexOf(quote):-1;
+      if(start>=0)excerpt.replaceChildren(source.text.slice(0,start),node('mark',quote),source.text.slice(start+quote.length));
+      if(context)context.open=true;
+      item.focus({preventScroll:true});item.scrollIntoView({block:'nearest'});
+    }});
+    if(source.role)item.append(node('small',roles[source.role]+(source.verified?' · 已核验原文':' · 待核验文本线索')));
+    item.append(node('strong',`${i+1}. ${source.label}`),excerpt,more);
+    if(source.graph){
+      const relation={REQUIRES_CONTEXT:'适用或确认前提',EXCEPTION_TO:'例外与风险',INVALIDATED_BY:'失效情形'}[source.graph.relation]||source.graph.relation;
+      const path=evidenceDetails('为何检索到这一段');path.append(node('p',`${source.graph.concept} → ${relation} → 原文`),node('p',source.graph.question));
+      if(source.graph.condition)path.append(node('p',`原文适用前提：${source.graph.condition}`));
+      path.append(node('small','核验的是原文与取证关系，不表示本例已经满足条件。'));
+      item.append(path);
+    }
+    if(context)item.append(context);
+    if(source.provenance==='ocr')item.append(node('small','OCR 文字'));
+    $('sources').append(item);$('sources-title').hidden=false;
+  }
+  for(const [key,label] of [['context','市场背景'],['thesis','入场正方依据'],['risks','最强反证与风险'],['review','综合复核'],['watch','下一步验证']]){
+    const section=commentary?.[key];if(!section)continue;
+    const div=node('div',null,'comment');div.append(node('h3',label),node('p',section.text));
+    if(section.quote)div.append(node('blockquote',section.quote.text,'evidence-quote'));
+    for(const id of section.evidence_ids){
+      const source=refs.get(id);if(!source)continue;
+      const quote=section.quote?.evidence_id===id?section.quote.text:null;
+      const b=node('button',`${quote?'定位引文':reply.commentary?'查看出处':'查看相关原理'} [${source.number}]`,'citation-chip');b.onclick=()=>source.focus(quote);div.append(b);
+    }
+    for(const ref of section.market_refs||[]){
+      const mark=commentary.market_anchors?.[ref];if(mark)div.append(anchorButton(mark,`已收盘事实 · ${mark.field.toUpperCase()} ${price(mark.price)}`));
+    }
+    $('commentary').append(div);
+  }
+}
+async function runAnalysis(preview=false){
+  if(!selection||evidenceBusy||(preview?$('evidence-preview').disabled:$('analyze').disabled))return;
+  pause();
+  const token=revision, selected=selection, review=Boolean(selected.fingerprint), close_ms=data.bars[cursor].ts_open+STEP;
+  analysisRequest=new AbortController();evidenceBusy=true;evidenceControls();
+  const retry=selected.last_attempt?.attempt_id;
+  reviewNotice('');
+  const button=$(preview?($('evidence-panel').hidden?'evidence-preview':'evidence-refresh'):'analyze'), started=performance.now();
+  button.setAttribute('aria-busy','true');
+  button.textContent=preview?'正在本地取证…':review?'模型复核进行中…':'正在分析…';
+  const progress=()=>{
+    if(token!==revision)return;
+    const elapsed=Math.floor((performance.now()-started)/1000);
+    const task=preview?'正在本地取证，不调用云模型':review?'已提交模型复核，正在等待结果':'正在检索并分析该 K 线';
+    evidenceMessage(task+(elapsed?'（已等待 '+elapsed+' 秒）':'')+(review?' · 此请求不会自动重试。':'。'),'busy');
+  };
+  progress();const progressTimer=setInterval(progress,5000);
+  try {
+    const payload=review?{close_ms,fingerprint:selected.fingerprint}:{close_ms,cloud:data.cloud_available&&$('cloud').checked};
+    if(review&&!preview){
+      if(retry)payload.retry_attempt_id=retry;
+      if(selected.previewToken)payload.evidence_token=selected.previewToken;
+    }
+    const endpoint=preview?'review-evidence':review?'review':'analyze';
+    const reply=await api('/pa-agent/'+endpoint,{method:'POST',headers:{'Content-Type':'application/json'},signal:analysisRequest.signal,body:JSON.stringify(payload)});
+    if(token!==revision)return;
+    if(!sameSnapshot(reply.snapshot)||(preview&&reply.fingerprint!==selected.fingerprint)){
+      selected.previewToken=null;selected.mustPreview=true;
+      evidenceMessage('行情窗口已更新，请刷新后重新选择该 K 线。','error');return;
+    }
+    if(preview){
+      selected.previewToken=reply.evidence_token;selected.mustPreview=!reply.evidence_token;
+      reply.review_source='preview';
+    }else if(review){
+      applyProjection(reply.snapshot,reply);
+      if(reply.review_status==='pending'&&data.reviews[cursor]!=='pending')return;
+      showRule(reply.rule,reply.review_status);
+      selected.previewToken=null;selected.mustPreview=false;
+      if(reply.review_status!=='pending')selected.saved_review=reply;
+      else if(reply.attempt_id)selected.last_attempt=reply;
+      if(reply.review_source==='last_attempt')reviewNotice('本次未发新请求：页面已同步最新失败记录。若要重新调用，请再点击「重试模型复核」。');
+    }
+    resetEvidence();showEvidence(reply);
+  }catch(error){
+    if(token!==revision||error.name==='AbortError')return;
+    if(review&&!preview&&['attempt_changed','in_progress'].includes(error.reviewState)){
+      void select(cursor,error.reviewState==='attempt_changed'?'重试记录已更新，本次未调用模型；正在同步最新状态。':error.message);
+      return;
+    }
+    if(review&&error.status===409){selected.previewToken=null;selected.mustPreview=true;}
+    evidenceMessage(error.message,'error');
+  }finally{
+    clearInterval(progressTimer);
+    if(token===revision){button.removeAttribute('aria-busy');evidenceBusy=false;evidenceControls();$('evidence-refresh').textContent='重新取证';reconcileSelection();}
+  }
+}
+$('evidence-preview').onclick=()=>{
+  const panel=$('evidence-panel');
+  if(panel.hidden)void runAnalysis(true);else{panel.open=!panel.open;previewLabel();}
+};
+$('evidence-panel').ontoggle=()=>{if(!evidenceBusy)previewLabel();};
+$('evidence-refresh').onclick=()=>void runAnalysis(true);
+$('analyze').onclick=()=>void runAnalysis();
+async function refresh(force=false) {
+  pause();$('refresh').disabled=true;$('market-status').textContent='正在读取 OKX 已收盘行情…';
+  try {
+    const fresh=await api('/pa-agent/market'+(force?'?refresh=true':''));
+    const selectedMs=data?.bars[cursor]?.ts_open;
+    if(data&&sameSnapshot(windowSnapshot(fresh))&&data.projection_seq>fresh.projection_seq){
+      Object.assign(fresh,{projection_seq:data.projection_seq,reviews:data.reviews,orders:data.orders,trades:data.trades});
+    }
+    data=fresh;
+    $('market-status').textContent=`${data.stale?'历史快照，非最新':'OKX 公共行情'} · ${utc(data.first_ms)} – ${utc(data.last_ms)}`;
+    $('cursor').max=data.bars.length-1;
+    for (const id of ['latest','play','cursor']) $(id).disabled=false;
+    const existing=data.bars.findIndex(bar=>bar.ts_open===selectedMs);
+    select(existing>=0?existing:data.bars.length-1);
+  } catch(error){$('market-status').textContent=error.message;}
+  finally{$('refresh').disabled=false;}
+}
+$('refresh').onclick=()=>refresh(true);
+$('latest').onclick=()=>{pause();select(data.bars.length-1);};
+$('prev').onclick=()=>{pause();select(cursor-1);};$('next').onclick=()=>{pause();select(cursor+1);};
+$('candidate').onclick=()=>{pause();select(previousBar('candidate'));};
+$('pending').onclick=()=>{pause();select(pendingBar());};
+$('cursor').oninput=()=>{pause();select(Number($('cursor').value));};
+async function stepPlayback(session, index){
+  await select(index);
+  if(playing&&session===playSession)timer=setTimeout(()=>stepPlayback(session,cursor+1),1300);
+}
+$('play').onclick=()=>{
+  if(playing){pause();reconcileSelection();return;}
+  if(evidenceBusy)return;
+  playing=true;const session=++playSession;$('play').textContent='暂停';
+  void stepPlayback(session,cursor===data.bars.length-1?0:cursor);
+};
+$('trade-lines').onchange=draw;
+window.addEventListener('resize',draw);
+let batch, batchSignature, batchLimits, batchBusy=false;
+function batchRunning(){return batch?.status==='running'||batch?.status==='stopping';}
+function showBatch(current){
+  batch=current;
+  $('batch-start').disabled=batchBusy||batchRunning()||!data?.cloud_available||!data.reviews.includes('pending');
+  $('batch-stop').hidden=!batchRunning();$('batch-stop').disabled=batch?.status==='stopping';
+  if(!batch){
+    $('batch-status').textContent=batchLimits?`本地取证最多 ${batchLimits.parallelism} 笔并行 · 云复核最多 ${batchLimits.cloud_parallelism} 笔并行`:'';
+    return;
+  }
+  const c=batch.counts, count=k=>c[k]||0;
+  const state={running:'全窗口批量复核中',stopping:'停止派发，等待已发请求结束',stopped:'全窗口批量已停止',done:'全窗口批量处理结束'}[batch.status];
+  const reason={manual:'手动停止',provider_auth:'模型认证失败',provider_billing:'模型服务计费拒绝',provider_rate_limit:'模型服务限流',inputs_changed:'复核代次变化',consecutive_model_failures:'模型连续失败'}[batch.stop_reason];
+  $('batch-status').textContent=`${state}${reason?'（'+reason+'）':''} · ${batch.total} 笔（本地上限 ${batch.parallelism} / 云上限 ${batch.cloud_parallelism}） · 通过 ${count('approve')} / 等待 ${count('wait')} / 否决 ${count('reject')} · 进行中 ${count('running')} / 排队 ${count('queued')} · 未完成 ${count('failed')+count('blocked')+count('pending')+count('not_started')} · 模型请求已返回 ${batch.model_attempts}`;
+}
+async function syncBatch(){
+  try{
+    batchLimits=await api('/pa-agent/review-batch');
+    const current=batchLimits.batch;showBatch(current);
+    const signature=current&&JSON.stringify([current.id,current.status,current.counts]);
+    if(signature&&signature!==batchSignature&&data&&sameSnapshot(current.snapshot)){
+      const fresh=await api('/pa-agent/market');
+      if(applyProjection(windowSnapshot(fresh),fresh)){
+        batchSignature=signature;
+        showBatch(current);
+      }
+    }
+    reconcileSelection();
+  }catch{/* Read-only status polling can recover on the next tick. */}
+  finally{setTimeout(syncBatch,batchRunning()?2500:5000);}
+}
+$('batch-start').onclick=async()=>{
+  if(!data||batchBusy||batchRunning())return;
+  const pending=data.reviews.filter(s=>s==='pending').length;
+  if(!window.confirm(`复核当前窗口的 ${pending} 个待复核候选？每笔最多请求一次模型，可能计费；已经保存的结论会跳过。`))return;
+  batchBusy=true;showBatch(batch);
+  try{
+    const id=Array.from(crypto.getRandomValues(new Uint8Array(16)),n=>n.toString(16).padStart(2,'0')).join('');
+    showBatch(await api('/pa-agent/review-batch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,snapshot:windowSnapshot(data),confirm:true})}));
+  }catch(error){window.alert(error.message);}
+  finally{batchBusy=false;showBatch(batch);}
+};
+$('batch-stop').onclick=async()=>{
+  if(!batchRunning())return;
+  try{showBatch(await api(`/pa-agent/review-batch/${batch.id}/stop`,{method:'POST'}));}
+  catch(error){window.alert(error.message);}
+};
+refresh().then(syncBatch);
+</script>
+</body>
+</html>

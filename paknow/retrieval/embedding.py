@@ -9,6 +9,7 @@ from functools import lru_cache
 import numpy as np
 
 from paknow.config import settings
+from paknow.retrieval.runtime import inference, priority, query_embeddings
 
 
 @lru_cache(maxsize=1)
@@ -37,5 +38,12 @@ def embed_texts(texts: list[str]) -> np.ndarray:
     )
 
 
+def _encode_queries(texts: list[str]) -> np.ndarray:
+    return _model().encode(texts, batch_size=len(texts), normalize_embeddings=True, show_progress_bar=False)
+
+
 def embed_query(text: str) -> np.ndarray:
-    return _model().encode([text], normalize_embeddings=True)[0]
+    key = (settings.embed_model, text)
+    result = query_embeddings.get(key, lambda urgency:
+        inference.call("embed", [text], _encode_queries, urgency)[0], priority.get())
+    return result.copy()

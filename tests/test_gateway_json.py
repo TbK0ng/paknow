@@ -14,14 +14,14 @@ class Answer(BaseModel):
     answer: str
 
 
-def _gateway(monkeypatch: pytest.MonkeyPatch, raw: str) -> gateway_module.ModelGateway:
+def _gateway(monkeypatch: pytest.MonkeyPatch, raw: str, finish_reason: str | None = None) -> gateway_module.ModelGateway:
     """A gateway whose completion call returns ``raw`` verbatim."""
     gw = gateway_module.ModelGateway()
     monkeypatch.setattr(
         gw,
         "_create",
         lambda **_kwargs: SimpleNamespace(
-            choices=[SimpleNamespace(message=SimpleNamespace(content=raw))]
+            choices=[SimpleNamespace(message=SimpleNamespace(content=raw), finish_reason=finish_reason)]
         ),
     )
     return gw
@@ -56,6 +56,14 @@ def test_truncated_body_raises_a_classified_error(monkeypatch: pytest.MonkeyPatc
     assert err.reason == "invalid_structure"
     assert err.snippet == raw[:120]
     assert raw[:120] in str(err)
+
+
+@pytest.mark.parametrize("finish_reason, expected", [("length", "length"), ("stop", "stop"), (None, "unknown")])
+@pytest.mark.parametrize("raw", ['', '{"answer":'])
+def test_parse_error_preserves_allowlisted_provider_metadata(monkeypatch, finish_reason, expected, raw):
+    with pytest.raises(gateway_module.ModelOutputError) as caught:
+        _ask(_gateway(monkeypatch, raw, finish_reason))
+    assert caught.value.finish_reason == expected and caught.value.content_chars == len(raw)
 
 
 def test_empty_content_is_no_content(monkeypatch: pytest.MonkeyPatch) -> None:

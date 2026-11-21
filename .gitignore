@@ -1,3 +1,4 @@
+# 离线复核环境与本地运行数据，不属于可批量清理的缓存。
 .venv/
 .omp/
 # omp 会话从用户级 skillshare 同步到仓库根的产物（重跑 omp 即重建）
@@ -5,17 +6,18 @@
 skills-lock.json
 .env
 __pycache__/
-integrations/paknow-mcp/dist/
 *.pyc
 .pytest_cache/
 .ruff_cache/
-# 评测的断点续跑状态（可由 records.jsonl 重建，不是记录本身）
+# PA 专项离线检查的本地输出。
+/evals/runs/
 .scratch/**/checkpoint.jsonl
+# 本地证据对象与向量索引、模型权重、行情快照及已完成复核。
 data/objects/
 data/models/
 data/market/
+data/pa-passages-build-*/
 data/*.db*
-site/
 # 原始资料仅本地保存（版权书籍 + 单文件超大），不入库
 *.pdf
 *.epub

@@ -1,43 +1,43 @@
 # AGENTS.md
 
-Operating notes for AI agents working in this repo.
+Working notes for agents maintaining PA Agent and PAknow retrieval.
+
+## Start here
+
+- [README.md](README.md): local startup and project overview.
+- [docs/pa-agent.md](docs/pa-agent.md): replay UI, API, analysis and reviews.
+- [docs/pa-rag.md](docs/pa-rag.md): text corpus, graph expansion and evidence provenance.
+- [docs/agents/retrieval-dev.md](docs/agents/retrieval-dev.md): current corpus build, PA retrieval checks and failure modes.
+- [PA Agent spec](.scratch/pa-agent/spec.md): current feature scope; use the docs above for commands and endpoints.
 
 ## Research tasks: delegate, don't self-explore
 
 **Any research task MUST be delegated to a subagent.** Research means multi-step investigation: "where does X live", "how does Y work end to end", "what breaks if I change Z", call-chain/dependency mapping, or impact analysis before an edit. A single `read` of a known path or a config value check is not research — do it inline.
 
-- Spawn a **read-only scout** subagent. Give it the question, the suspected path scope, and the shape of the answer you need back. It must not edit files.
-- The subagent MUST query the **codebase-memory MCP** graph before touching the filesystem. This repo is indexed as project `E-PAknow` (auto-refresh on use):
-  - `search_graph` — find symbols by name/semantics (returns `qn`, file, lines)
-  - `trace_path` — callers/callees, data flow
-  - `get_code_snippet` — source for a symbol
-  - `get_architecture` — packages, entry points, layers, cycles
-  - `query_graph` — multi-hop Cypher
-  - `detect_changes` — map a git diff to affected files/symbols
-  - Fall back to `grep`/`read` only for literals or paths the index flags as uncovered (`check_index_coverage`).
-- Fan out independent questions as separate subagents in one batch, never serially.
-- The main agent synthesises the returned findings. It does not re-read the same files to "confirm" — that wastes the delegation.
-- Only if no subagent can be spawned (harness reports no model / spawn error): say so in one line, then run the same MCP-first procedure inline. Never silently fall back to blind file crawling.
+- Spawn a **read-only scout** with the question, scope, and evidence needed. Fan out independent questions in one batch. Scouts must not edit files.
+- Start with the **codebase-memory** graph for `E-PAknow`: confirm the generation, locate symbols with `search_graph`, trace dependencies with `trace_path`, and read symbol source with `get_code_snippet`. Use `detect_changes` for diff impact and `check_index_coverage` for evidence paths and relevant scopes. Read source for missed or stale ranges, literal strings and config values. A clean coverage report does not prove that code is unused.
+- Share the parent’s graph findings, coverage gaps, and unresolved questions. Scouts with graph access should query it first; otherwise they should use the supplied evidence and read the relevant source without claiming graph access.
+- Synthesize the findings without redoing the scout’s work. If the harness cannot spawn a scout, say so and continue graph-first. Direct reads of already-known files are fine for implementation.
 
-**Implementation work is graph-first too.** For call-chain, dependency, or impact questions while editing a spec, use `search_graph` / `trace_path` / `get_code_snippet` instead of hunting through files; `detect_changes` maps a diff to affected symbols. Reading an already-known path directly is fine and preferred over extra search hops — read that file, don't crawl the tree.
+## Local data and cleanup
 
-## Retrieval and eval
-
-Commands, path overrides, and failure modes for retrieval/eval/taxonomy/alignment work: `docs/agents/retrieval-dev.md`. The embedded Qdrant is single-process — serialize runs against `data/objects`.
+- Embedded Qdrant is single-process. Do not run two servers or run retrieval, ingest, or eval against the same object store while the server owns it. Use separate database **and** object-store paths for rebuilds; see [retrieval-dev.md](docs/agents/retrieval-dev.md).
+- Ignored does not mean disposable. Preserve `.env`, the local environment, source PDF/EPUBs, databases, object stores, model weights, market/review data, and rebuild or rollback evidence unless the task explicitly replaces them. Delete only named, verified disposable outputs; do not run a blanket `git clean`.
 
 ## Concept identity
 
-Canonical concept ids live only in `configs/terms.yaml`. Resolve cross-module links through `paknow/graph/identity.py` (`canonical_for` / `resolved_canonical`); a `TermMatch.canonical` is a local match, not an identity. See `GLOSSARY.md` 概念身份.
+Canonical concept ids live only in `configs/terms.yaml`. Resolve cross-module links through `paknow/graph/identity.py` (`canonical_for`); a `TermMatch.canonical` is a local match, not an identity. See `GLOSSARY.md` 概念身份.
 
-## Feature workflow
+## Feature workflow and verification
 
-Record the integration base as `**Review base:** <sha>` in the feature spec before `/code-review`; the review pins its diff to that commit. On close, run `python scripts/check_scratch.py` and update or delete `HANDOFF.md` so it does not describe a retired API or frontier.
+- Record the integration base as `**Review base:** <sha>` in the feature spec before review, and use that commit as the diff base.
+- Before closing, run `python scripts/check_scratch.py` and `python -m pytest -q` from the project environment. Remove specs, handoffs, and run instructions for retired features; keep current commands in the docs.
 
-## Agent skills
+## Tracking and domain references
 
 ### Issue tracker
 
-Issues and specs live as markdown files under `.scratch/<feature>/` in this repo (no remote tracker). See `docs/agents/issue-tracker.md`.
+Issues and specs live as Markdown files under `.scratch/<feature>/` in this repo (no remote tracker). See [the local tracker guide](docs/agents/issue-tracker.md).
 
 ### Triage labels
 
@@ -45,4 +45,4 @@ Five canonical roles mapped to `Status:` values: `needs-triage`, `needs-info`, `
 
 ### Domain docs
 
-Single-context: `GLOSSARY.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+Single-context: `GLOSSARY.md`, `docs/pa-agent.md`, and `docs/pa-rag.md`. See `docs/agents/domain.md`.

@@ -1,9 +1,7 @@
 """Concept identity: surface form -> canonical concept id.
 
-``configs/terms.yaml`` is the only source of identity. Extraction may produce
-any phrasing ("High 2", "H2", "高二"); only forms that resolve to a dictionary
-entry become concept nodes. Unresolved forms are queued for review instead of
-creating nodes, so the graph cannot accumulate near-duplicates.
+``configs/terms.yaml`` is the source of identity for the PA graph and lexical
+retrieval. Unresolved names in the curated graph sources cannot create nodes.
 """
 from __future__ import annotations
 
@@ -28,12 +26,16 @@ def display_label(term: Term) -> str:
 
 @lru_cache(maxsize=1)
 def _index() -> dict[str, Term]:
-    """normalized canonical/alias -> Term."""
-    out: dict[str, Term] = {}
-    for term in load_terms():
-        out.setdefault(_norm(term.canonical), term)
+    """Resolve canonical ids first, then unambiguous aliases."""
+    terms = load_terms()
+    out = {_norm(term.canonical): term for term in terms}
+    aliases: dict[str, dict[str, Term]] = {}
+    for term in terms:
         for alias in term.aliases:
-            out.setdefault(_norm(alias), term)
+            aliases.setdefault(_norm(alias), {})[term.canonical] = term
+    for key, matches in aliases.items():
+        if len(matches) == 1:
+            out.setdefault(key, next(iter(matches.values())))
     return out
 
 
@@ -46,16 +48,6 @@ def resolve_term(surface: str | None) -> Term | None:
 def canonical_for(surface: str | None) -> str | None:
     term = resolve_term(surface)
     return term.canonical if term else None
-
-
-def resolved_canonical(surface: str, fallback: str) -> str:
-    """Pin a surface form on the dictionary's primary canonical concept.
-
-    Chapter-derived ``auto_*`` entries repeat the aliases of the base vocabulary
-    for the same surface form; the first registered canonical wins, so aliases
-    that resolve here are the same ids retrieval seeds and taxonomy edges use.
-    """
-    return canonical_for(surface) or fallback
 
 
 def label_for(canonical: str) -> str:
@@ -71,8 +63,3 @@ def concept_kind_for(canonical: str) -> str | None:
 
 def concept_node_id(canonical: str) -> str:
     return stable_id("node", canonical)
-
-
-def candidate_key(surface: str) -> str:
-    """Stable key for an unresolved surface queued for human review."""
-    return stable_id("cand", _norm(surface))

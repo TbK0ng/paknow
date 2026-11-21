@@ -1,9 +1,12 @@
-"""Hybrid retrieval: dense + sparse recall fused with RRF, optional rerank,
-and evidence expansion (adjacent units + linked figures).
-"""
+"""Hybrid text retrieval, cross-encoder reranking, and adjacent passage IDs."""
 from __future__ import annotations
 
+from contextlib import nullcontext
+from copy import deepcopy
 from functools import lru_cache
+import json
+from hashlib import sha256
+from math import isfinite
 from typing import Any, Mapping, Sequence
 
 from qdrant_client.models import (
@@ -12,15 +15,16 @@ from qdrant_client.models import (
     FusionQuery,
     Prefetch,
     ScoredPoint,
-    SparseVector,
 )
 
 from paknow.config import settings
 from paknow.db import SessionLocal
-from paknow.db.models import EvidenceUnitRow, FigureAssetRow
+from paknow.db.models import EvidenceUnitRow
 from paknow.retrieval.embedding import embed_query
-from paknow.retrieval.qdrant_store import COLLECTION_TEXT, get_client
-from paknow.retrieval.tokenize import sparse_indices_values
+from paknow.retrieval.pa_corpus import corpus
+from paknow.retrieval.qdrant_store import COLLECTION_TEXT, bm25_generation, get_client
+from paknow.retrieval.runtime import inference, priority, qdrant_reads, rank_scores, recall
+from paknow.retrieval.bm25 import VECTOR_NAME, query_vector
 
 
 def hybrid_search(
@@ -31,22 +35,35 @@ def hybrid_search(
     sparse_limit: int = 40,
     query_filter: Filter | None = None,
 ) -> list[ScoredPoint]:
-    client = get_client()
+    generation, _ = corpus()
+    if generation == "unsealed":
+        return _hybrid_search(query_text, top_k, dense_limit, sparse_limit, query_filter)
+    filter_id = json.dumps(query_filter.model_dump(mode="json", exclude_none=True), sort_keys=True) if query_filter else None
+    key = (settings.objects_dir, settings.qdrant_url, generation, bm25_generation(), settings.embed_model,
+           query_text, top_k, dense_limit, sparse_limit, filter_id)
+
+    def fetch(urgency):
+        token = priority.set(urgency)
+        try:
+            return _hybrid_search(query_text, top_k, dense_limit, sparse_limit, query_filter)
+        finally:
+            priority.reset(token)
+
+    return deepcopy(recall.get(key, fetch, priority.get()))
+
+
+def _hybrid_search(query_text: str, top_k: int, dense_limit: int, sparse_limit: int,
+                   query_filter: Filter | None) -> list[ScoredPoint]:
     dense = embed_query(query_text).tolist()
-    idx, vals = sparse_indices_values(query_text)
-    prefetch: list[Prefetch] = [Prefetch(query=dense, using="dense", limit=dense_limit)]
-    if idx:
-        prefetch.append(
-            Prefetch(query=SparseVector(indices=idx, values=vals), using="sparse", limit=sparse_limit)
-        )
-    return client.query_points(
-        collection_name=COLLECTION_TEXT,
-        prefetch=prefetch,
-        query=FusionQuery(fusion=Fusion.RRF),
-        query_filter=query_filter,
-        limit=top_k,
-        with_payload=True,
-    ).points
+    lexical = query_vector(query_text)
+    prefetch: list[Prefetch] = [Prefetch(query=dense, using="dense", filter=query_filter, limit=dense_limit)]
+    if lexical.indices:
+        prefetch.append(Prefetch(query=lexical, using=VECTOR_NAME, filter=query_filter, limit=sparse_limit))
+    # Only the embedded vector query is serialized, not GPU encoding, text
+    # planning, citation hydration, or waiting on a cached result.
+    with (nullcontext() if settings.qdrant_url else qdrant_reads):
+        return get_client().query_points(collection_name=COLLECTION_TEXT, prefetch=prefetch,
+            query=FusionQuery(fusion=Fusion.RRF), query_filter=query_filter, limit=top_k, with_payload=True).points
 
 
 @lru_cache(maxsize=1)
@@ -54,7 +71,12 @@ def _reranker():
     from sentence_transformers import CrossEncoder
 
     device = "cuda" if _cuda_ok() else "cpu"
-    return CrossEncoder(settings.rerank_model, device=device)
+    kwargs = {}
+    if device == "cuda":
+        import torch
+
+        kwargs["dtype"] = torch.float16
+    return CrossEncoder(settings.rerank_model, device=device, model_kwargs=kwargs)
 
 
 def _cuda_ok() -> bool:
@@ -66,17 +88,22 @@ def _cuda_ok() -> bool:
         return False
 
 
-def rerank(query_text: str, docs: list[dict[str, Any]], top_k: int | None = None) -> list[dict[str, Any]]:
-    """Cross-encoder rerank over candidate docs (dicts with 'text')."""
-    if not docs:
-        return []
-    model = _reranker()
-    pairs = [(query_text, d["text"]) for d in docs]
-    scores = model.predict(pairs)
-    order = sorted(range(len(docs)), key=lambda i: scores[i], reverse=True)
-    if top_k:
-        order = order[:top_k]
-    return [docs[i] for i in order]
+def _predict_pairs(pairs: list[tuple[str, str]]) -> list[float]:
+    scores = [float(s) for s in _reranker().predict(pairs, batch_size=6, show_progress_bar=False)]
+    if not all(isfinite(s) for s in scores):
+        raise ValueError("non-finite reranker score")
+    return scores
+
+
+def score_pairs(pairs: list[tuple[str, str]]) -> tuple[float, ...]:
+    if not pairs:
+        return ()
+    urgency = priority.get()
+    # Hash exact UTF-8 text, not bare evidence IDs that may be reused after a rebuild.
+    by_key = {(settings.rerank_model, q, sha256(t.encode()).digest()): (q, t) for q, t in pairs}
+    keys = [(settings.rerank_model, q, sha256(t.encode()).digest()) for q, t in pairs]
+    return tuple(rank_scores.get_many(keys, lambda missing, owner:
+        inference.call("rerank", [by_key[k] for k in missing], _predict_pairs, owner), urgency))
 
 
 def rerank_best(
@@ -96,41 +123,18 @@ def rerank_best(
     """
     if not docs:
         return []
-    model = _reranker()
-    batches: dict[str, list[int]] = {}
+    cohorts: dict[str, list[int]] = {}
     for i, d in enumerate(docs):
-        ids = queries.get(str(d.get("evidence_id"))) or [fallback_query]
-        for q in ids:
-            batches.setdefault(q, []).append(i)
+        for q in queries.get(str(d.get("evidence_id"))) or [fallback_query]:
+            cohorts.setdefault(q, []).append(i)
+    flat = [(q, i) for q, subset in cohorts.items() for i in subset]
     best: dict[int, float] = {}
-    for q, idx in batches.items():
-        scores = model.predict([(q, docs[i]["text"]) for i in idx])
-        for i, s in zip(idx, scores):
-            if i not in best or float(s) > best[i]:
-                best[i] = float(s)
+    for (_, i), s in zip(flat, score_pairs([(q, docs[i]["text"]) for q, i in flat]), strict=True):
+        best[i] = max(best.get(i, -float("inf")), s)
     order = sorted(best, key=lambda i: best[i], reverse=True)
     if top_k:
         order = order[:top_k]
     return [docs[i] for i in order]
-
-
-def caption_search(query_text: str, top_k: int = 10) -> list[ScoredPoint]:
-    """Caption-only recall: surface figure captions/observations whose
-    figure_ids populate the example catalog for 'show me' queries."""
-    from qdrant_client.models import FieldCondition, Filter, MatchValue
-
-    client = get_client()
-    dense = embed_query(query_text).tolist()
-    return client.query_points(
-        collection_name=COLLECTION_TEXT,
-        query=dense,
-        using="dense",
-        query_filter=Filter(
-            must=[FieldCondition(key="block_type", match=MatchValue(value="caption"))]
-        ),
-        limit=top_k,
-        with_payload=True,
-    ).points
 
 
 def diversify(
@@ -139,11 +143,8 @@ def diversify(
     """Near-duplicate suppression + per-document cap so one book/edition
     cannot flood the evidence window (plan §5.4 去重分组).
 
-    ``dedupe_chars`` is how much of the normalised text identifies a duplicate.
-    It was 80, which merged distinct chapter headings that share an opening
-    ("交易区间开盘：多头突破失败" appears in several chapters) and kept whichever
-    one ranked higher. ``max_per_doc`` was 5, but one encyclopaedia supplies 50 of
-    the 123 gold evidence points, so the cap alone dropped rank-3 answers.
+    Compare leading normalized text, and cap units per document to leave
+    room for other sources.
     """
     import re
 
@@ -179,89 +180,24 @@ def point_to_doc(p: ScoredPoint) -> dict[str, Any]:
         "doc_id": pl.get("doc_id"),
         "block_type": pl.get("block_type"),
         "text": pl.get("text", ""),
-        "figure_ids": pl.get("figure_ids") or [],
-        "chapter_path": pl.get("chapter_path") or [],
-        "pdf_page": pl.get("pdf_page"),
-        "figure_label": pl.get("figure_label"),
-        "epub_href": pl.get("epub_href"),
         "score": p.score,
     }
 
 
-_PARENT_TEXT_CHARS = 2400  # a chunked parent is reading context; 34-child parents reach 37k chars
-
-
-def _parent_text(text: str) -> str:
-    return text if len(text) <= _PARENT_TEXT_CHARS else text[:_PARENT_TEXT_CHARS] + "…"
-
-
-def expand_evidence(
-    evidence_ids: list[str],
-    *,
-    parent_limit: int = 6,
-    adjacent_limit: int = 4,
-) -> dict[str, Any]:
-    """Fetch full units + linked figures + parent/adjacent context units."""
+def adjacent_evidence(evidence_ids: list[str], *, limit: int = 4) -> list[str]:
+    """Look up nearby text for ordinary analysis; split parents are not sources."""
     with SessionLocal() as s:
-        rows = {
-            r.evidence_id: r
-            for r in s.query(EvidenceUnitRow)
-            .filter(EvidenceUnitRow.evidence_id.in_(evidence_ids))
-            .all()
-        }
-        parents: set[str] = set()
-        adjacents: set[str] = set()
+        ordered = s.query(EvidenceUnitRow).filter(EvidenceUnitRow.evidence_id.in_(evidence_ids)).all()
+        by_id = {row.evidence_id: row for row in ordered}
+        seen = set(evidence_ids) | {row.parent_id for row in ordered if row.parent_id}
+        neighbors = []
         for eid in evidence_ids:
-            r = rows.get(eid)
-            if r is None:
+            if (row := by_id.get(eid)) is None:
                 continue
-            if r.parent_id and r.parent_id not in rows and len(parents) < parent_limit:
-                # shortcut: the parent contains the hit's own text, so both are
-                # rendered — 39 of 114 answer runs cite a parent and its child.
-                # Dropping the child would change the frozen eval's id semantics
-                # (gold evidence ids are child ids), so it stays for now.
-                parents.add(r.parent_id)
-            for aid in r.adjacent_ids or []:
-                if aid not in rows and aid not in parents and len(adjacents) < adjacent_limit:
-                    adjacents.add(aid)
-        if parents or adjacents:
-            extra_ids = parents | adjacents
-            for r in (
-                s.query(EvidenceUnitRow)
-                .filter(EvidenceUnitRow.evidence_id.in_(extra_ids))
-                .all()
-            ):
-                rows[r.evidence_id] = r
-        fig_ids: set[str] = set()
-        for r in rows.values():
-            fig_ids.update(r.figure_ids or [])
-        figs = {f.figure_id: f for f in s.query(FigureAssetRow).filter(FigureAssetRow.figure_id.in_(fig_ids)).all()} if fig_ids else {}
-    units = [
-        {
-            "evidence_id": r.evidence_id,
-            "doc_id": r.doc_id,
-            "block_type": r.block_type,
-            "text": _parent_text(r.text) if r.evidence_id in parents else r.text,
-            "chapter_path": r.chapter_path or [],
-            "pdf_page": r.pdf_page_1based,
-            "printed_page": (r.locator or {}).get("printed_page_label"),
-            "figure_label": r.figure_label,
-            "epub_href": r.epub_href,
-            "figure_ids": r.figure_ids or [],
-            "provenance": r.provenance,
-            "is_parent": r.evidence_id in parents,
-            "is_adjacent": r.evidence_id in adjacents,
-        }
-        for r in rows.values()
-    ]
-    figures = [
-        {
-            "figure_id": f.figure_id,
-            "rel_path": f.rel_path,
-            "width_px": f.width_px,
-            "height_px": f.height_px,
-            "figure_label": f.figure_label,
-        }
-        for f in figs.values()
-    ]
-    return {"units": units, "figures": figures}
+            for neighbor in row.adjacent_ids or []:
+                if neighbor not in seen:
+                    seen.add(neighbor)
+                    neighbors.append(neighbor)
+                    if len(neighbors) == limit:
+                        return neighbors
+        return neighbors

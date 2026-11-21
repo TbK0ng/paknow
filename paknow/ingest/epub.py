@@ -6,12 +6,11 @@ Keeps the original XHTML structure. References are located by
 from __future__ import annotations
 
 import posixpath
-import re
 import zipfile
 from dataclasses import dataclass, field
 from urllib.parse import unquote
 
-from bs4 import BeautifulSoup, Tag, XMLParsedAsHTMLWarning
+from bs4 import BeautifulSoup, XMLParsedAsHTMLWarning
 from lxml import etree
 
 import warnings
@@ -21,16 +20,13 @@ warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
 from paknow.evidence.contracts import (
     DocFormat,
     EvidenceUnit,
-    FigureAsset,
     SourceLocator,
 )
 from paknow.ids import content_hash, stable_id
-from paknow.ingest.images import image_size
-from paknow.ingest.store import write_object
+from paknow.ingest.figure_labels import FIGURE_LABEL
 
 OPF_NS = {"opf": "http://www.idpf.org/2007/opf", "dc": "http://purl.org/dc/elements/1.1/"}
 NCX_NS = {"ncx": "http://www.daisy.org/z3986/2005/ncx/"}
-_FIGURE_LABEL_RE = re.compile(r"Figure\s+[A-Za-z0-9]+(?:\.[0-9]+)?", re.IGNORECASE)
 
 
 @dataclass
@@ -50,7 +46,6 @@ class EpubParseResult:
     entry_count: int
     toc: list[dict] = field(default_factory=list)
     evidence_units: list[EvidenceUnit] = field(default_factory=list)
-    figures: list[FigureAsset] = field(default_factory=list)
 
 
 def parse_epub(path: str, doc_id: str) -> EpubParseResult:
@@ -59,7 +54,14 @@ def parse_epub(path: str, doc_id: str) -> EpubParseResult:
         opf_path = _find_opf(zf)
         meta = _parse_opf(zf, opf_path)
         toc = _parse_ncx(zf)
-        href_to_path = {_norm(t["href"]): t["path"] for t in toc if t.get("href")}
+        href_paths: dict[str, list[str]] = {}
+        sections: dict[str, dict[str, list[str]]] = {}
+        for entry in toc:
+            if href := entry["href"]:
+                if fragment := entry["fragment"]:
+                    sections.setdefault(href, {}).setdefault(fragment, entry["path"])
+                else:
+                    href_paths.setdefault(href, entry["path"])
 
         result = EpubParseResult(
             doc_id=doc_id,
@@ -72,14 +74,12 @@ def parse_epub(path: str, doc_id: str) -> EpubParseResult:
         for href in meta.spine_hrefs:
             if not href.lower().endswith((".htm", ".html", ".xhtml")):
                 continue
-            chapter_path = href_to_path.get(_norm(href), [])
+            chapter_path = href_paths.get(href, [])
             try:
                 html = zf.read(href).decode("utf-8", "ignore")
             except KeyError:
                 continue
-            units, figures = _parse_xhtml(html, href, doc_id, chapter_path, zf)
-            result.evidence_units.extend(units)
-            result.figures.extend(figures)
+            result.evidence_units.extend(_parse_xhtml(html, href, doc_id, chapter_path, sections=sections.get(href)))
         return result
     finally:
         zf.close()
@@ -131,141 +131,95 @@ def _parse_ncx(zf: zipfile.ZipFile) -> list[dict]:
             out: list[dict] = []
             if navmap is not None:
                 for np in navmap.findall("ncx:navPoint", NCX_NS):
-                    _walk_nav(np, 1, [], out)
+                    _walk_nav(np, name, 1, [], out)
             return out
     return []
 
 
-def _walk_nav(np, level: int, path: list[str], out: list[dict]) -> None:
+def _walk_nav(np, ncx: str, level: int, path: list[str], out: list[dict]) -> None:
     label = _text(np.find("ncx:navLabel/ncx:text", NCX_NS))
     src = None
     content = np.find("ncx:content", NCX_NS)
     if content is not None:
         src = content.attrib.get("src")
     cur = path + ([label] if label else [])
-    out.append({"title": label, "href": _norm(src) if src else None, "level": level, "path": list(cur)})
+    href, _, fragment = (src or "").partition("#")
+    out.append({"title": label, "href": _resolve(ncx, href) if href else None,
+                "fragment": unquote(fragment) or None, "level": level, "path": list(cur)})
     for child in np.findall("ncx:navPoint", NCX_NS):
-        _walk_nav(child, level + 1, cur, out)
+        _walk_nav(child, ncx, level + 1, cur, out)
 
 
 # --------------------------------------------------------------------------- #
-# XHTML -> evidence units + figures
+# XHTML -> text evidence (captions do not shift the body paragraph sequence)
 # --------------------------------------------------------------------------- #
-def _parse_xhtml(
-    html: str, href: str, doc_id: str, chapter_path: list[str], zf: zipfile.ZipFile
-) -> tuple[list[EvidenceUnit], list[FigureAsset]]:
+def _parse_xhtml(html: str, href: str, doc_id: str, chapter_path: list[str], *,
+                 sections: dict[str, list[str]] | None = None) -> list[EvidenceUnit]:
     soup = BeautifulSoup(html, "lxml")
     body = soup.body or soup
+    positions: dict[int, int] = {}
+    changes = []
+    for i, tag in enumerate(body.find_all(True) if sections else []):
+        positions[id(tag)] = i
+        key = tag.get("id") or tag.get("name")
+        if key in sections:
+            changes.append((i, sections[key]))
+    change = 0
 
-    figures: list[FigureAsset] = []
-    anchor_to_figure: dict[str, str] = {}
-    # Pass A: figure divs
-    for div in body.find_all("div", class_=lambda c: c and "figure" in c):
-        fig = _extract_figure(div, href, doc_id, chapter_path, zf)
-        if fig is not None:
-            figures.append(fig)
-            # figure anchor id (from the caption <a id="...">)
-            a = div.find("a", id=True)
-            if a is not None:
-                anchor_to_figure[a["id"]] = fig.figure_id
-
-    # Pass B: text blocks in reading order
     units: list[EvidenceUnit] = []
     idx = 0
-    for el in _text_elements(body):
-        cls = " ".join(el.get("class", [])) if isinstance(el, Tag) else ""
+    caption_idx = 0
+    elements = body.find_all(["p", "h1", "h2", "h3", "h4", "h5", "h6", "blockquote", "li", "figcaption", "div"])
+    for el in elements:
+        cls = " ".join(el.get("class", []))
+        in_figure_div = el.find_parent("div", class_=lambda c: c and "figure" in c) is not None
+        is_caption = el.name == "figcaption" or "caption" in cls
+        if el.name == "div" and not is_caption:
+            continue
+        if in_figure_div and not is_caption:
+            continue
+        if not is_caption and el.find_parent(["figcaption", "div"], class_=lambda c: c and "caption" in c):
+            continue
         text = el.get_text(" ", strip=True)
         if not text:
             continue
         block_type = "paragraph"
-        if el.name in ("h1", "h2", "h3", "h4", "h5", "h6") or "title" in cls or "head" in cls:
-            block_type = "heading"
-        elif "caption" in cls:
+        if is_caption:
             block_type = "caption"
+        elif el.name in ("h1", "h2", "h3", "h4", "h5", "h6") or "title" in cls or "head" in cls:
+            block_type = "heading"
 
-        # figure references from <a href="#anchor">
-        fig_ids: list[str] = []
-        for a in el.find_all("a", href=True):
-            target = a["href"].lstrip("#")
-            if target in anchor_to_figure:
-                fid = anchor_to_figure[target]
-                if fid not in fig_ids:
-                    fig_ids.append(fid)
-
-        evidence_id = stable_id("ev", doc_id, href, str(idx))
-        idx += 1
+        if in_figure_div or el.name in ("figcaption", "div"):
+            evidence_id = stable_id("ev", doc_id, href, "caption", str(caption_idx))
+            caption_idx += 1
+        else:
+            evidence_id = stable_id("ev", doc_id, href, str(idx))
+            idx += 1
+        anchor = el.get("id") or el.get("name")
+        if not anchor and (link := el.find("a", id=True)) is not None:
+            anchor = link["id"]
+        if not anchor and (link := el.find("a", attrs={"name": True})) is not None:
+            anchor = link["name"]
+        position = positions.get(id(el), -1)
+        while change < len(changes) and changes[change][0] <= position:
+            chapter_path = changes[change][1]
+            change += 1
+        active_path = sections.get(anchor, chapter_path) if sections else chapter_path
+        label = FIGURE_LABEL.search(text) if is_caption else None
         units.append(
             EvidenceUnit(
                 evidence_id=evidence_id,
                 doc_id=doc_id,
-                locator=SourceLocator(doc_id=doc_id, format=DocFormat.epub, epub_href=href),
+                locator=SourceLocator(doc_id=doc_id, format=DocFormat.epub, epub_href=href,
+                                      epub_fragment=anchor, figure_label=label.group() if label else None,
+                                      chapter_path=active_path),
                 text=text,
                 text_hash=content_hash(text.encode("utf-8")),
                 block_type=block_type,  # type: ignore[arg-type]
-                chapter_path=chapter_path,
-                figure_ids=fig_ids,
+                chapter_path=active_path,
             )
         )
-    return units, figures
-
-
-def _text_elements(body):
-    """Yield heading/paragraph/caption leaf elements in document order.
-
-    Container ``<div>`` (e.g. ``div.story`` wrapping a whole chapter) must NOT
-    be yielded — otherwise a single unit captures the entire chapter.
-    """
-    for child in body.find_all(["p", "h1", "h2", "h3", "h4", "h5", "h6", "blockquote", "li"]):
-        if child.find_parent("div", class_=lambda c: c and "figure" in c) is not None:
-            continue
-        yield child
-
-
-def _extract_figure(
-    div, href: str, doc_id: str, chapter_path: list[str], zf: zipfile.ZipFile
-) -> FigureAsset | None:
-    img = div.find("img")
-    if img is None:
-        return None
-    src = img.get("src", "")
-    if not src:
-        return None
-    full_src = _resolve(href, src)
-    try:
-        raw = zf.read(full_src)
-    except KeyError:
-        return None
-    try:
-        w, h = image_size(raw)
-    except ValueError:
-        w, h = 0, 0
-
-    # figure anchor + label
-    a = div.find("a", id=True)
-    anchor_id = a["id"] if a is not None else None
-    caption = div.find(class_=lambda c: c and "caption" in c)
-    caption_text = caption.get_text(" ", strip=True) if caption is not None else ""
-    m = _FIGURE_LABEL_RE.search(caption_text)
-    figure_label = m.group(0) if m else None
-
-    figure_id = stable_id("fig", doc_id, anchor_id or full_src)
-    write_object(f"epub/{doc_id}/{full_src}", raw)
-    return FigureAsset(
-        figure_id=figure_id,
-        doc_id=doc_id,
-        locator=SourceLocator(
-            doc_id=doc_id,
-            format=DocFormat.epub,
-            epub_href=href,
-            chapter_path=chapter_path,
-            figure_label=figure_label,
-        ),
-        image_hash=content_hash(raw),
-        rel_path=f"epub/{doc_id}/{full_src}",
-        width_px=w,
-        height_px=h,
-        annotation_source="native",
-    )
+    return units
 
 
 # --------------------------------------------------------------------------- #
@@ -275,10 +229,6 @@ def _text(el) -> str:
     if el is None:
         return ""
     return (el.text or "").strip()
-
-
-def _norm(href: str) -> str:
-    return unquote(href).split("#")[0]
 
 
 def _resolve(base: str, rel: str) -> str:

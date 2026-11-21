@@ -3,10 +3,9 @@ in ``.github/workflows/check.yml`` falls behind the imports the test suite
 reaches at module scope.
 
 ``check.yml`` cannot install the full dependency set (torch, transformers,
-sentence-transformers), so it carries a hand-picked subset. That subset drifted
-from the code three times in one afternoon: a module-level ``import PIL`` made
-ten test modules fail to collect. This walks the static import closure starting
-at the test files and asserts every third-party name it reaches is installed.
+sentence-transformers), so it carries a hand-picked subset. This walks the
+static import closure starting at the test files and asserts every third-party
+name it reaches is installed.
 """
 from __future__ import annotations
 

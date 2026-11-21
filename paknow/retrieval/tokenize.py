@@ -34,7 +34,7 @@ def _tokens(text: str) -> list[str]:
     # dictionary aliases -> canonical concept id (boundary-aware matching)
     toks.extend(match_terms(text))
     # protected numeric/abbreviation patterns
-    toks.extend(m.group(0).replace(" ", "") for m in _PROTECT_RE.finditer(text))
+    toks.extend(m.group(0).replace(" ", "").lower() for m in _PROTECT_RE.finditer(text))
     # English words
     toks.extend(_EN_RE.findall(lower))
     # Chinese words
@@ -44,30 +44,15 @@ def _tokens(text: str) -> list[str]:
     return toks
 
 
-def sparse_weights(text: str) -> dict[str, float]:
-    """Term-frequency sparse vector (float weights)."""
-    c = Counter(_tokens(text))
-    return dict(c)
+def token_counts(text: str) -> Counter[str]:
+    """Domain-aware tokens shared by query and index builders."""
+    return Counter(_tokens(text))
 
 
-def sparse_indices_values(text: str) -> tuple[list[int], list[float]]:
-    """Return (indices, values) using a stable vocabulary hash.
-
-    Token -> index via 32-bit FNV-1a hash mod 2**24; collision-tolerant for
-    lexical recall. Values are raw term frequencies.
-    """
-    w = sparse_weights(text)
-    idx: list[int] = []
-    vals: list[float] = []
-    for token, tf in w.items():
-        idx.append(_fnv(token))
-        vals.append(float(tf))
-    return idx, vals
-
-
-def _fnv(token: str) -> int:
+def term_id(token: str) -> int:
+    """Stable 32-bit FNV-1a term identifier for the sparse index."""
     h = 0x811C9DC5
     for b in token.encode("utf-8"):
         h ^= b
         h = (h * 0x01000193) & 0xFFFFFFFF
-    return h % (1 << 24)
+    return h

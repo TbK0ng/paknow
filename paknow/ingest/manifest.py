@@ -2,12 +2,32 @@
 from __future__ import annotations
 
 from pathlib import Path
+from collections.abc import Iterable
+
+import yaml
 
 from paknow.config import settings
 from paknow.db import SessionLocal
 from paknow.db.models import DocumentRow
 from paknow.evidence.contracts import DocFormat
 from paknow.ids import file_hash, stable_id
+
+
+_SOURCES = Path(__file__).resolve().parents[2] / "configs" / "pa_corpus_sources.yaml"
+
+
+def expected_originals() -> dict[str, str]:
+    return yaml.safe_load(_SOURCES.read_text(encoding="utf-8"))
+
+
+def verify_originals(paths: Iterable[Path]) -> None:
+    expected = expected_originals()
+    paths = list(paths)
+    if sorted(p.name for p in paths) != sorted(expected):
+        raise ValueError("provide exactly the originals in configs/pa_corpus_sources.yaml")
+    for path in paths:
+        if file_hash(str(path)) != expected[path.name]:
+            raise ValueError(f"original SHA-256 mismatch: {path.name}")
 
 
 def resolve_source(name: str) -> Path:

@@ -12,7 +12,7 @@ Issues and specs for this repo live as markdown files in `.scratch/`.
 - A feature pins the commit it is reviewed against with `**Review base:** <sha>` near the top of `spec.md`. The value is a 7-40 character hex commit SHA.
 - Comments and conversation history append to the bottom of the file under a `## Comments` heading
 
-`.scratch/` is not gitignored in this repo, so tickets are committed alongside the code they describe.
+`.scratch/` specs and tickets are committed alongside the code they describe. Local checkpoints and generated eval runs are not specs or tickets.
 
 ## Checking the tracker
 
@@ -30,21 +30,6 @@ python scripts/check_scratch.py --root <dir> # another checkout
 
 It prints `path:line: message` per failure and exits 1; otherwise one `scratch: N file(s) OK` line. The same check runs in the `scratch` pre-commit hook (on changes under `.scratch/`) and in `.github/workflows/check.yml`.
 
-## When a skill says "publish to the issue tracker"
+## Keeping the tracker current
 
-Create a new file under `.scratch/<feature-slug>/` (creating the directory if needed).
-
-## When a skill says "fetch the relevant ticket"
-
-Read the file at the referenced path. The user will normally pass the path or the issue number directly.
-
-## Wayfinding operations
-
-Used by `/wayfinder`. The **map** is a file with one **child** file per ticket.
-
-- **Map**: `.scratch/<effort>/map.md` (the Notes / Decisions-so-far / Fog body).
-- **Child ticket**: `.scratch/<effort>/issues/NN-<slug>.md`, numbered from `01`, with the question in the body. A `Type:` line records the ticket type (`research`/`prototype`/`grilling`/`task`); the `**Status:**` line records `claimed`/`resolved`.
-- **Blocking**: a `**Blocked by:** NN, NN` line near the top. A ticket is unblocked when every file it lists is `resolved`.
-- **Frontier**: scan `.scratch/<effort>/issues/` for files that are open, unblocked, and unclaimed; first by number wins.
-- **Claim**: set `**Status:** claimed` and save before any work.
-- **Resolve**: append the answer under an `## Answer` heading, set `**Status:** resolved`, then append a context pointer (gist + link) to the map's Decisions-so-far in `map.md`.
+Remove the spec and tickets when a feature is retired. Keep runnable commands and supported endpoints in the docs linked from [AGENTS.md](../../AGENTS.md).

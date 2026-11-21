@@ -27,7 +27,7 @@ def get_session() -> Session:
 
 
 def init_db() -> None:
-    """Create all tables (dev bootstrap; Alembic migrations for production)."""
+    """Create any missing metadata tables for local evidence ingestion."""
     from paknow.db import models  # noqa: F401  register mapped tables
 
     Base.metadata.create_all(engine)
