@@ -443,5 +443,4 @@ def _add_model(response, state, bars, *, entry_review=False, timings=None) -> No
             if isinstance(exc, ModelOutputError) and exc.finish_reason == "length":
                 response["commentary_failure"] = "length"
             else:
-                response["commentary_failure"] = ("connection" if type(exc).__name__ == "APIConnectionError"
-                                                  else failure_reason(exc))
+                response["commentary_failure"] = failure_reason(exc)

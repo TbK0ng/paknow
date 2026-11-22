@@ -410,6 +410,131 @@ def test_review_controls_replay_and_reuses_causal_verdict(market, monkeypatch, t
     assert not client.get("/pa-agent/market").json()["trades"]
 
 
+def test_review_history_is_read_only_and_independent_of_replay(monkeypatch, tmp_path):
+    from apps.api.main import app
+    from paknow.pa_review import ReviewLedger
+
+    ledger = ReviewLedger(tmp_path / "history.db")
+    monkeypatch.setattr(pa_agent, "review_ledger", ledger)
+
+    def unexpected(*_args, **_kwargs):
+        pytest.fail("history must not consult live replay, the corpus, or a model")
+
+    for name in ("_market", "corpus", "explain", "fingerprint"):
+        monkeypatch.setattr(pa_agent, name, unexpected)
+    client = TestClient(app)
+    base = "/pa-agent/review-history"
+    assert client.get(base).json() == {"total": 0, "records": []}
+    assert client.get(f"{base}/{'a' * 64}").status_code == 404
+    assert not ledger.path.exists()
+
+    def result(close_ms, verdict, name):
+        return {"rule": {"close_ms": close_ms, "state": "short"}, "retrieval_status": "ok",
+                "commentary_status": "ok", "commentary": {"verdict": verdict, "review": {"text": name}},
+                "sources": [{"id": "excerpt", "text": name, "reading_context": "saved parent"}]}
+
+    first, second, older, failed = (letter * 64 for letter in "abcd")
+    current = result(START, "approve", "same signal, first review")
+    other_profile = result(START, "reject", "same signal, different review")
+    old_window = result(START - STEP * BARS, "wait", "old window review")
+    for key, row in ((first, current), (second, other_profile), (older, old_window)):
+        assert ledger.run(key, lambda: row) == row
+    blocked = {"rule": {"close_ms": START + STEP}, "model_called": True, "commentary_status": "unavailable"}
+    assert ledger.run(failed, lambda: blocked, review_input=(blocked["rule"], ())).get("attempt_id")
+    snapshot = ledger.path.read_bytes()
+    monkeypatch.setattr(ledger, "_connect", unexpected)
+
+    page = client.get(base, params={"limit": 2})
+    assert page.headers["Cache-Control"] == "no-store"
+    assert page.json() == {"total": 3, "records": [
+        {"fingerprint": second, "number": 2, "close_ms": START, "direction": "short", "verdict": "reject"},
+        {"fingerprint": first, "number": 1, "close_ms": START, "direction": "short", "verdict": "approve"},
+    ]}
+    assert client.get(base, params={"offset": 2}).json()["records"][0]["fingerprint"] == older
+    for key, expected in ((first, current), (second, other_profile), (older, old_window)):
+        detail = client.get(f"{base}/{key}")
+        assert detail.json() == expected and detail.headers["Cache-Control"] == "no-store"
+    assert client.get(f"{base}/{failed}").status_code == 404
+    assert client.get(f"{base}/not-a-fingerprint").status_code == 422
+    assert client.get(base, params={"limit": 101}).status_code == 422
+    assert client.get(base, params={"offset": -1}).status_code == 422
+    assert ledger.path.read_bytes() == snapshot
+
+
+def test_replay_uses_another_profile_and_preserves_exact_saved_records(market, monkeypatch, tmp_path):
+    from copy import deepcopy
+
+    from apps.api.main import app
+    from paknow import pa_review
+
+    ledger = pa_review.ReviewLedger(tmp_path / "history.db")
+    monkeypatch.setattr(pa_agent, "review_ledger", ledger)
+    monkeypatch.setattr(pa_agent.market_feed, "get", lambda **kwargs: (market, False))
+    i = next(i for i, key in enumerate(market.review_keys) if key)
+    close_ms = market.bars[i].ts_open + STEP
+    rule, bars = market.at(close_ms)
+    saved_rule = deepcopy(rule)
+    saved_rule["facts"]["higher_ema20"] += 5  # original, different hourly warmup
+    old = {"rule": saved_rule, "retrieval_status": "ok", "commentary_status": "ok",
+           "commentary": {"verdict": "approve", "paper_plan": _paper_plan(rule)}}
+    previous_profile = "deepseek" if pa_review.settings.pa_cloud_provider == "terra" else "terra"
+    with monkeypatch.context() as patch:
+        patch.setattr(pa_review.settings, "pa_cloud_provider", previous_profile)
+        old_key = pa_review.fingerprint(saved_rule, bars)
+    assert ledger.run(old_key, lambda: old) == old
+    active_key = market.review_keys[i]
+    assert ledger.matching({active_key: (rule, bars)}) == {}
+    assert ledger.replay_matches({active_key: (rule, bars)}) == {active_key: old}
+    changed = (replace(bars[0], high=bars[0].high + 1), *bars[1:])
+    assert ledger.replay_matches({pa_review.fingerprint(rule, changed): (rule, changed)}) == {}
+    client = TestClient(app)
+    saved = client.get("/pa-agent/rule", params={"close_ms": close_ms}).json()
+    assert saved["saved_review"] == old and saved["review_status"] == "approve"
+    view = client.get("/pa-agent/market").json()
+    assert view["reviews"][i] == "approve" and len(view["orders"]) == len(view["trades"]) == 1
+    new = {**old, "rule": rule, "commentary": {"verdict": "wait"}}
+    ledger.run(active_key, lambda: new)
+    current = client.get("/pa-agent/market").json()
+    assert current["reviews"][i] == "wait" and not current["orders"]
+    assert client.get(f"/pa-agent/review-history/{old_key}").json() == old
+
+
+def test_review_history_replay_can_jump_one_candle_outside_live_window(monkeypatch, tmp_path):
+    from apps.api.main import app
+    from paknow.pa_market import PublicMarket
+    from paknow.pa_review import ReviewLedger
+
+    bars = tape(BARS + WARMUP + 8)
+    archive = assemble(bars[:-4], bars[-5].ts_open + STEP)
+    live = assemble(bars, bars[-1].ts_open + STEP)
+    close_ms = live.bars[0].ts_open
+    assert archive.locate(close_ms) < 4
+    feed = PublicMarket(tmp_path)
+    feed._save(archive)
+    feed.path.rename(tmp_path / "btc-usdt-swap-15m-archive-okx.json")
+    feed._save(live)
+    monkeypatch.setattr(pa_agent, "market_feed", feed)
+    ledger = ReviewLedger(tmp_path / "replay.db")
+    monkeypatch.setattr(pa_agent, "review_ledger", ledger)
+    key = "e" * 64
+    state, _ = archive.at(close_ms)
+    record = {"rule": state, "retrieval_status": "ok", "commentary_status": "ok",
+              "commentary": {"verdict": "wait"}}
+    ledger.run(key, lambda: record)
+    monkeypatch.setattr(feed, "get", lambda **kwargs: pytest.fail("history must not fetch live market"))
+    client = TestClient(app)
+    path = f"/pa-agent/review-history/{key}"
+    view = client.get(path + "/replay").json()
+    assert view["history_close_ms"] == close_ms and not view["cloud_available"]
+    assert view["bars"][0]["ts_open"] + STEP == close_ms
+    selected = client.get("/pa-agent/rule", params={"close_ms": close_ms, "history_close_ms": close_ms})
+    assert selected.status_code == 200 and selected.json()["rule"]["close_ms"] == close_ms
+    (tmp_path / "btc-usdt-swap-15m-archive-okx.json").unlink()
+    feed.path.unlink()
+    assert client.get(path + "/replay").status_code == 404
+    assert client.get(path).json() == record
+
+
 def test_failed_model_refresh_and_explicit_retry_reuse_evidence(market, monkeypatch, tmp_path):
     from apps.api.main import app
     from paknow.gateway import ModelOutputError
@@ -696,8 +821,13 @@ def test_window_roll_reuses_original_decision_only_with_identical_causal_input(m
     ledger.run(conflict_key, lambda: conflicting)
     assert ledger.matching({key: (drifted, bars)}) == {}
     assert ledger.matching({conflict_key: (conflict, bars)}) == {conflict_key: conflicting}
-    monkeypatch.setattr(settings, "deepseek_model", "other-test-model")
-    assert ledger.matching({fingerprint(rule, bars): (rule, bars)}) == {}
+    for name, value in ((settings.pa_cloud_provider + "_model", "other-test-model"),
+                        (settings.pa_cloud_provider + "_effort", "other-test-effort"),
+                        ("pa_cloud_provider", "terra" if settings.pa_cloud_provider == "deepseek" else "deepseek")):
+        with monkeypatch.context() as patch:
+            patch.setattr(settings, name, value)
+            assert ledger.matching({fingerprint(rule, bars): (rule, bars)}) == {}
+    assert ledger.matching({fingerprint(rule, bars): (rule, bars)})
 
 
 @pytest.mark.parametrize("prior_policy", ["paknow-paper-plan-v3", "paknow-paper-plan-v4-bm25"])

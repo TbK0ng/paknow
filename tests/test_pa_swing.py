@@ -2,6 +2,7 @@
 from types import SimpleNamespace
 
 from paknow import gateway as gateway_module
+from paknow.config import Settings
 from paknow.pa_swing import screen
 
 
@@ -21,8 +22,8 @@ def test_local_entry_geometry_not_fixed_ema_or_rr_thresholds():
 
 
 def test_micu_uses_high_reasoning_effort_for_structured_review(monkeypatch):
-    config = SimpleNamespace(deepseek_base_url="https://www.micuapi.ai/v1", deepseek_model="deepseek-v4.1-flash",
-                             deepseek_effort="high")
+    config = Settings(_env_file=None, pa_cloud_provider="deepseek", deepseek_base_url="https://www.micuapi.ai/v1",
+                      deepseek_model="deepseek-v4.1-flash", deepseek_effort="high")
     monkeypatch.setattr(gateway_module, "settings", config)
     model = gateway_module.ModelGateway()
     calls = []

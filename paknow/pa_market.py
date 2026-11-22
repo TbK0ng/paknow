@@ -171,23 +171,47 @@ class PublicMarket:
                     pass
             return self.current, self.stale
 
-    def _read_saved(self) -> Market | None:
-        try:
-            candidates = [self.path, *sorted(self.path.parent.glob("btc-usdt-swap-15m-*-okx.json"), reverse=True)[:2]]
-            for path in candidates:
-                try:
-                    if path.stat().st_size > 8 * 1024 * 1024:
-                        continue
-                    saved = json.loads(path.read_text(encoding="utf-8"))
-                    if saved.get("symbol") != SYMBOL or saved.get("source") != "okx":
-                        continue
-                    bars = [Bar(**{key: row[key] for key in Bar.__slots__}) for row in saved["bars"] if row.get("closed") is True]
-                    return assemble(bars, saved["downloaded_at_ms"])
-                except (OSError, ValueError, TypeError, KeyError, AttributeError):
+    def _saved_markets(self, archive_limit: int | None):
+        for path in [self.path, *sorted(self.path.parent.glob("btc-usdt-swap-15m-*-okx.json"), reverse=True)[:archive_limit]]:
+            try:
+                if path.stat().st_size > 8 * 1024 * 1024:
                     continue
-        except OSError:
-            pass
-        return None
+                saved = json.loads(path.read_text(encoding="utf-8"))
+                if saved.get("symbol") != SYMBOL or saved.get("source") != "okx":
+                    continue
+                bars = [Bar(**{key: row[key] for key in Bar.__slots__}) for row in saved["bars"] if row.get("closed") is True]
+                yield assemble(bars, saved["downloaded_at_ms"])
+            except (OSError, ValueError, TypeError, KeyError, AttributeError):
+                continue
+
+    def _read_saved(self) -> Market | None:
+        return next(self._saved_markets(2), None)
+
+    def history(self, close_ms: int) -> Market:
+        """Find a real replay window around an archived signal, without downloading."""
+        signal = close_ms - STEP
+        by_open: dict[int, Bar] = {}
+        for snapshot in self._saved_markets(None):
+            for bar in snapshot.tape:
+                by_open.setdefault(bar.ts_open, bar)
+        if signal not in by_open:
+            raise LookupError("本地没有这笔记录对应的已收盘行情，无法跳转。")
+        # Keep the signal in the visible range while leaving enough room
+        # for warmup at the left edge. Never bridge gaps between archives.
+        end = signal
+        while end + STEP in by_open and end < signal + (BARS - 1) * STEP:
+            end += STEP
+        run = []
+        ts = end
+        while ts in by_open and len(run) < _TAPE_SIZE:
+            run.append(by_open[ts])
+            ts -= STEP
+        try:
+            market = assemble(run, end + STEP)
+            market.locate(close_ms)
+        except (ValueError, LookupError) as exc:
+            raise LookupError("本地连续行情不足以回放这笔记录。") from exc
+        return market
 
     def _save(self, market: Market) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)

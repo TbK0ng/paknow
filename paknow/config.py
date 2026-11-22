@@ -1,14 +1,26 @@
 """Application settings loaded from environment / .env."""
 from __future__ import annotations
 
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, PydanticBaseSettingsSource, SettingsConfigDict
 
 # Measured on the PA Agent host with a sealed corpus and frozen OKX candidates.
 _LOCAL_PA_LIMIT = 8
+
+CloudProvider = Literal["terra", "deepseek"]
+
+
+@dataclass(frozen=True)
+class CloudProfile:
+    provider: CloudProvider
+    base_url: str
+    model: str
+    effort: str
+    api_key: str = field(repr=False)
 
 
 class Settings(BaseSettings):
@@ -17,7 +29,12 @@ class Settings(BaseSettings):
     )
 
     # Cloud inference for PA Agent commentary and candidate review.
-    deepseek_api_key: str = ""
+    pa_cloud_provider: CloudProvider = "terra"
+    terra_api_key: str = Field(default="", repr=False)
+    terra_base_url: str = "https://api.muzeai.top/v1"
+    terra_model: str = "gpt-6.1-terra"
+    terra_effort: str = "medium"
+    deepseek_api_key: str = Field(default="", repr=False)
     deepseek_base_url: str = "https://www.micuapi.ai/v1"
     deepseek_model: str = "deepseek-v4.1-flash"
     deepseek_effort: str = "high"
@@ -56,27 +73,34 @@ class Settings(BaseSettings):
     ) -> tuple:
         def provider_aware_settings() -> dict[str, Any]:
             env, local = env_settings(), dotenv_settings()
-            env_url, file_url = env.get("deepseek_base_url"), local.get("deepseek_base_url")
-            if file_url and not env_url:
-                # A selected local provider must not receive a shell's key for
-                # a different provider. Override it with an explicit env URL.
-                env = {key: value for key, value in env.items() if not key.startswith("deepseek_")}
-            elif env_url and str(env_url).rstrip("/") != str(file_url or "").rstrip("/"):
-                # An explicit new endpoint never inherits the local provider key.
-                local = {key: value for key, value in local.items() if not key.startswith("deepseek_")}
-                env.setdefault("deepseek_api_key", "")
-            merged = {**local, **env}
             explicit = init_settings()
-            init_url = explicit.get("deepseek_base_url")
-            if init_url and str(init_url).rstrip("/") != str(merged.get("deepseek_base_url", "")).rstrip("/"):
-                merged["deepseek_api_key"] = ""
-            return merged
+            for profile in ("terra", "deepseek"):
+                prefix = profile + "_"
+                url, api_key = prefix + "base_url", prefix + "api_key"
+                env_url, file_url = env.get(url), local.get(url)
+                if file_url and not env_url:
+                    # Override a selected .env profile only with an explicit shell URL.
+                    env = {key: value for key, value in env.items() if not key.startswith(prefix)}
+                elif env_url and str(env_url).rstrip("/") != str(file_url or "").rstrip("/"):
+                    # A new endpoint must never inherit the old endpoint's credential.
+                    local = {key: value for key, value in local.items() if not key.startswith(prefix)}
+                    env.setdefault(api_key, "")
+                merged_url = env.get(url, local.get(url, ""))
+                if (init_url := explicit.get(url)) and str(init_url).rstrip("/") != str(merged_url).rstrip("/"):
+                    env[api_key] = ""
+            return {**local, **env}
 
         return init_settings, provider_aware_settings, file_secret_settings
 
     @property
+    def cloud_profile(self) -> CloudProfile:
+        if self.pa_cloud_provider == "terra":
+            return CloudProfile("terra", self.terra_base_url, self.terra_model, self.terra_effort, self.terra_api_key)
+        return CloudProfile("deepseek", self.deepseek_base_url, self.deepseek_model, self.deepseek_effort, self.deepseek_api_key)
+
+    @property
     def has_cloud(self) -> bool:
-        return bool(self.deepseek_api_key)
+        return bool(self.cloud_profile.api_key)
 
     def ensure_dirs(self) -> None:
         for d in (self.objects_dir, self.models_dir):

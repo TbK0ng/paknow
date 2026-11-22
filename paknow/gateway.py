@@ -7,7 +7,8 @@ from threading import Lock
 from typing import Any
 from urllib.parse import urlsplit
 
-from openai import OpenAI
+from httpx import TimeoutException, TransportError
+from openai import APIConnectionError, APITimeoutError, OpenAI
 from pydantic import BaseModel, ValidationError
 
 from paknow.config import settings
@@ -31,11 +32,13 @@ class ModelOutputError(ValueError):
 
 
 def failure_reason(exc: Exception) -> str:
-    """The one failure vocabulary: ``timeout`` / ``invalid_structure`` / ``no_content``."""
+    """Map SDK and streaming transport failures to the chart vocabulary."""
     if isinstance(exc, ModelOutputError):
         return exc.reason
-    if isinstance(exc, TimeoutError) or type(exc).__name__ == "APITimeoutError":
+    if isinstance(exc, (TimeoutError, TimeoutException, APITimeoutError)):
         return "timeout"
+    if isinstance(exc, (TransportError, APIConnectionError)):
+        return "connection"
     if isinstance(exc, (ValidationError, ValueError)):
         return "invalid_structure"
     return "no_content"
@@ -58,9 +61,10 @@ def _first_json_object(raw: str) -> Any:
 
 class ModelGateway:
     def __init__(self) -> None:
-        self.model = settings.deepseek_model
-        self.effort = settings.deepseek_effort
-        host = urlsplit(settings.deepseek_base_url).hostname
+        self.profile = settings.cloud_profile
+        self.model = self.profile.model
+        self.effort = self.profile.effort
+        host = urlsplit(self.profile.base_url).hostname
         self.effort_field = "reasoning_effort" if host in {"micuapi.ai", "www.micuapi.ai"} else "effort"
         self._client: OpenAI | None = None
         self._no_retry: OpenAI | None = None
@@ -68,8 +72,8 @@ class ModelGateway:
 
     def _new_client(self, **kwargs: Any) -> OpenAI:
         return OpenAI(
-            api_key=settings.deepseek_api_key,
-            base_url=settings.deepseek_base_url,
+            api_key=self.profile.api_key,
+            base_url=self.profile.base_url,
             **kwargs,
         )
 
@@ -101,12 +105,45 @@ class ModelGateway:
         last: Exception | None = None
         for attempt in range(attempts):
             try:
+                if self.profile.provider == "terra":
+                    return self._responses_text(client, **kwargs)
                 return client.chat.completions.create(**kwargs)
             except Exception as e:  # noqa: BLE001
                 last = e
                 if attempt + 1 < attempts:
                     time.sleep(1.5)
         raise last  # type: ignore[misc]
+
+    @staticmethod
+    def _responses_text(client: OpenAI, **kwargs: Any) -> tuple[str, str]:
+        """Read the full Responses stream before accepting any structured result."""
+        timeout = kwargs.get("timeout")
+        deadline = time.monotonic() + timeout if timeout is not None else None
+        final = None
+        chunks: list[str] = []
+        with client.responses.create(**kwargs) as stream:
+            for event in stream:
+                if deadline is not None and time.monotonic() >= deadline:
+                    raise TimeoutError("Responses request exceeded its time budget")
+                if event.type == "response.output_text.delta":
+                    chunks.append(event.delta)
+                elif event.type in {"response.completed", "response.incomplete", "response.failed"}:
+                    final = event.response
+                    break
+                elif event.type == "error":
+                    raise RuntimeError("Responses stream reported an error")
+        if final is None or final.status == "failed":
+            raise RuntimeError("Responses stream did not complete")
+        raw = final.output_text or "".join(chunks)
+        if final.status != "completed":
+            error = ModelOutputError(raw, "Responses stream was incomplete")
+            reason = getattr(getattr(final, "incomplete_details", None), "reason", None)
+            if reason == "max_output_tokens":
+                error.finish_reason = "length"
+            elif reason == "content_filter":
+                error.finish_reason = "content_filter"
+            raise error
+        return raw, "stop"
 
     def chat_json(
         self,
@@ -130,22 +167,37 @@ class ModelGateway:
                 ),
             }
         )
-        kwargs: dict[str, Any] = dict(
-            model=self.model,
-            messages=msgs,
-            max_tokens=max_tokens,
-            temperature=temperature,
-            response_format={"type": "json_object"},
-        )
-        if self.effort:
-            kwargs["extra_body"] = {self.effort_field: self.effort}
+        if self.profile.provider == "terra":
+            # Fold system instructions before the single user payload, as on Pi's
+            # Responses route. Keep schema-guided JSON plus local validation.
+            instructions = "\n\n".join(msg["content"] for msg in msgs if msg["role"] == "system")
+            kwargs: dict[str, Any] = dict(
+                model=self.model,
+                input=[{"role": "developer", "content": instructions},
+                       *(msg for msg in msgs if msg["role"] != "system")],
+                max_output_tokens=max_tokens,
+                text={"format": {"type": "json_object"}},
+                store=False,
+                stream=True,
+            )
+            if self.effort:
+                kwargs["reasoning"] = {"effort": self.effort}
+        else:
+            kwargs = dict(model=self.model, messages=msgs, max_tokens=max_tokens,
+                          temperature=temperature, response_format={"type": "json_object"})
+            if self.effort:
+                kwargs["extra_body"] = {self.effort_field: self.effort}
         if timeout is not None:
             kwargs["timeout"] = timeout
         resp = self._create(attempts=attempts, **kwargs)
-        if not resp.choices:
-            raise ModelOutputError("", "completion returned no choices")
-        choice = resp.choices[0]
-        raw = choice.message.content or ""
+        if self.profile.provider == "terra":
+            raw, finish_reason = resp
+        else:
+            if not resp.choices:
+                raise ModelOutputError("", "completion returned no choices")
+            choice = resp.choices[0]
+            raw = choice.message.content or ""
+            finish_reason = getattr(choice, "finish_reason", None)
         # models emit bare newlines/tabs inside strings and a second object
         # after the first; tolerate both before giving up on the reply
         try:
@@ -157,9 +209,8 @@ class ModelGateway:
                 try:
                     data = _first_json_object(raw)
                 except ModelOutputError as exc:
-                    reason = getattr(choice, "finish_reason", None)
-                    if reason in {"stop", "length", "content_filter", "tool_calls", "function_call"}:
-                        exc.finish_reason = reason
+                    if finish_reason in {"stop", "length", "content_filter", "tool_calls", "function_call"}:
+                        exc.finish_reason = finish_reason
                     raise
         return schema.model_validate(data)
 

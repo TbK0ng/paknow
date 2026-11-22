@@ -13,7 +13,7 @@ from time import time_ns
 from typing import Any, Callable
 from uuid import uuid4
 
-from paknow.config import settings
+from paknow.config import CloudProfile, settings
 from paknow.pa_rules import VERSION as RULE_VERSION, Bar
 from paknow.retrieval.pa_corpus import corpus
 
@@ -26,10 +26,14 @@ def fingerprint(state: dict[str, Any], bars: tuple[Bar, ...]) -> str:
     return _fingerprint(state, bars, POLICY_VERSION)
 
 
-def _fingerprint(state: dict[str, Any], bars: tuple[Bar, ...], policy: str) -> str:
-    material = [policy, RULE_VERSION, corpus()[0], settings.deepseek_base_url, settings.deepseek_model,
-                settings.deepseek_effort, settings.embed_model, settings.rerank_model,
+def _fingerprint(state: dict[str, Any], bars: tuple[Bar, ...], policy: str, *, cloud: CloudProfile | None = None) -> str:
+    cloud = cloud or settings.cloud_profile
+    material = [policy, RULE_VERSION, corpus()[0], cloud.base_url, cloud.model,
+                cloud.effort, settings.embed_model, settings.rerank_model,
                 state, [asdict(bar) for bar in bars]]
+    if cloud.provider == "terra":
+        # Keep the old Chat fingerprint byte-identical when explicitly switching back.
+        material.extend(["openai-responses", settings.pa_review_max_tokens])
     return sha256(json.dumps(material, ensure_ascii=False, sort_keys=True, allow_nan=False).encode()).hexdigest()
 
 
@@ -57,6 +61,11 @@ def _same_rule_after_warmup(old: dict[str, Any], current: dict[str, Any]) -> boo
             and isclose(old_slope, slope, rel_tol=0, abs_tol=0.002)
             and (close > old_ema, close < old_ema) == (close > ema, close < ema)
             and band(old_slope) == band(slope))
+
+
+def _without_hourly_seed(rule: dict[str, Any]) -> dict[str, Any]:
+    return {**rule, "facts": {k: v for k, v in rule.get("facts", {}).items()
+                             if k not in {"higher_ema20", "higher_ema_delta_atr"}}}
 
 
 class ReviewBusy(RuntimeError):
@@ -97,6 +106,40 @@ class ReviewLedger:
             rows = db.execute(f"SELECT fingerprint, result FROM reviews WHERE fingerprint IN ({placeholders})", keys)
             return {key: json.loads(result) for key, result in rows}
 
+    @contextmanager
+    def _history_reader(self):
+        if not self.path.exists():
+            yield None
+            return
+        with closing(sqlite3.connect(self.path.resolve().as_uri() + "?mode=ro", uri=True, timeout=5)) as db:
+            # Keep the count and page on the same read snapshot while a batch writes.
+            db.execute("BEGIN")
+            exists = db.execute("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'reviews'").fetchone()
+            yield db if exists else None
+
+    def history_page(self, *, offset: int, limit: int) -> dict[str, Any]:
+        """Read saved verdicts across all windows and fingerprint namespaces."""
+        with self._history_reader() as db:
+            if db is None:
+                return {"total": 0, "records": []}
+            total = db.execute("SELECT count(*) FROM reviews").fetchone()[0]
+            rows = db.execute(
+                "SELECT fingerprint, rowid, json_extract(result, '$.rule.close_ms') AS close_ms, "
+                "coalesce(json_extract(result, '$.rule.original_state'), json_extract(result, '$.rule.state')), "
+                "json_extract(result, '$.commentary.verdict') "
+                "FROM reviews ORDER BY close_ms DESC, rowid DESC LIMIT ? OFFSET ?",
+                (limit, offset),
+            )
+            return {"total": total, "records": [
+                {"fingerprint": key, "number": number, "close_ms": close, "direction": direction, "verdict": verdict}
+                for key, number, close, direction, verdict in rows
+            ]}
+
+    def history_record(self, key: str) -> dict[str, Any] | None:
+        with self._history_reader() as db:
+            row = db.execute("SELECT result FROM reviews WHERE fingerprint = ?", (key,)).fetchone() if db is not None else None
+            return json.loads(row[0]) if row else None
+
     def matching(self, inputs: dict[str, ReviewInput]) -> dict[str, dict[str, Any]]:
         """Read exact matches or prove compatibility with saved inputs; never rewrite history."""
         saved = self.get(tuple(inputs))
@@ -128,6 +171,39 @@ class ReviewLedger:
                     if (first["verdict"], first.get("paper_plan")) != (decision["verdict"], decision.get("paper_plan")):
                         ambiguous.add(slot)
         saved.update({key: result for key, result in compatible.items() if key not in ambiguous})
+        return saved
+
+    def replay_matches(self, inputs: dict[str, ReviewInput]) -> dict[str, dict[str, Any]]:
+        """Use saved decisions from both configured profiles for paper replay only."""
+        saved = self.matching(inputs)
+        missing = {rule["close_ms"]: (key, rule, bars) for key, (rule, bars) in inputs.items() if key not in saved}
+        if not missing:
+            return saved
+        other = "deepseek" if settings.pa_cloud_provider == "terra" else "terra"
+        profiles = (settings.cloud_profile, settings.model_copy(update={"pa_cloud_provider": other}).cloud_profile)
+        with self._history_reader() as db:
+            if db is None:
+                return saved
+            rows = db.execute(
+                "SELECT fingerprint, result FROM reviews "
+                "WHERE json_extract(result, '$.rule.close_ms') BETWEEN ? AND ? ORDER BY rowid DESC",
+                (min(missing), max(missing)),
+            )
+            for stored_key, raw in rows:
+                result = json.loads(raw)
+                prior = result["rule"]
+                if not (item := missing.get(prior["close_ms"])):
+                    continue
+                key, rule, bars = item
+                # Execute the original plan, not a fresh review under the current
+                # profile. Preserve signal direction and authenticate all 81 bars
+                # and the original rule. Only the two hourly warmup diagnostics
+                # may differ from the current rule in this historical replay.
+                if _without_hourly_seed(prior) != _without_hourly_seed(rule):
+                    continue
+                if any(_fingerprint(prior, bars, POLICY_VERSION, cloud=profile) == stored_key for profile in profiles):
+                    saved[key] = result
+                    del missing[prior["close_ms"]]
         return saved
 
     def last_attempt(self, key: str, review_input: ReviewInput) -> dict[str, Any] | None:

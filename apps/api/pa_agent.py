@@ -4,7 +4,7 @@ from threading import Event, Lock
 from time import monotonic_ns, perf_counter
 from typing import Literal
 
-from fastapi import APIRouter, HTTPException, Query, Response
+from fastapi import APIRouter, HTTPException, Path as PathParam, Query, Response
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -67,9 +67,9 @@ def _market(*, refresh: bool = False):
         raise HTTPException(503, detail=str(exc)) from exc
 
 
-def _selected(close_ms: int):
-    market, stale = _market()
+def _selected(close_ms: int, history_close_ms: int | None = None):
     try:
+        market, stale = (market_feed.history(history_close_ms), True) if history_close_ms else _market()
         index = market.locate(close_ms)
         rule, bars = market.at(close_ms)
     except LookupError as exc:
@@ -78,8 +78,8 @@ def _selected(close_ms: int):
 
 
 def _reviews(data: Market):
-    return review_ledger.matching({key: data.at(bar.ts_open + STEP)
-                                   for key, bar in zip(data.review_keys, data.bars) if key})
+    return review_ledger.replay_matches({key: data.at(bar.ts_open + STEP)
+                                         for key, bar in zip(data.review_keys, data.bars) if key})
 
 
 def _projection_inputs(data: Market) -> tuple[dict, int]:
@@ -92,33 +92,58 @@ def _projection_inputs(data: Market) -> tuple[dict, int]:
         return reviews, _projection_sequence
 
 
+def _market_payload(data: Market, *, stale: bool, history_close_ms: int | None = None):
+    reviews, sequence = _projection_inputs(data)
+    return {**data.payload(stale=stale, reviews=reviews), "cloud_available": not history_close_ms and settings.has_cloud,
+            "history_close_ms": history_close_ms, "projection_seq": sequence,
+            "rule_version": VERSION, "review_version": POLICY_VERSION}
+
+
 @router.get("/market")
 def market(response: Response, refresh: bool = False):
     response.headers["Cache-Control"] = "no-store"
     data, stale = _market(refresh=refresh)
-    reviews, sequence = _projection_inputs(data)
-    return {**data.payload(stale=stale, reviews=reviews), "cloud_available": settings.has_cloud,
-            "projection_seq": sequence,
-            "rule_version": VERSION, "review_version": POLICY_VERSION}
+    return _market_payload(data, stale=stale)
 
 
 @router.get("/rule")
-def rule(response: Response, close_ms: int = Query(gt=0)):
+def rule(response: Response, close_ms: int = Query(gt=0), history_close_ms: int | None = Query(None, gt=0)):
     response.headers["Cache-Control"] = "no-store"
-    market, index, result, bars, stale = _selected(close_ms)
+    market, index, result, bars, stale = _selected(close_ms, history_close_ms)
     key = market.review_keys[index]
-    active = bool(key and review_ledger.in_progress(close_ms))
-    saved = review_ledger.matching({key: (result, bars)}).get(key) if key else None
-    previous = review_ledger.last_attempt(key, (result, bars)) if key and not saved else None
-    projection = None
-    if saved:
-        reviews, sequence = _projection_inputs(market)
-        projection = {**market.review_projection(reviews), "projection_seq": sequence}
+    active = bool(key and not history_close_ms and review_ledger.in_progress(close_ms))
+    reviews, sequence = _projection_inputs(market) if key else ({}, 0)
+    saved = reviews.get(key) if key else None
+    previous = review_ledger.last_attempt(key, (result, bars)) if key and not saved and not history_close_ms else None
+    projection = {**market.review_projection(reviews), "projection_seq": sequence} if saved else None
     return {"rule": result, "stale": stale, "fingerprint": key, "review_status": verdict(saved) if key else None,
             "review_source": "saved" if saved else "last_attempt" if previous else None,
             "saved_review": saved, "last_attempt": previous, "review_in_progress": active and not saved,
             "snapshot": [market.bars[0].ts_open, market.last_ms, market.fetched_ms],
             "projection": projection}
+
+
+@router.get("/review-history")
+def review_history(response: Response, offset: int = Query(0, ge=0, le=2**63 - 1), limit: int = Query(50, ge=1, le=100)):
+    response.headers["Cache-Control"] = "no-store"
+    return review_ledger.history_page(offset=offset, limit=limit)
+
+
+@router.get("/review-history/{key}")
+def review_history_record(response: Response, key: str = PathParam(pattern=r"^[0-9a-f]{64}$")):
+    record = review_ledger.history_record(key)
+    if record is None:
+        raise HTTPException(404, detail="没有这笔历史复核记录。")
+    response.headers["Cache-Control"] = "no-store"
+    return record
+
+
+@router.get("/review-history/{key}/replay")
+def review_history_replay(response: Response, key: str = PathParam(pattern=r"^[0-9a-f]{64}$")):
+    record = review_history_record(response, key)
+    close_ms = record["rule"]["close_ms"]
+    data, _, _, _, _ = _selected(close_ms, close_ms)
+    return _market_payload(data, stale=True, history_close_ms=close_ms)
 
 
 @router.get("/evidence/{evidence_id}")
@@ -149,7 +174,7 @@ def analyze(req: AnalyzeRequest):
 def _candidate_key(data: Market, index: int, state: dict, bars, expected: str) -> str:
     key = data.review_keys[index]
     if key is None or key != expected or fingerprint(state, bars) != key:
-        raise HTTPException(409, detail="候选、背景或语料已更新，请刷新行情后重新选择。")
+        raise HTTPException(409, detail="候选、背景、语料或云模型配置已更新，请刷新后重新选择。")
     return key
 
 
@@ -204,6 +229,9 @@ def _run_review(key: str, inputs: ReviewInput, retry_id: str | None, timings: di
 
     # Existing manual and batch paths share the singleton ledger and admission.
     admission = {"queue": True} if stop is not None else {}
+    # A saved decision used by the replay must not be billed again.
+    if saved := review_ledger.replay_matches({key: inputs}).get(key):
+        return saved, False
     result = review_ledger.run(key, analyze_candidate, review_input=inputs, retry_attempt_id=retry_id, **admission)
     return result, attempted
 

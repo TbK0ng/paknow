@@ -10,7 +10,7 @@ dependencies = [
     "pydantic>=2.9",
     "pydantic-settings>=2.5",
     "httpx>=0.27",
-    "openai>=1.40",
+    "openai>=2.0",  # Responses streaming for the default PA cloud profile
     # authoritative metadata db
     "sqlalchemy>=2.0",
     "psycopg[binary]>=3.2",

@@ -8,6 +8,7 @@ import pytest
 from pydantic import BaseModel, ValidationError
 
 from paknow import gateway as gateway_module
+from paknow.config import Settings
 
 
 class Answer(BaseModel):
@@ -16,6 +17,7 @@ class Answer(BaseModel):
 
 def _gateway(monkeypatch: pytest.MonkeyPatch, raw: str, finish_reason: str | None = None) -> gateway_module.ModelGateway:
     """A gateway whose completion call returns ``raw`` verbatim."""
+    monkeypatch.setattr(gateway_module, "settings", Settings(_env_file=None, pa_cloud_provider="deepseek"))
     gw = gateway_module.ModelGateway()
     monkeypatch.setattr(
         gw,
