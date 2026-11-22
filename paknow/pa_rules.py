@@ -7,6 +7,7 @@ from typing import Any
 
 STEP = 900_000
 HOUR = 4 * STEP
+FOUR_HOUR = 16 * STEP
 VERSION = "2026-09-v1"
 
 
@@ -28,13 +29,23 @@ class Bar:
         )
 
 
-def hourly(bars: tuple[Bar, ...]) -> tuple[Bar, ...]:
-    """Caller validates gap-free tape starting on an hour. Drop its partial last hour."""
+def _aggregate(bars: tuple[Bar, ...], size: int) -> tuple[Bar, ...]:
     return tuple(
         Bar(group[0].ts_open, group[0].open, max(b.high for b in group), min(b.low for b in group),
             group[-1].close, sum(b.volume for b in group))
-        for group in (bars[i:i + 4] for i in range(0, len(bars) - 3, 4))
+        for group in (bars[i:i + size] for i in range(0, len(bars) - size + 1, size))
     )
+
+
+def hourly(bars: tuple[Bar, ...]) -> tuple[Bar, ...]:
+    """Caller validates gap-free tape starting on an hour. Drop its partial last hour."""
+    return _aggregate(bars, 4)
+
+
+def four_hourly(bars: tuple[Bar, ...]) -> tuple[Bar, ...]:
+    """Aggregate complete 15m groups from a UTC 4-hour boundary; drop the partial tail."""
+    start = next((i for i, bar in enumerate(bars) if bar.ts_open % FOUR_HOUR == 0), len(bars))
+    return _aggregate(bars[start:], 16)
 
 
 @dataclass(frozen=True, slots=True)

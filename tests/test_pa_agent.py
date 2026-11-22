@@ -14,7 +14,7 @@ from apps.api import pa_agent
 from paknow import pa_analysis
 from paknow.pa_analysis import Commentary, Point
 from paknow.pa_background import LOOKBACK, describe, summarize
-from paknow.pa_market import BARS, WARMUP, assemble, download
+from paknow.pa_market import BARS, MIN_WARMUP, WARMUP, assemble, download
 from paknow.pa_rules import HOUR, STEP, Bar
 from paknow.pa_swing import screen
 
@@ -75,6 +75,14 @@ def test_background_distinguishes_direction_and_range():
         summarize(series(range(100, 179)))
 
 
+def test_old_real_snapshot_still_loads_without_inventing_4h_history():
+    bars = tape(BARS + MIN_WARMUP + 4)
+    market = assemble(bars, bars[-1].ts_open + STEP + 100)
+    assert len(market.tape) == BARS + MIN_WARMUP + 4
+    assert market.states[0]["decision"]["timeframes"]["major"]["available"] is False
+    assert market.states[-1]["decision"]["timeframes"]["major"]["available"] is True
+
+
 def test_rule_and_context_use_the_same_closed_cutoff(market):
     close_ms = market.last_ms - 8 * STEP
     rule, ctx = market.at(close_ms)
@@ -91,12 +99,20 @@ def test_rule_and_context_use_the_same_closed_cutoff(market):
     assert len(ctx) == LOOKBACK + 1
     assert rule["background"]["end_ms"] == ctx[-1].ts_open
     assert rule["background"]["start_ms"] == ctx[0].ts_open
+    decision = rule["decision"]
+    assert decision["session"] == "continuous_24_7" and decision["gap_analysis"] == "not_applicable"
+    assert decision["timeframes"]["execution"]["label"] == "15m"
+    assert decision["timeframes"]["middle"]["label"] == "1h"
+    assert decision["timeframes"]["major"]["label"] == "4h"
+    assert decision["timeframes"]["major"]["close_ms"] <= close_ms
+    assert decision["follow_through"]["status"] == "awaiting_next_closed_bar"
     # Future bars can change hits or exits, but cannot change this plan.
     source = list(market.tape)
     source[i + 1] = replace(source[i + 1], high=source[i + 1].high + 100)
     assert assemble(source, market.fetched_ms).at(close_ms) == (rule, ctx)
     early, first_ctx = market.at(market.bars[0].ts_open + STEP)
     assert early["background"]["count"] == LOOKBACK
+    assert early["decision"]["timeframes"]["major"]["available"] is True
     assert first_ctx[:-1] == market.tape[-BARS - LOOKBACK:-BARS]
     assert early["background"]["high"] == max(bar.high for bar in first_ctx[:-1])
     assert len(rule["short"]["checks"]) == len(rule["long"]["checks"]) == 5
@@ -208,6 +224,8 @@ def test_evidence_and_citations_are_hard_requirements_for_review(market, monkeyp
         payload = json.loads(messages[1]["content"])
         assert len(payload["previous_80_oldest_first"]) == 80 and "trades" not in payload
         assert all(x["ts_open"] <= history[-1].ts_open for x in payload["causal_facts"].values())
+        assert payload["decision"]["gap_analysis"] == "not_applicable"
+        assert payload["decision"]["timeframes"]["major"]["label"] == "4h"
         def point(src, fact, quote=None):
             return Point(text="根据候选现有结构评估原文条件与本例是否符合。", evidence_ids=[src["id"]],
                          quote={"evidence_id": src["id"], "text": quote or src["text"]}, market_refs=[fact])
@@ -830,7 +848,8 @@ def test_window_roll_reuses_original_decision_only_with_identical_causal_input(m
     assert ledger.matching({fingerprint(rule, bars): (rule, bars)})
 
 
-@pytest.mark.parametrize("prior_policy", ["paknow-paper-plan-v3", "paknow-paper-plan-v4-bm25"])
+@pytest.mark.parametrize("prior_policy", ["paknow-paper-plan-v3", "paknow-paper-plan-v4-bm25",
+                                          "paknow-paper-plan-v9-context-roles"])
 def test_previous_policy_stays_in_ledger_but_does_not_replay(market, monkeypatch, tmp_path, prior_policy):
     from paknow import pa_review
 

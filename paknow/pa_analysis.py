@@ -144,11 +144,18 @@ def _local_commentary(state: dict[str, Any], hits: list[dict[str, Any]]) -> dict
     ltf = "上方" if facts["close"] >= facts["ema20"] else "下方"
     htf = "上方" if facts["higher_close"] >= facts["higher_ema20"] else "下方"
     bg = state["background"]
+    decision = state.get("decision", {})
+    major = decision.get("timeframes", {}).get("major", {})
+    major_text = ""
+    if major.get("available"):
+        major_text = (f" 4 小时收在其 EMA20 {'上方' if major['close'] >= major['ema20'] else '下方'}，"
+                      f"五根斜率 {major['ema_delta_atr']:+.2f} ATR。")
     context = (f"信号以前 80 根属{_REGIMES[bg['regime']]}背景：净变动 {bg['change_pct']:+.2f}%，"
                f"范围 {bg['low']:,.2f}–{bg['high']:,.2f}。"
                f"信号收盘在 15 分钟 EMA20 {ltf}，均线较五根前变动 {facts['ema_delta_atr']:+.2f} ATR；"
                f"1 小时收在其 EMA20 {htf}，变动 {facts['higher_ema_delta_atr']:+.2f} ATR。"
-               "PA 要求本级别趋势支持方向，高周期不明显反向即可，不把高周期中性误读成同向确认。")
+               f"{major_text}"
+               "PA 要求本级别趋势支持方向，1 小时不明显反向即可；4 小时是风险背景，不把中性或冲突误读成同向确认。")
     watch_for = {
         "trigger": f"观察后续已收盘 K 线能否形成同向实体，越过前棒高/低（当前参照 {hi:,.2f} / {lo:,.2f}），并保住同向收盘。",
         "local_trend": "观察收盘与 EMA20 是否回到同一方向，且五根均线变动能否达到同向 0.10 ATR；否则一根放大的 K 线不够。",
@@ -168,6 +175,8 @@ def _local_commentary(state: dict[str, Any], hits: list[dict[str, Any]]) -> dict
                  "aligned": " 与前 80 根方向一致，但仍要留意趋势衰竭。"}[plan["alignment"]]
         if plan["edge_before_target"] is not None:
             risk += f" 前 80 根的区间边缘 {plan['edge_before_target']:,.2f} 在目标之前，不能假设会直接通过。"
+        if decision.get("alignment", {}).get("candidate_major_conflict"):
+            risk += " 候选与 4 小时方向相反，需额外等待后续收盘跟进，不能把 15 分钟信号当作大周期反转成立。"
         watch = (f"PA 模拟草案以收盘 {plan['entry']:,.2f} 为参考入场、{plan['stop']:,.2f} 为失效位、"
                  f"{plan['target']:,.2f} 为目标。下一根收盘后再验证同向跟进；越过失效位要重审候选。")
         risk_topic, watch_topic = "second_test", "trigger"
@@ -285,7 +294,7 @@ def _generate(state: dict[str, Any], bars: tuple[Bar, ...], hits: list[dict[str,
     schema = EntryReview if entry_review else Commentary
     facts = market_anchors(state, bars) if entry_review else {}
     if entry_review:
-        payload.update(causal_facts=facts, setup=setup_at(state, bars).payload())
+        payload.update(causal_facts=facts, setup=setup_at(state, bars).payload(), decision=state.get("decision"))
         system += (
             "当前任务是制定可由程序执行的离线模拟条件，不接实盘。PA 同方向，PA 价格作参考，允许按实际 K 线结构另选价位并解释。"
             "如果不做就 verdict=reject；没有可执行方案但想等新信号就 wait，两者的 paper_plan 都必须为 null。"
@@ -312,6 +321,10 @@ def _generate(state: dict[str, Any], bars: tuple[Bar, ...], hits: list[dict[str,
             "market_refs 只用 causal_facts 的键；通过时 thesis 和 risks 都必须锚定行情事实。"
             "通过时为 paper_plan 每个非空价格字段提供 price_anchors：按字段名映射到 {ts_open,field}，只用这81根的时间和 open/high/low/close，解释为何相对该真实价位调整。"
             "next_open 不虚构未来开盘；非通过 price_anchors={}。不把图谱问题、段落标签或检索分数当成行情事实。"
+            "decision 是确定性的逐根背景卡：15 分钟是执行周期，1 小时是中周期，4 小时是大周期；"
+            "4 小时冲突或区间只用于风险背景，不能自行新增或删除 PA 候选。"
+            "signal_bar 已经收盘，但还没有下一根跟进；不得把信号棒自身称为 follow-through。"
+            "BTC 为连续交易，decision.gap_analysis=not_applicable；不要引入开盘跳空、缺口回补或股指联动条件。"
         )
     messages = [{"role": "system", "content": system},
                 {"role": "user", "content": json.dumps(payload, ensure_ascii=False)}]

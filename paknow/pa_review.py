@@ -17,7 +17,7 @@ from paknow.config import CloudProfile, settings
 from paknow.pa_rules import VERSION as RULE_VERSION, Bar
 from paknow.retrieval.pa_corpus import corpus
 
-POLICY_VERSION = "paknow-paper-plan-v9-context-roles"
+POLICY_VERSION = "paknow-paper-plan-v10-btc-decision"
 LOCAL_REVIEW_PARALLELISM = settings.pa_local_parallelism
 CLOUD_REVIEW_PARALLELISM = 8
 

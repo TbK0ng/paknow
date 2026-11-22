@@ -12,15 +12,17 @@ import httpx
 
 from paknow.config import settings
 from paknow.pa_background import LOOKBACK, describe, summarize
+from paknow.pa_decision import decision_card
 from paknow.pa_plan import PaperPlan
 from paknow.pa_replay import simulate
 from paknow.pa_review import fingerprint, verdict
-from paknow.pa_rules import HOUR, STEP, Bar, diagnose, hourly
+from paknow.pa_rules import FOUR_HOUR, HOUR, STEP, Bar, diagnose, four_hourly, hourly
 from paknow.pa_swing import screen
 
 SYMBOL = "BTC-USDT-SWAP"
 BARS = 480
-WARMUP = 232
+WARMUP = 420
+MIN_WARMUP = 232
 _ENDPOINT = "https://www.okx.com/api/v5/market/history-candles"
 _TAPE_SIZE = BARS + WARMUP + 4
 
@@ -85,21 +87,26 @@ def assemble(bars: list[Bar], fetched_ms: int) -> Market:
     tape = tuple(sorted(bars, key=lambda bar: bar.ts_open)[-_TAPE_SIZE:])
     start = next((i for i, b in enumerate(tape) if b.ts_open % HOUR == 0), len(tape))
     tape = tape[start:]
-    if len(tape) < BARS + WARMUP or not all(b.valid() for b in tape):
+    if len(tape) < BARS + MIN_WARMUP or not all(b.valid() for b in tape):
         raise ValueError("已收盘行情不足或 OHLCV 无效")
     if any(b.ts_open - a.ts_open != STEP for a, b in zip(tape, tape[1:])):
         raise ValueError("行情有缺口，不能用合成数据补齐")
     if tape[-1].ts_open + STEP > fetched_ms or tape[-1].ts_open + 3 * STEP < fetched_ms:
         raise ValueError("行情时间与下载时点不相符")
     hours = hourly(tape)
+    four_hours = four_hourly(tape)
     first = len(tape) - BARS
     def analyze_close(end: int) -> dict[str, Any]:
         background = summarize(tape[end - LOOKBACK - 1:end - 1])
-        rule = diagnose(tape[:end], hours[:end // 4])
+        selected_hours = hours[:end // 4]
+        rule = diagnose(tape[:end], selected_hours)
         context = describe(background, rule)
         swing = screen(rule)
         original = rule["state"]
-        return {**rule, **context, "original_state": original, "swing": swing,
+        close_ms = tape[end - 1].ts_open + STEP
+        selected_four_hours = tuple(bar for bar in four_hours if bar.ts_open + FOUR_HOUR <= close_ms)
+        state = {**rule, **context, "original_state": original, "swing": swing}
+        return {**state, "decision": decision_card(state, tape[:end], selected_hours, selected_four_hours),
                 "state": "wait" if swing["status"] == "blocked" else original}
 
     states = tuple(analyze_close(i) for i in range(first + 1, len(tape) + 1))

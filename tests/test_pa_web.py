@@ -15,6 +15,7 @@ def test_root_serves_only_pa_agent():
     page = client.get("/")
     assert page.status_code == 200
     assert "<h1>PA Agent</h1>" in page.text
+    assert "逐根决策卡" in page.text and "4h 大周期" in page.text
     assert "返回 PAknow" not in page.text
     assert client.get("/health").json() == {"status": "ok"}
     for path in ("/query", "/search", "/charts", "/sops", "/docs", "/redoc", "/openapi.json",

@@ -4,3 +4,7 @@
 
 - 上游版权：Copyright (C) 2026 okx-2pa-agent-web Contributors。
 - 许可标识：`AGPL-3.0-or-later`。见 [上游 LICENSE](upstream-LICENSE.txt) 与 [GNU AGPL v3 全文](AGPL-3.0.txt)。
+
+## 交易方法的设计启发
+
+[`paknow/pa_decision.py`](../../paknow/pa_decision.py) 的逐根决策卡参考了 Tom Hougaard 的《No Hindsight Price Action》所展示的逐根收盘、信号与跟进分离、条件情景和风险背景写法。该文章不是六份封存语料之一，项目没有复制其图表或正文，也不会把文章中的案例当作当前行情的可引用证据。

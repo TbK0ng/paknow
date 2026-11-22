@@ -38,6 +38,7 @@
     <section class="section" aria-labelledby="rule-title">
       <div class="line"><h2 id="rule-title">PA  · 多空检查</h2><span class="pill" id="state">待加载</span></div>
       <p class="muted" id="timeframe"></p>
+      <div id="decision" class="notes"></div>
       <div id="background" class="notes"></div>
       <div id="rule-details" class="notes"><p class="muted" role="status">等待选择已收盘的 K 线。</p></div>
     </section>
@@ -233,12 +234,44 @@ function showBackground(bg) {
     box.append(node('p',structure[bg.structure]+'；信号收盘 '+location+'。','muted'));
   }
 }
+function showDecision(decision) {
+  const box=$('decision');box.replaceChildren();
+  if(!decision)return;
+  const regimes={up:'上行',down:'下行',range_or_mixed:'区间或混合'};
+  const names={execution:'15m 执行',middle:'1h 中周期',major:'4h 大周期'};
+  box.append(node('h3','逐根决策卡 · 15m / 1h / 4h'));
+  const grid=node('div',null,'checks');
+  for(const [key,label] of Object.entries(names)){
+    const item=decision.timeframes[key], col=node('div');
+    if(!item?.available){col.append(node('h3',label),node('small',item?.reason||'数据不足'));grid.append(col);continue;}
+    col.append(node('h3',label+' · '+(regimes[item.regime]||item.regime)));
+    col.append(node('small',`收盘 ${price(item.close)} · EMA20 ${price(item.ema20)} · 斜率 ${item.ema_delta_atr.toFixed(2)} ATR`));
+    col.append(node('small',`结构 ${({rising:'高低点抬高',falling:'高低点降低',mixed:'混合'})[item.structure]||item.structure} · 区间位置 ${(100*item.range_position).toFixed(0)}%`));
+    grid.append(col);
+  }
+  box.append(grid);
+  const f=decision.signal_bar, seq=decision.sequence;
+  box.append(node('p',`信号棒 ${({bull:'多头',bear:'空头',flat:'平收'})[f.direction]||f.direction} · 收盘位置 ${(100*f.close_location).toFixed(0)}% · 振幅 ${f.range_atr.toFixed(2)} ATR · ${f.inside?'内包棒':f.outside?'外包棒':'普通区间'}`));
+  box.append(node('p',`最近连续收盘跟进：向上 ${seq.up_close_streak} 根 · 向下 ${seq.down_close_streak} 根；当前收盘突破 ${seq.last_close_break==='up'?'前高':seq.last_close_break==='down'?'前低':'未完成'}。`,'muted'));
+  const transition={middle_major_conflict:'1 小时与 4 小时方向冲突',execution_trend_in_middle_range:'15 分钟有方向、1 小时仍在区间',major_range:'4 小时处于区间或混合',aligned_or_neutral:'周期方向未形成明显冲突'}[decision.transition];
+  box.append(node('p',transition+((decision.alignment?.candidate_major_conflict)?'；当前候选逆 4 小时方向，按风险背景处理。':'。')));
+  const list=node('ul');
+  for(const scenario of decision.scenarios)list.append(node('li',scenario.response));
+  box.append(node('h3','下一根收盘情景'),list);
+  if(decision.risk){
+    const r=decision.risk;
+    box.append(node('small',`止损 ${r.stop_atr?.toFixed(2)||'—'} ATR · 目标 ${r.target_atr?.toFixed(2)||'—'} ATR · 毛盈亏比 ${r.gross_rr?.toFixed(2)||'—'} : 1${r.major_barrier_before_target!=null?' · 4 小时障碍 '+price(r.major_barrier_before_target):''}`));
+  }
+  box.append(node('small',decision.notes.join(' ')));
+}
 function showRule(rule, status) {
+  showDecision(rule.decision);
   showBackground(rule.background);
   const box=$('rule-details');box.replaceChildren();
   $('state').textContent=reviewNames[status]||(rule.swing.status==='blocked'?'价格结构无效':stateNames[rule.state]);$('state').className='pill '+(status==='approve'?rule.state:'wait');
   if (!rule.facts) {box.append(node('p',rule.reason,'muted'));return;}
-  $('timeframe').textContent='1 小时数据截至 '+utc(rule.higher_close_ms);
+  const major=rule.decision?.timeframes?.major;
+  $('timeframe').textContent='1 小时数据截至 '+utc(rule.higher_close_ms)+(major?.available?' · 4 小时数据截至 '+utc(major.close_ms):'');
   const f=rule.facts, checks=node('div',null,'checks');
   for (const [direction,label] of [['long','多头'],['short','空头']]) {
     const side=rule[direction], col=node('div'), list=node('ul');
@@ -349,7 +382,7 @@ async function select(i,notice='',savedRecord=null) {
   $('evidence-status').removeAttribute('data-state');reviewNotice(notice);
   for(const id of ['evidence-preview','evidence-refresh','analyze'])$(id).removeAttribute('aria-busy');
   $('evidence-refresh').textContent='重新取证';
-  evidenceControls();$('rule-details').replaceChildren();$('background').replaceChildren();$('timeframe').textContent='';
+  evidenceControls();$('rule-details').replaceChildren();$('decision').replaceChildren();$('background').replaceChildren();$('timeframe').textContent='';
   $('evidence-status').textContent='正在读取所选 K 线的规则。';
   const bar=data.bars[i], close=bar.ts_open+STEP;
   $('state').textContent=reviewNames[data.reviews[i]]||stateNames[bar.state];$('state').className='pill '+(data.reviews[i]==='approve'?bar.state:'wait');
