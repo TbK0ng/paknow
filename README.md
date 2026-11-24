@@ -4,7 +4,15 @@
 
 PA Agent 是一个本地价格行为（Price Action，PA）研究工作台。PAknow 是内置的 RAG 取证模块：它不仅查找相似段落，还要求候选复核的**支持、反证、确认**分别落到可回读、可逐字核验的独立原文。模型可以否决、等待或给出同向的条件式方案，但不能创建候选，也不能下单。
 
-[架构总览](#架构总览) · [PAknow RAG](#paknow-rag从建库到取证) · [快速启动](#快速启动) · [验证与文档](#验证与文档)
+[演示](#演示) · [架构总览](#架构总览) · [PAknow RAG](#paknow-rag从建库到取证) · [快速启动](#快速启动) · [验证与文档](#验证与文档)
+
+## 演示
+
+<https://github.com/TbK0ng/paknow/raw/main/docs/media/paknow-demo.mp4>
+
+[![PA Agent 工作台演示](docs/media/paknow-demo-poster.jpg)](https://github.com/TbK0ng/paknow/raw/main/docs/media/paknow-demo.mp4)
+
+规则提名候选 → PAknow 取证（适用条件 / 反例 / 触发与确认各回读原文）→ 显式发起模型复核 → 已收盘行情逐根纸面回放。片段来自本机工作台实录，约 1 分 20 秒，无音轨。
 
 ## 架构总览
 
